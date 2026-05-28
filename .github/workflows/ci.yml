@@ -1,0 +1,35 @@
+name: Agentkit CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: '0 8 * * 3'
+
+jobs:
+  test-analyze-publish-dry-run:
+    name: test · analyze · publish dry-run
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: dart pub get
+        run: dart pub get
+
+      - name: make test
+        run: make test
+
+      - name: make analyze
+        run: make analyze
+
+      - name: pub.dev dry-run (all packages)
+        run: make publish-dry-run
