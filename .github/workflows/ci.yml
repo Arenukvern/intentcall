@@ -1,4 +1,4 @@
-name: Agentkit CI
+name: IntentCall CI
 
 on:
   pull_request:

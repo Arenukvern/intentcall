@@ -1,4 +1,4 @@
-# Agentkit monorepo — shared analyzer config (xsoulspace_lints).
+# IntentCall monorepo — shared analyzer config (xsoulspace_lints).
 include: package:xsoulspace_lints/library.yaml
 
 analyzer:
@@ -11,5 +11,5 @@ analyzer:
     unnecessary_library_directive: ignore
   exclude:
     - "**/*.g.dart"
-    - packages/agentkit_codegen/example/**
-    - packages/agentkit_codegen/test/fixtures/**
+    - packages/intentcall_codegen/example/**
+    - packages/intentcall_codegen/test/fixtures/**

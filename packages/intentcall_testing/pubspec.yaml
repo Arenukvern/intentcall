@@ -1,0 +1,25 @@
+name: intentcall_testing
+description: PRE-RELEASE — Test helpers and contract harness for intentcall packages.
+version: 0.1.0
+license: MIT
+repository: https://github.com/Arenukvern/mcp_flutter/tree/main/intentcall/packages/intentcall_testing
+issue_tracker: https://github.com/Arenukvern/mcp_flutter/issues
+homepage: https://github.com/Arenukvern/mcp_flutter/tree/main/intentcall/packages/intentcall_testing
+topics:
+  - mcp
+  - testing
+  - agents
+
+environment:
+  sdk: ">=3.11.0 <4.0.0"
+resolution: workspace
+
+dependencies:
+  intentcall_core: ^0.1.0
+  intentcall_schema: ^0.1.0
+  meta: ^1.17.0
+
+dev_dependencies:
+  lints: ^6.1.0
+  test: ^1.31.1
+  xsoulspace_lints: ^0.1.2

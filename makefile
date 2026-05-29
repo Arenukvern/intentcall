@@ -1,14 +1,14 @@
 .PHONY: test analyze publish-dry-run
-AGENTKIT_PKGS := packages/agentkit_schema packages/agentkit_core packages/agentkit_mcp \
-	packages/agentkit_webmcp packages/agentkit_gemma packages/agentkit_apple \
-	packages/agentkit_android packages/agentkit_platform packages/agentkit_codegen \
-	packages/agentkit_testing
+INTENTCALL_PKGS := packages/intentcall_schema packages/intentcall_core packages/intentcall_mcp \
+	packages/intentcall_webmcp packages/intentcall_gemma packages/intentcall_apple \
+	packages/intentcall_android packages/intentcall_platform packages/intentcall_codegen \
+	packages/intentcall_testing
 
 test:
-	dart test $(AGENTKIT_PKGS)
+	dart test $(INTENTCALL_PKGS)
 
 analyze:
 	dart analyze .
 
 publish-dry-run:
-	bash tool/agentkit/publish_all.sh
+	bash tool/intentcall/publish_all.sh

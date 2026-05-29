@@ -1,35 +1,35 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
   "packages": {
-    "packages/agentkit_schema": {
+    "packages/intentcall_schema": {
       "release-type": "dart",
-      "package-name": "agentkit_schema",
-      "component": "agentkit_schema"
+      "package-name": "intentcall_schema",
+      "component": "intentcall_schema"
     },
-    "packages/agentkit_core": {
+    "packages/intentcall_core": {
       "release-type": "dart",
-      "package-name": "agentkit_core",
-      "component": "agentkit_core"
+      "package-name": "intentcall_core",
+      "component": "intentcall_core"
     },
-    "packages/agentkit_mcp": {
+    "packages/intentcall_mcp": {
       "release-type": "dart",
-      "package-name": "agentkit_mcp",
-      "component": "agentkit_mcp"
+      "package-name": "intentcall_mcp",
+      "component": "intentcall_mcp"
     },
-    "packages/agentkit_webmcp": {
+    "packages/intentcall_webmcp": {
       "release-type": "dart",
-      "package-name": "agentkit_webmcp",
-      "component": "agentkit_webmcp"
+      "package-name": "intentcall_webmcp",
+      "component": "intentcall_webmcp"
     },
-    "packages/agentkit_platform": {
+    "packages/intentcall_platform": {
       "release-type": "dart",
-      "package-name": "agentkit_platform",
-      "component": "agentkit_platform"
+      "package-name": "intentcall_platform",
+      "component": "intentcall_platform"
     },
-    "packages/agentkit_testing": {
+    "packages/intentcall_testing": {
       "release-type": "dart",
-      "package-name": "agentkit_testing",
-      "component": "agentkit_testing"
+      "package-name": "intentcall_testing",
+      "component": "intentcall_testing"
     }
   }
 }

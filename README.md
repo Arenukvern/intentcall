@@ -1,23 +1,23 @@
-# agentkit
+# intentcall
 
 > **Pre-release (`0.1.x`)** — Highly experimental. APIs may change without notice. **Not for production.** See [PRE_RELEASE.md](PRE_RELEASE.md).
 
 Transport-agnostic agent intent platform (extracted from [mcp_flutter](https://github.com/Arenukvern/mcp_flutter)).
 
-Standalone workspace at `~/mcp/agentkit` (sibling to `mcp_flutter`). Consumer integration tests run in the parent repo: `make -C ../mcp_flutter check-agentkit-integration` with `AGENTKIT_ROOT` pointing here (default when cloned as siblings).
+Standalone workspace at `~/mcp/agentkit` (sibling to `mcp_flutter`). GitHub: [Arenukvern/intentcall](https://github.com/Arenukvern/intentcall). See [docs/decisions/0010-adopt-intentcall-product-name.md](docs/decisions/0010-adopt-intentcall-product-name.md). Consumer integration tests run in the parent repo: `make -C ../mcp_flutter check-intentcall-integration` with `INTENTCALL_ROOT` pointing here (default when cloned as siblings).
 
 ## Packages
 
 | Package | Role |
 |---------|------|
-| `agentkit_schema` | Wire types, validation, `AgentResult` |
-| `agentkit_core` | Registry, runtime, `AgentCallEntry` |
-| `agentkit_mcp` | MCP publish adapter (`dart_mcp`) |
-| `agentkit_webmcp` | WebMCP hot-sync adapter |
-| `agentkit_platform` | Native/web emitters + Flutter plugin |
-| `agentkit_codegen` | Optional `@AgentTool` codegen |
-| `agentkit_testing` | Contract / invoke test helpers |
-| `agentkit_gemma` / `agentkit_apple` / `agentkit_android` | Optional surface adapters |
+| `intentcall_schema` | Wire types, validation, `AgentResult` |
+| `intentcall_core` | Registry, runtime, `AgentCallEntry` |
+| `intentcall_mcp` | MCP publish adapter (`dart_mcp`) |
+| `intentcall_webmcp` | WebMCP hot-sync adapter |
+| `intentcall_platform` | Native/web emitters + Flutter plugin |
+| `intentcall_codegen` | Optional `@AgentTool` codegen |
+| `intentcall_testing` | Contract / invoke test helpers |
+| `intentcall_gemma` / `intentcall_apple` / `intentcall_android` | Optional surface adapters |
 
 ## Development
 
@@ -34,8 +34,8 @@ This repository starts with a **fresh history** (2026-05-28). Packages were deve
 
 ## Flutter MCP Toolkit
 
-App authors should prefer **`mcp_toolkit`** + `flutter-mcp-toolkit` CLI. Agentkit packages are for platform work and advanced integration.
+App authors should prefer **`mcp_toolkit`** + `flutter-mcp-toolkit` CLI. IntentCall packages are for platform work and advanced integration.
 
 ## Publishing
 
-See [PUBLISHING.md](PUBLISHING.md). Execute publish only with pub.dev credentials: `bash tool/agentkit/publish_all.sh --execute`.
+See [PUBLISHING.md](PUBLISHING.md). Execute publish only with pub.dev credentials: `bash tool/intentcall/publish_all.sh --execute`.
