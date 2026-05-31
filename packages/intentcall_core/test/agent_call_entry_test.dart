@@ -65,7 +65,7 @@ void main() {
           'snapshotId': {'type': 'integer'},
         },
       },
-      handler: (final args) async {
+      handler: (final args) {
         capturedSnapshotId = args['snapshotId'] as int?;
         return AgentResult.success();
       },

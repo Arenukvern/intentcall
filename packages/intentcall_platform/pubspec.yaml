@@ -1,5 +1,6 @@
 name: intentcall_platform
-description: PRE-RELEASE — Platform emitters and sync for intentcall (web manifest, WebMCP JS, bootstrap).
+description: PRE-RELEASE — Platform emitters and sync for intentcall (web
+  manifest, WebMCP JS, bootstrap).
 version: 0.1.0
 license: MIT
 repository: https://github.com/Arenukvern/mcp_flutter/tree/main/intentcall/packages/intentcall_platform
@@ -16,11 +17,11 @@ environment:
 resolution: workspace
 
 dependencies:
-  intentcall_core: ^0.1.0
-  intentcall_schema: ^0.1.0
   app_links: ^6.4.0
   flutter:
     sdk: flutter
+  intentcall_core: ^0.1.0
+  intentcall_schema: ^0.1.0
   meta: ^1.17.0
   path: ^1.9.1
   web: ^1.1.1

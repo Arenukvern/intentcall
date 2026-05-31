@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:intentcall_core/intentcall_core.dart';
 import 'package:dart_mcp/server.dart';
+import 'package:intentcall_core/intentcall_core.dart';
 
 import 'agent_bridge.dart';
 import 'mcp_resource_mapper.dart';
@@ -248,10 +248,7 @@ final class McpPublishAdapter implements AgentAdapter {
         mimeType: registration?.mimeType ?? d.mimeType ?? 'application/json',
       ),
       (final request) async => agentResultToReadResourceResult(
-        await registry.invoke(
-          key,
-          <String, Object?>{'uri': request.uri},
-        ),
+        await registry.invoke(key, <String, Object?>{'uri': request.uri}),
         uri: request.uri,
       ),
     );
@@ -273,16 +270,18 @@ final class McpPublishAdapter implements AgentAdapter {
         name: registration?.name ?? descriptor!.name,
         description: registration?.description ?? descriptor!.description,
         mimeType:
-            registration?.mimeType ?? descriptor!.mimeType ?? 'application/json',
+            registration?.mimeType ??
+            descriptor!.mimeType ??
+            'application/json',
       ),
       (final request) async {
         final params = matchUriTemplate(uriTemplate, request.uri);
         if (params == null) return null;
         return agentResultToReadResourceResult(
-          await registry.invoke(
-            key,
-            <String, Object?>{'uri': request.uri, ...params},
-          ),
+          await registry.invoke(key, <String, Object?>{
+            'uri': request.uri,
+            ...params,
+          }),
           uri: request.uri,
         );
       },
@@ -302,5 +301,4 @@ final class McpPublishAdapter implements AgentAdapter {
       // dart_mcp has no removeResourceTemplate; registry unregister is enough.
     }
   }
-
 }

@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:intentcall_schema/intentcall_schema.dart';
 import 'package:dart_mcp/server.dart';
+import 'package:intentcall_schema/intentcall_schema.dart';
 
 AgentResult mcpResultToAgentResult(final CallToolResult result) {
   if (result.isError == true) {
@@ -80,21 +80,18 @@ String? _firstText(final CallToolResult result) {
   return null;
 }
 
-List<Map<String, Object?>> _contentMaps(final CallToolResult result) =>
-    result.content
-        .map((final block) {
-          if (block is TextContent) {
-            return <String, Object?>{'type': 'text', 'text': block.text};
-          }
-          if (block is ImageContent) {
-            return <String, Object?>{
-              'type': 'image',
-              'mimeType': block.mimeType,
-            };
-          }
-          return <String, Object?>{
-            'type': block.runtimeType.toString(),
-            'value': block.toString(),
-          };
-        })
-        .toList(growable: false);
+List<Map<String, Object?>> _contentMaps(final CallToolResult result) => result
+    .content
+    .map((final block) {
+      if (block is TextContent) {
+        return <String, Object?>{'type': 'text', 'text': block.text};
+      }
+      if (block is ImageContent) {
+        return <String, Object?>{'type': 'image', 'mimeType': block.mimeType};
+      }
+      return <String, Object?>{
+        'type': block.runtimeType.toString(),
+        'value': block.toString(),
+      };
+    })
+    .toList(growable: false);

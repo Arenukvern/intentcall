@@ -68,7 +68,10 @@ void registerFromEntries(final Set<AgentCallEntry> entries) {
       name: qualifiedName.toJS,
       description: descriptor.description.toJS,
       inputSchema: _jsonParse(jsonEncode(descriptor.inputSchema).toJS)!,
-      execute: ((final JSAny? rawArgs) => _invokeEntry(entry, rawArgs).toJS).toJS,
+      execute: ((final JSAny? rawArgs) => _invokeEntry(
+        entry,
+        rawArgs,
+      ).toJS).toJS,
     );
     try {
       modelContext.registerTool(toolDefinition);
@@ -86,9 +89,10 @@ void _ensureDartExecuteHook() {
   _dartExecuteHookInstalled = true;
   globalContext.setProperty(
     '__intentcallWebMcpDartExecute'.toJS,
-    ((final JSString nameJS, final JSAny? rawArgs) {
-      return _dartExecuteHook(nameJS, rawArgs).toJS;
-    }).toJS,
+    ((final JSString nameJS, final JSAny? rawArgs) => _dartExecuteHook(
+      nameJS,
+      rawArgs,
+    ).toJS).toJS,
   );
 }
 

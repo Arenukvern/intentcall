@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:intentcall_schema/intentcall_schema.dart';
 import 'package:dart_mcp/server.dart';
+import 'package:intentcall_schema/intentcall_schema.dart';
 
 AgentResult readResourceResultToAgentResult(final ReadResourceResult result) {
   final artifacts = <AgentArtifact>[];

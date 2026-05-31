@@ -7,7 +7,9 @@ void main() {
       'type': 'object',
       'additionalProperties': false,
       'required': ['ref'],
-      'properties': {'ref': {'type': 'string'}},
+      'properties': {
+        'ref': {'type': 'string'},
+      },
     };
     expect(
       () => validateAgainstSchema(schema, {}),
@@ -19,7 +21,9 @@ void main() {
     const schema = {
       'type': 'object',
       'additionalProperties': false,
-      'properties': {'ref': {'type': 'string'}},
+      'properties': {
+        'ref': {'type': 'string'},
+      },
     };
     expect(
       () => validateAgainstSchema(schema, {'extra': 'x'}),
@@ -46,7 +50,7 @@ void main() {
         () => validateAgainstSchema(schema, {'n': -1}),
         throwsA(
           isA<AgentValidationException>().having(
-            (e) => e.message,
+            (final e) => e.message,
             'message',
             contains('at least 0'),
           ),
@@ -59,7 +63,7 @@ void main() {
         () => validateAgainstSchema(schema, {'n': 101}),
         throwsA(
           isA<AgentValidationException>().having(
-            (e) => e.message,
+            (final e) => e.message,
             'message',
             contains('at most 100'),
           ),
@@ -106,7 +110,7 @@ void main() {
         }),
         throwsA(
           isA<AgentValidationException>().having(
-            (e) => e.message,
+            (final e) => e.message,
             'message',
             allOf(contains('ref'), contains('fields[0]')),
           ),
@@ -123,7 +127,7 @@ void main() {
         }),
         throwsA(
           isA<AgentValidationException>().having(
-            (e) => e.message,
+            (final e) => e.message,
             'message',
             allOf(contains('ref'), contains('fields[0]')),
           ),
@@ -155,7 +159,7 @@ void main() {
         () => validateAgainstSchema(schema, {'direction': 'sideways'}),
         throwsA(
           isA<AgentValidationException>().having(
-            (e) => e.message,
+            (final e) => e.message,
             'message',
             allOf(contains('direction'), contains('one of')),
           ),
@@ -173,8 +177,14 @@ void main() {
     };
 
     test('accepts value within bounds', () {
-      expect(() => validateAgainstSchema(schema, {'ratio': 1.0}), returnsNormally);
-      expect(() => validateAgainstSchema(schema, {'ratio': 1.5}), returnsNormally);
+      expect(
+        () => validateAgainstSchema(schema, {'ratio': 1.0}),
+        returnsNormally,
+      );
+      expect(
+        () => validateAgainstSchema(schema, {'ratio': 1.5}),
+        returnsNormally,
+      );
     });
 
     test('rejects value outside bounds', () {

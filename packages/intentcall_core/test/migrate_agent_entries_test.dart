@@ -52,7 +52,7 @@ MCPCallEntry.tool(
       final migrated = migrator.migrateSource(before);
       expect(migrated, contains("'predicate': {'type': 'object'}"));
       expect(migrated, contains("'required': <String>['predicate']"));
-      expect(migrated, isNot(contains(r"'kind'")));
+      expect(migrated, isNot(contains("'kind'")));
       expect(migrated, isNot(contains('TODO(migrate):')));
     });
 
@@ -142,10 +142,7 @@ MCPCallEntry.tool(
       expect(migrated, contains("'ref'"));
       expect(migrated, contains("'text'"));
       expect(migrated, contains("'type': 'string'"));
-      expect(
-        migrated,
-        contains("'required': <String>['ref', 'text']"),
-      );
+      expect(migrated, contains("'required': <String>['ref', 'text']"));
       expect(migrated, contains("'required': <String>['fields']"));
       expect(migrated, isNot(contains('TODO(migrate):')));
     });
@@ -174,7 +171,7 @@ MCPCallEntry.tool(
       final migrated = migrator.migrateSource(before);
       expect(migrated, contains("'rows'"));
       expect(migrated, contains("'type': 'array'"));
-      expect(migrated, isNot(contains(r"'items': {")));
+      expect(migrated, isNot(contains("'items': {")));
       expect(migrated, contains('TODO(migrate):'));
       expect(migrated, contains('nested ArraySchema items'));
     });

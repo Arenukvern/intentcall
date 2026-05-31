@@ -1,5 +1,6 @@
 import 'package:intentcall_core/intentcall_core.dart';
 import 'package:intentcall_schema/intentcall_schema.dart';
+
 import 'resource_registration.dart';
 import 'resource_template_registration.dart';
 import 'tool_registration.dart';
@@ -48,6 +49,7 @@ RegisteredAgentIntent toolRegistrationToRegistration({
     inputSchema: registration.inputSchema,
   );
   late final RegisteredAgentIntent intent;
+  // ignore: join_return_with_assignment
   intent = RegisteredAgentIntent(
     descriptor: descriptor,
     execute: (final invocation) {
@@ -73,6 +75,7 @@ RegisteredAgentIntent resourceRegistrationToRegistration({
     mimeType: registration.mimeType,
   );
   late final RegisteredAgentIntent intent;
+  // ignore: join_return_with_assignment
   intent = RegisteredAgentIntent(
     descriptor: descriptor,
     execute: (final invocation) {
@@ -99,6 +102,7 @@ RegisteredAgentIntent resourceTemplateRegistrationToRegistration({
     mimeType: registration.mimeType,
   );
   late final RegisteredAgentIntent intent;
+  // ignore: join_return_with_assignment
   intent = RegisteredAgentIntent(
     descriptor: descriptor,
     execute: (final invocation) {

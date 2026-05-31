@@ -324,8 +324,9 @@ final class MigrateAgentEntriesMigrator {
       buffer.writeln('    // $migrationTodo');
     }
 
-    buffer..writeln('    inputSchema: const {')
-    ..writeln("      'type': 'object',");
+    buffer
+      ..writeln('    inputSchema: const {')
+      ..writeln("      'type': 'object',");
     if (additionalProperties != null) {
       buffer.writeln("      'additionalProperties': $additionalProperties,");
     }
@@ -356,9 +357,9 @@ final class MigrateAgentEntriesMigrator {
   }
 
   bool? _extractAdditionalProperties(final String objectBody) {
-    for (final match
-        in RegExp(r'additionalProperties:\s*(true|false)\b')
-            .allMatches(objectBody)) {
+    for (final match in RegExp(
+      r'additionalProperties:\s*(true|false)\b',
+    ).allMatches(objectBody)) {
       if (_braceDepthAt(objectBody, match.start) == 0) {
         return match.group(1) == 'true';
       }
@@ -393,7 +394,7 @@ final class MigrateAgentEntriesMigrator {
     final properties = <String, String>{};
     final typePattern = RegExp(
       r"'([^']+)':\s*(?:const\s+)?"
-      r'(StringSchema|IntegerSchema|BooleanSchema|NumberSchema|ObjectSchema|ArraySchema|'
+      '(StringSchema|IntegerSchema|BooleanSchema|NumberSchema|ObjectSchema|ArraySchema|'
       r'Schema\.string|Schema\.int|Schema\.bool|Schema\.num|Schema\.object|Schema\.array)\b',
     );
     for (final match in typePattern.allMatches(section)) {
@@ -411,7 +412,8 @@ final class MigrateAgentEntriesMigrator {
     return properties;
   }
 
-  String _jsonTypeForSchemaConstructor(final String schemaType) => switch (schemaType) {
+  String _jsonTypeForSchemaConstructor(final String schemaType) =>
+      switch (schemaType) {
         'StringSchema' || 'Schema.string' => 'string',
         'IntegerSchema' || 'Schema.int' => 'integer',
         'BooleanSchema' || 'Schema.bool' => 'boolean',
@@ -493,17 +495,16 @@ final class MigrateAgentEntriesMigrator {
 
     final objectItems = _extractObjectSchemaItemsBody(arrayBody);
     if (objectItems == null) {
-      return RegExp(r'items\s*:').hasMatch(arrayBody) ? null : <String, Object?>{'type': 'array'};
+      return RegExp(r'items\s*:').hasMatch(arrayBody)
+          ? null
+          : <String, Object?>{'type': 'array'};
     }
 
     final itemsJson = _objectSchemaBodyToJsonMap(objectItems);
     if (itemsJson == null) {
       return null;
     }
-    return <String, Object?>{
-      'type': 'array',
-      'items': itemsJson,
-    };
+    return <String, Object?>{'type': 'array', 'items': itemsJson};
   }
 
   String? _topLevelArrayItemsTail(final String arrayBody) {
@@ -522,7 +523,7 @@ final class MigrateAgentEntriesMigrator {
     }
     final match = RegExp(
       r'^(?:const\s+)?'
-      r'(StringSchema|IntegerSchema|BooleanSchema|NumberSchema|'
+      '(StringSchema|IntegerSchema|BooleanSchema|NumberSchema|'
       r'Schema\.string|Schema\.int|Schema\.bool|Schema\.num)\b',
     ).firstMatch(itemsTail);
     if (match == null) {
@@ -569,7 +570,8 @@ final class MigrateAgentEntriesMigrator {
       final jsonProperties = <String, Object?>{};
       for (final name in properties.keys) {
         final detailed = nestedDetailed[name];
-        jsonProperties[name] = detailed ?? <String, Object?>{'type': properties[name]};
+        jsonProperties[name] =
+            detailed ?? <String, Object?>{'type': properties[name]};
       }
       json['properties'] = jsonProperties;
     }
@@ -723,10 +725,9 @@ final class MigrateAgentEntriesMigrator {
     }
 
     const arrayCtor = r'(?:ArraySchema|Schema\.array)\s*\(';
-    const complexItem = r'(?:ObjectSchema|ArraySchema|Schema\.object|Schema\.array)\s*\(';
-    final pattern = RegExp(
-      "'([^']+)':\\s*(?:const\\s+)?$arrayCtor",
-    );
+    const complexItem =
+        r'(?:ObjectSchema|ArraySchema|Schema\.object|Schema\.array)\s*\(';
+    final pattern = RegExp("'([^']+)':\\s*(?:const\\s+)?$arrayCtor");
     for (final match in pattern.allMatches(section)) {
       if (_braceDepthAt(section, match.start) != 0) {
         continue;
@@ -738,7 +739,9 @@ final class MigrateAgentEntriesMigrator {
         continue;
       }
       final arrayBody = section.substring(openParen + 1, closeParen);
-      if (!RegExp('items\\s*:\\s*(?:const\\s+)?$complexItem').hasMatch(arrayBody)) {
+      if (!RegExp(
+        'items\\s*:\\s*(?:const\\s+)?$complexItem',
+      ).hasMatch(arrayBody)) {
         continue;
       }
       final detailed = detailedProperties[name];
@@ -806,7 +809,9 @@ final class MigrateAgentEntriesMigrator {
       final insertAt = mcpImport?.start ?? 0;
       final imports = StringBuffer();
       if (!hasIntentCallCore) {
-        imports.writeln("import 'package:intentcall_core/intentcall_core.dart';");
+        imports.writeln(
+          "import 'package:intentcall_core/intentcall_core.dart';",
+        );
       }
       if (!hasIntentCallSchema) {
         imports.writeln(
