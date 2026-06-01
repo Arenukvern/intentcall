@@ -16,6 +16,7 @@ workspace:
   - packages/intentcall_android
   - packages/intentcall_platform
   - packages/intentcall_testing
+  - tool/intentcall
 
 dev_dependencies:
   lints: ^6.1.0

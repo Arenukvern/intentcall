@@ -1,0 +1,61 @@
+# IntentCall — Design FAQ
+
+*Why IntentCall is built the way it is.* For usage patterns, see [DX_FAQ.md](DX_FAQ.md).
+
+---
+
+## Origin & positioning
+
+**Q: Why was IntentCall extracted from mcp_flutter?**
+A: As `mcp_flutter` scaled, the intent registry, wire types, and adapters became a distinct platform concern separate from the product harness (`mcp_toolkit`). Extracting to a standalone repo clarifies the dependency boundary: `mcp_flutter` is a consumer of IntentCall, not its host. See [ADR 0010](docs/decisions/0010-adopt-intentcall-product-name.md).
+
+**Q: Why is it called IntentCall and not AgentKit?**
+A: OpenAI shipped a product named AgentKit in October 2025, creating a direct pub.dev and search collision. IntentCall — "register intents, call them everywhere" — describes the registry-plus-invoke model without overlap. See [ADR 0010](docs/decisions/0010-adopt-intentcall-product-name.md).
+
+**Q: What problem does IntentCall solve that `dart_mcp` alone does not?**
+A: `dart_mcp` is a transport implementation. IntentCall adds a typed *intent registry* on top: a central `AgentRegistry` where tools declare `AgentCallEntry` objects once, and adapters publish them to any transport. Without IntentCall, each adapter re-implements registration, validation, and dispatch independently.
+
+---
+
+## Architecture
+
+**Q: Why is the monorepo split into so many `intentcall_*` packages?**
+A: Each package has a distinct dependency footprint and deployment target. `intentcall_schema` has zero Flutter dependencies; `intentcall_platform` requires Flutter. Keeping them separate lets backend-only consumers (CLI tools, servers) depend only on `intentcall_schema` + `intentcall_core` without pulling in Flutter.
+
+**Q: Why does `intentcall_schema` own the wire types rather than `intentcall_core`?**
+A: Schema types cross transport boundaries — they must be importable by every adapter and by the testing package without pulling in registry runtime logic. Keeping them in a leaf package with minimal dependencies prevents circular imports and keeps the contract stable even as the core evolves.
+
+**Q: Why is `intentcall_testing` a separate package?**
+A: Test helpers have `test` as a dependency, which must not bleed into production packages. Isolating them in `intentcall_testing` lets app authors add it as a `dev_dependency` without the production graph growing.
+
+**Q: Why is there an `intentcall_codegen` package?**
+A: Codegen is strictly optional — many adopters will register intents by hand. Keeping it separate means the core registry has zero `build_runner` dependency, and users who opt in to `@AgentTool` get a clean code-generation surface without it affecting tree-shaking for others.
+
+**Q: Why are there separate `intentcall_apple` / `intentcall_android` / `intentcall_gemma` packages instead of one `intentcall_native`?**
+A: Native surface adapters differ sharply in their platform SDKs and entitlement requirements. A single `intentcall_native` would force all three sets of platform SDKs into every build. Platform-specific packages let Flutter tree-shaker and pubspec `platforms` keys exclude irrelevant targets cleanly.
+
+---
+
+## Transport model
+
+**Q: Why is IntentCall "transport-agnostic" rather than MCP-first?**
+A: MCP is one wire format today; WebMCP, native Apple Intelligence, and Android AICore use different protocols. Building adapters against a shared registry interface means adding a new transport is one new package, not a fork of the registry.
+
+**Q: Why does `intentcall_mcp` use `dart_mcp` rather than a custom implementation?**
+A: Maintaining a custom MCP wire implementation would duplicate protocol work tracked upstream in the Dart ecosystem. `dart_mcp` is the canonical Dart MCP library; IntentCall wraps it with the registry bridge, staying thin.
+
+**Q: Why does `intentcall_webmcp` exist separately from `intentcall_mcp`?**
+A: WebMCP's hot-sync model (persistent browser connection, delta dispatch) requires different lifecycle management from the request/response MCP model. Mixing them in one adapter would make both harder to reason about and test.
+
+---
+
+## Quality & stability
+
+**Q: Why are all packages at `0.1.x` pre-release instead of `1.0.0`?**
+A: The wire contract in `intentcall_schema` and the registry API in `intentcall_core` are still being exercised across real adapters. Publishing a `1.0.0` would imply API stability we cannot guarantee yet. Pre-release allows breaking changes to land without a semver major while the design stabilizes.
+
+**Q: Why does CI run `make publish-dry-run` on every PR?**
+A: pub.dev publish validation catches issues (missing `README.md`, bad `pubspec.yaml` constraints, platform tag mismatches) that `dart analyze` misses. Catching them early in PR review prevents a broken pub.dev publish in a release workflow.
+
+**Q: Why is `pubspec.lock` committed for the workspace?**
+A: Workspace-level lock files ensure CI reproduces exactly the dependency graph that developers tested locally, avoiding "works on my machine" failures caused by transitive dependency updates. Per-package locks are not committed (pub.dev consumers resolve fresh).

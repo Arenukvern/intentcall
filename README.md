@@ -1,10 +1,25 @@
-# intentcall
+# IntentCall
+
+[![maintained with Skill Steward](https://raw.githubusercontent.com/Arenukvern/skill_steward/main/docs/brand/assets/svg/badge-solid.svg)](https://github.com/Arenukvern/skill_steward)
 
 > **Pre-release (`0.1.x`)** — Highly experimental. APIs may change without notice. **Not for production.** See [PRE_RELEASE.md](PRE_RELEASE.md).
 
-Transport-agnostic agent intent platform (extracted from [mcp_flutter](https://github.com/Arenukvern/mcp_flutter)).
+*Register intents. Call them everywhere.*
 
-Standalone workspace at `~/mcp/agentkit` (sibling to `mcp_flutter`). GitHub: [Arenukvern/intentcall](https://github.com/Arenukvern/intentcall). See [docs/decisions/0010-adopt-intentcall-product-name.md](docs/decisions/0010-adopt-intentcall-product-name.md). Consumer integration tests run in the parent repo: `make -C ../mcp_flutter check-intentcall-integration` with `INTENTCALL_ROOT` pointing here (default when cloned as siblings).
+Transport-agnostic agent intent platform for Dart/Flutter — central registry (`AgentRegistry`), typed invocation model, and adapters for MCP, WebMCP, and native surfaces. Extracted from [mcp_flutter](https://github.com/Arenukvern/mcp_flutter).
+
+**Charter:** [docs/NORTH_STAR.md](docs/NORTH_STAR.md) · **Agent map:** [AGENTS.md](AGENTS.md)  
+**Why / how:** [DESIGN_FAQ.md](DESIGN_FAQ.md) · [DX_FAQ.md](DX_FAQ.md) · [Decisions](docs/decisions/) · [CONTRIBUTING.md](CONTRIBUTING.md)
+
+GitHub: [Arenukvern/intentcall](https://github.com/Arenukvern/intentcall)
+
+## Ecosystem
+
+| Repo | Role |
+|---|---|
+| **IntentCall** (this repo) | Platform layer — registry + adapters |
+| **[mcp_flutter](https://github.com/Arenukvern/mcp_flutter)** | Product harness — `mcp_toolkit`, `flutter-mcp-toolkit` CLI |
+| **[Skill Steward](https://github.com/Arenukvern/skill_steward)** | Meta-layer — agent skills governance |
 
 ## Packages
 
@@ -28,6 +43,8 @@ make analyze
 make publish-dry-run   # pub.dev dry-run (all packages)
 ```
 
+See [DX_FAQ.md](DX_FAQ.md) for detailed workflows.
+
 ## Git history
 
 This repository starts with a **fresh history** (2026-05-28). Packages were developed inside `mcp_flutter` until Phase 7 extract; `git filter-repo` / subtree split was deferred to avoid timebox risk. Use `mcp_flutter` git log before the extract commit for prior package history.
@@ -35,6 +52,10 @@ This repository starts with a **fresh history** (2026-05-28). Packages were deve
 ## Flutter MCP Toolkit
 
 App authors should prefer **`mcp_toolkit`** + `flutter-mcp-toolkit` CLI. IntentCall packages are for platform work and advanced integration.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). All PRs must pass `make test && make analyze && make publish-dry-run`.
 
 ## Publishing
 
