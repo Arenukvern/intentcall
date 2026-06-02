@@ -6,7 +6,7 @@ Thanks for your interest! IntentCall is a pre-release platform library. Contribu
 
 - [Dart SDK](https://dart.dev/get-dart) `^3.11.0`
 - [Flutter SDK](https://flutter.dev/docs/get-started/install) (stable) — required for `intentcall_platform`
-- `make` (standard on macOS/Linux)
+- [just](https://github.com/casey/just) task runner (recommended)
 
 ## Quick start
 
@@ -14,9 +14,9 @@ Thanks for your interest! IntentCall is a pre-release platform library. Contribu
 git clone https://github.com/Arenukvern/intentcall.git
 cd intentcall
 dart pub get
-make test        # run all package tests
-make analyze     # static analysis
-make publish-dry-run  # pub.dev validation (no credentials needed)
+just test        # run all package tests
+just analyze     # static analysis
+just publish-dry-run  # pub.dev validation (no credentials needed)
 ```
 
 All three must be green before opening a PR.

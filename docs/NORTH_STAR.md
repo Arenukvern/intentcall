@@ -27,7 +27,7 @@ IntentCall is a **transport-agnostic agent intent platform** for Dart/Flutter. I
 
 1. A Flutter app can register intents once and expose them over MCP and WebMCP without per-transport boilerplate.
 2. The `intentcall_schema` wire contract is stable enough that adapters can evolve independently without breaking consumers.
-3. `make test && make analyze && make publish-dry-run` stays green on every PR.
+3. `just test && just analyze && just publish-dry-run` stays green on every PR.
 4. A new adapter author can read `intentcall_core` + one existing adapter and ship a working adapter in a single session.
 
 ---

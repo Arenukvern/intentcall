@@ -19,6 +19,8 @@ const publishOrder = [
 
 void main(List<String> arguments) async {
   final parser = ArgParser()
+    ..addCommand('doctor')
+    ..addCommand('validate')
     ..addCommand('check-path-deps')
     ..addCommand(
       'print-hosted-deps',
@@ -48,6 +50,14 @@ void main(List<String> arguments) async {
   final repoRoot = findRepoRoot();
 
   switch (results.command!.name) {
+    case 'doctor':
+      final code = await runDoctor(repoRoot);
+      exit(code);
+
+    case 'validate':
+      final code = await runValidate(repoRoot);
+      exit(code);
+
     case 'check-path-deps':
       final code = await runCheckPathDeps(repoRoot);
       exit(code);
@@ -92,11 +102,124 @@ Directory findRepoRoot() {
 void printUsage(ArgParser parser) {
   print('Usage: dart run tool/intentcall [command] [options]');
   print('\nCommands:');
+  print('  doctor                Check developer environment health.');
+  print('  validate              Validate path dependencies and version consistency.');
   print('  check-path-deps       Scan workspace for invalid path dependencies.');
   print('  print-hosted-deps     Print hosted pub.dev dependency blocks.');
   print('  publish-all           Publish all workspace packages to pub.dev in order.');
   print('\nOptions:');
   print(parser.usage);
+}
+
+Future<int> runDoctor(Directory repoRoot) async {
+  print('== IntentCall Workspace Doctor ==');
+  bool healthy = true;
+
+  // 1. Check Dart CLI
+  try {
+    final result = await Process.run('dart', ['--version']);
+    if (result.exitCode == 0) {
+      print('✓ Dart SDK: ${result.stdout.toString().trim()}');
+    } else {
+      print('✗ Dart SDK check failed');
+      healthy = false;
+    }
+  } catch (e) {
+    print('✗ Dart SDK not found in PATH: $e');
+    healthy = false;
+  }
+
+  // 2. Check Flutter CLI (needed for intentcall_platform)
+  try {
+    final result = await Process.run('flutter', ['--version']);
+    if (result.exitCode == 0) {
+      final line = result.stdout.toString().split('\n').first;
+      print('✓ Flutter SDK: $line');
+    } else {
+      print('✗ Flutter SDK check failed');
+      healthy = false;
+    }
+  } catch (e) {
+    print('✗ Flutter SDK not found in PATH: $e');
+    healthy = false;
+  }
+
+  // 3. Check just task runner
+  try {
+    final result = await Process.run('just', ['--version']);
+    if (result.exitCode == 0) {
+      print('✓ just task runner: ${result.stdout.toString().trim()}');
+    } else {
+      print('✗ just check failed');
+      healthy = false;
+    }
+  } catch (e) {
+    print('? just task runner not found (optional but recommended): $e');
+  }
+
+  // 4. Check workspace lockfile
+  final lockFile = File(p.join(repoRoot.path, 'pubspec.lock'));
+  if (lockFile.existsSync()) {
+    print('✓ Workspace pubspec.lock exists');
+  } else {
+    print('✗ Workspace pubspec.lock is missing. Run "dart pub get"');
+    healthy = false;
+  }
+
+  if (healthy) {
+    print('\nWorkspace status: HEALTHY');
+    return 0;
+  } else {
+    print('\nWorkspace status: UNHEALTHY (Please check the issues above)');
+    return 1;
+  }
+}
+
+Future<int> runValidate(Directory repoRoot) async {
+  print('== Running Workspace Validation ==');
+  
+  // 1. Run check-path-deps
+  final pathDepsExitCode = await runCheckPathDeps(repoRoot);
+  if (pathDepsExitCode != 0) {
+    return pathDepsExitCode;
+  }
+  
+  // 2. Run version consistency check
+  print('\nChecking version consistency across packages...');
+  String? commonVersion;
+  bool versionMismatch = false;
+  
+  for (final pkg in publishOrder) {
+    final pubspecFile = File(p.join(repoRoot.path, 'packages', pkg, 'pubspec.yaml'));
+    if (!pubspecFile.existsSync()) {
+      stderr.writeln('ERROR: pubspec.yaml not found for package: $pkg');
+      return 1;
+    }
+    
+    final content = await pubspecFile.readAsString();
+    final versionMatch = RegExp(r'^version:\s*([^\s]+)', multiLine: true).firstMatch(content);
+    if (versionMatch == null) {
+      stderr.writeln('ERROR: Could not find version in pubspec.yaml for package: $pkg');
+      return 1;
+    }
+    
+    final version = versionMatch.group(1);
+    print('  - $pkg: $version');
+    if (commonVersion == null) {
+      commonVersion = version;
+    } else if (commonVersion != version) {
+      stderr.writeln('ERROR: Version mismatch for package $pkg ($version). Expected $commonVersion.');
+      versionMismatch = true;
+    }
+  }
+  
+  if (versionMismatch) {
+    stderr.writeln('FAIL: Package versions are not synchronized.');
+    return 1;
+  }
+  
+  print('OK: All packages are synchronized at version $commonVersion.');
+  return 0;
 }
 
 Future<int> runCheckPathDeps(Directory repoRoot) async {

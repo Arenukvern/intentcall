@@ -5,91 +5,91 @@
       "source": "arenukvern/skill_steward",
       "sourceType": "github",
       "skillPath": "skills/adr-records/SKILL.md",
-      "computedHash": "419c11fec8fb9e4c1e88d7ddedd79f53698920926f5cfb1411c512410544b9f9"
+      "computedHash": "3524eb888ec5502c883aa895860194f2de2912ab9954aad0e24d1c62d44b4919"
     },
     "concept-doc-store": {
       "source": "arenukvern/skill_steward",
       "sourceType": "github",
       "skillPath": "skills/concept-doc-store/SKILL.md",
-      "computedHash": "92edd5bfd28917d58555faee3334087aed8543b4c47bbedf42d333a5f43afcba"
+      "computedHash": "ddcf58787f223fd4905befbfa7d7131a8a139ea2e6e8d5d0ed3a3725c7e76ab2"
     },
     "create-skill": {
       "source": "arenukvern/skill_steward",
       "sourceType": "github",
       "skillPath": "skills/create-skill/SKILL.md",
-      "computedHash": "217315dcfbf3d134343e8957c9a9bfcebfefa36f911468879b6c76120fe9cc1f"
+      "computedHash": "f4a99985a1adb2d6fa1f91a9599cba29131b3433c9a739a12c1d05bff430ec64"
     },
     "ethical-stewardship": {
       "source": "arenukvern/skill_steward",
       "sourceType": "github",
       "skillPath": "skills/ethical-stewardship/SKILL.md",
-      "computedHash": "dbdc5149a91e2cd93fb1c5f8da59f5e0c16bd86c91dbd57c6355307cee6bc2bb"
+      "computedHash": "eaa7630063cf489873688f73846d5b9466cd89c8ec5519b06e4b03b2ce53174c"
     },
     "faq-driven-docs": {
       "source": "arenukvern/skill_steward",
       "sourceType": "github",
       "skillPath": "skills/faq-driven-docs/SKILL.md",
-      "computedHash": "56997eb8076a14df0faa79d7cc5b82489e84972c84471cd7cd4d5481e75e17e0"
+      "computedHash": "a99208d95586fb8aa623b241223d89288c273209fdf3eeabb080c8a651eb8861"
     },
     "harness-engineering-culture": {
       "source": "arenukvern/skill_steward",
       "sourceType": "github",
       "skillPath": "skills/harness-engineering-culture/SKILL.md",
-      "computedHash": "6c15615082fb9df0c7777ea0df020333921340380bedd77d71bba12d7038e795"
+      "computedHash": "a3d440b71e54916ae21350f78b6e182e44f1c7099b80c51aa957646a884e1484"
     },
     "mcp-harness-repo-maintainer": {
       "source": "arenukvern/skill_steward",
       "sourceType": "github",
       "skillPath": "skills/mcp-harness-repo-maintainer/SKILL.md",
-      "computedHash": "97b24ea03344f6e1cdcc85d8bfd4a3bdadf1ab1a28bd70db0988c1b78f9afedc"
+      "computedHash": "041ce507eb92dd358e75dd62453d0d2deeb706f3db90a27c3f2d41ae5b7b68ca"
     },
     "multi-agent-handoff": {
       "source": "arenukvern/skill_steward",
       "sourceType": "github",
       "skillPath": "skills/multi-agent-handoff/SKILL.md",
-      "computedHash": "22e5bff3a5d69aa0de9d14a526642fa7c9833029c105ef50701f4e0b04f3e729"
+      "computedHash": "f3b68132762b9ee86e3952242cb39b408a30efe20e7d9ff886ca6ad54518987d"
     },
     "north-star-governance": {
       "source": "arenukvern/skill_steward",
       "sourceType": "github",
       "skillPath": "skills/north-star-governance/SKILL.md",
-      "computedHash": "a6aca017ca2bd9cefcc9c210621462c4f943170b793917e058f633e4221917d5"
+      "computedHash": "3cad91c8f9ff55e3db6ec513a20e45fa4acb6c7f6ce2c3fc681c2e67b4e8161c"
     },
     "plugin-marketplace-setup": {
       "source": "arenukvern/skill_steward",
       "sourceType": "github",
       "skillPath": "skills/plugin-marketplace-setup/SKILL.md",
-      "computedHash": "41802446950217b24e09927599aaabb61b0baec5b30fb1a1e02af68a41a49bdb"
+      "computedHash": "b9967901406a9c2adc402f1c8a8b2fd1c2935e980a1f2f4a2dea2d3462dcb2e6"
     },
     "release-changelog-harness": {
       "source": "arenukvern/skill_steward",
       "sourceType": "github",
       "skillPath": "skills/release-changelog-harness/SKILL.md",
-      "computedHash": "7e3adff11c24cacf9e3201b2d79f7bf36c8d4e806a2d4e0c6434a68d4d064eb7"
+      "computedHash": "4bd0798e1245519a59bea2d9eba9e88f7f81f5a29b6a801735f96e365d582703"
     },
     "repo-brand-identity": {
       "source": "arenukvern/skill_steward",
       "sourceType": "github",
       "skillPath": "skills/repo-brand-identity/SKILL.md",
-      "computedHash": "0774afe73bd5caa4283f865023a185c692aff57b1b1261c57b1bc1539379e055"
+      "computedHash": "0e1e606d29f98d0686ddcf386a972ff5e5fedc862832c8e75a752dd287ee08a2"
     },
     "skill-eval-improve": {
       "source": "arenukvern/skill_steward",
       "sourceType": "github",
       "skillPath": "skills/skill-eval-improve/SKILL.md",
-      "computedHash": "f683a99dcae63e544cdbdcac452ca528676e15c9dadfeeb7554258d9368438f9"
+      "computedHash": "39d228138b4f6afeb98bcb87d19fd86075ef44519265599f26a2befcc64a4388"
     },
     "skill-source-citations": {
       "source": "arenukvern/skill_steward",
       "sourceType": "github",
       "skillPath": "skills/skill-source-citations/SKILL.md",
-      "computedHash": "f409acc327a11096b0f014d86f77b5892523108835d65b84e1799f15aa91fd30"
+      "computedHash": "cb84ec53ab7696e70065986e30cc142b22ae52a46ebaacedf5f803b28958a341"
     },
     "skill-spec-review": {
       "source": "arenukvern/skill_steward",
       "sourceType": "github",
       "skillPath": "skills/skill-spec-review/SKILL.md",
-      "computedHash": "54a381db4d954d7eb5c686be27a4e7f27aebe1af90ed69ca46fd46f11df32339"
+      "computedHash": "b0f83cef42e93a7a779808bb59c8fda54a9960fb1a7105d5a3c3b226e7085018"
     }
   }
 }

@@ -2,9 +2,9 @@ name: intentcall_mcp
 description: PRE-RELEASE — MCP adapter for intentcall registry (dart_mcp publish bridge).
 version: 0.1.0
 license: MIT
-repository: https://github.com/Arenukvern/mcp_flutter/tree/main/intentcall/packages/intentcall_mcp
-issue_tracker: https://github.com/Arenukvern/mcp_flutter/issues
-homepage: https://github.com/Arenukvern/mcp_flutter/tree/main/intentcall/packages/intentcall_mcp
+repository: https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_mcp
+issue_tracker: https://github.com/Arenukvern/intentcall/issues
+homepage: https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_mcp
 topics:
   - mcp
   - agents

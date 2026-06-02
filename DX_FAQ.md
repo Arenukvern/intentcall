@@ -12,8 +12,8 @@
 git clone https://github.com/Arenukvern/intentcall.git
 cd intentcall
 dart pub get
-make test
-make analyze
+just test
+just analyze
 ```
 
 **Q: How do I run only the tests for one package?**
@@ -25,15 +25,15 @@ dart test packages/intentcall_core
 **Q: How do I run static analysis?**
 
 ```bash
-make analyze
+just analyze
 # equivalent to: dart analyze .
 ```
 
 **Q: How do I validate all packages are publishable without publishing?**
 
 ```bash
-make publish-dry-run
-# equivalent to: bash tool/intentcall/publish_all.sh
+just publish-dry-run
+# equivalent to: dart run tool/intentcall/bin/intentcall.dart publish-all
 ```
 
 ---
@@ -63,7 +63,7 @@ The workspace resolver handles this; no extra steps needed.
 
 1. Create `packages/intentcall_foo/` with a valid `pubspec.yaml`.
 2. Add `- packages/intentcall_foo` to the `workspace:` list in the root `pubspec.yaml`.
-3. Add the package to `INTENTCALL_PKGS` in `makefile`.
+3. Add the package to the `test` target in `justfile` / `Makefile` and the `publishOrder` list in `tool/intentcall/bin/intentcall.dart`.
 4. Add a row to the package table in `README.md`.
 5. Add the package to `release-please-config.json` if it will be published to pub.dev.
 6. Run `dart pub get` to re-resolve.
@@ -147,10 +147,10 @@ See [PUBLISHING.md](PUBLISHING.md) for full instructions. In short:
 
 ```bash
 # dry-run first (no credentials needed)
-make publish-dry-run
+just publish-dry-run
 
 # execute (requires pub.dev token)
-bash tool/intentcall/publish_all.sh --execute
+just publish-execute
 ```
 
 **Q: How do I cut a release?**

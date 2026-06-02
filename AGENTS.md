@@ -13,6 +13,7 @@ npx skills add arenukvern/skill_steward
 
 | Question | Go to |
 |---|---|
+| Where is the full doc map? | [docs/start_here/docs_map.md](docs/start_here/docs_map.md) |
 | What does this repo own? | [docs/NORTH_STAR.md](docs/NORTH_STAR.md) |
 | Why is it built this way? | [DESIGN_FAQ.md](DESIGN_FAQ.md) |
 | How do I use / extend it? | [DX_FAQ.md](DX_FAQ.md) |
@@ -26,7 +27,7 @@ npx skills add arenukvern/skill_steward
 
 ## Non-negotiables
 
-- Run `make test && make analyze && make publish-dry-run` before opening a PR.
+- Run `just test && just analyze && just publish-dry-run` before opening a PR.
 - Significant design forks → ADR in `docs/decisions/` before coding.
 - No secrets, tokens, or private URLs in ADRs or docs.
 - Plan files are temporary — extract durable knowledge to ADR/FAQ then delete.

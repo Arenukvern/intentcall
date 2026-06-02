@@ -34,13 +34,24 @@ GitHub: [Arenukvern/intentcall](https://github.com/Arenukvern/intentcall)
 | `intentcall_testing` | Contract / invoke test helpers |
 | `intentcall_gemma` / `intentcall_apple` / `intentcall_android` | Optional surface adapters |
 
+## Agent Skills
+
+We provide custom agent skills to assist in developing with and extending IntentCall:
+
+| Skill | Description | Install command |
+|---|---|---|
+| [register-intents](skills/register-intents/SKILL.md) | Guide to manual and codegen intent registration. | `npx skills add Arenukvern/intentcall --skill register-intents` |
+| [write-adapter](skills/write-adapter/SKILL.md) | Guide to implementing custom platform/transport adapters. | `npx skills add Arenukvern/intentcall --skill write-adapter` |
+
+Repository management is guided by [Skill Steward](https://github.com/Arenukvern/skill_steward) meta-skills (installed in `.agents/skills/`).
+
 ## Development
 
 ```bash
 dart pub get
-make test
-make analyze
-make publish-dry-run   # pub.dev dry-run (all packages)
+just test
+just analyze
+just publish-dry-run   # pub.dev dry-run (all packages)
 ```
 
 See [DX_FAQ.md](DX_FAQ.md) for detailed workflows.
@@ -55,7 +66,7 @@ App authors should prefer **`mcp_toolkit`** + `flutter-mcp-toolkit` CLI. IntentC
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). All PRs must pass `make test && make analyze && make publish-dry-run`.
+See [CONTRIBUTING.md](CONTRIBUTING.md). All PRs must pass `just test && just analyze && just publish-dry-run`.
 
 ## Publishing
 

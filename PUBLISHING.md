@@ -4,7 +4,7 @@
 
 - `dart pub` logged in (`dart pub token add https://pub.dev`)
 - All packages at the same semver (currently **0.1.0**)
-- `make test` green in this workspace
+- `just test` green in this workspace
 
 ## Order (required)
 
@@ -18,10 +18,10 @@
 
 ```bash
 # Validate all packages (CI uses this)
-make publish-dry-run
+just publish-dry-run
 
 # After credentials are configured
-bash tool/intentcall/publish_all.sh --execute
+just publish-execute
 ```
 
 For `intentcall_platform`, if `dart pub publish` fails on Flutter constraints, run from package dir:
@@ -35,7 +35,7 @@ cd intentcall/packages/intentcall_platform && flutter pub publish --dry-run
 See `docs/intentcall/hosted_cutover.md` and run:
 
 ```bash
-bash tool/intentcall/print_hosted_deps.sh
+just print-hosted-deps
 ```
 
 Replace `path:` entries in `mcp_toolkit`, `mcp_server_dart`, and capability packages with hosted `^0.1.0`.

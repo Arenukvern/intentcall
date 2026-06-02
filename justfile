@@ -27,3 +27,19 @@ check-path-deps:
 # Print hosted dependencies block for a specific version
 print-hosted-deps version="0.1.0":
     dart run tool/intentcall/bin/intentcall.dart print-hosted-deps --version {{version}}
+
+# Check developer environment health
+doctor:
+    dart run tool/intentcall/bin/intentcall.dart doctor
+
+# Validate path dependencies and version consistency
+validate:
+    dart run tool/intentcall/bin/intentcall.dart validate
+
+# List custom agent skills defined in this repository
+list-skills:
+    @echo "Available Custom Agent Skills:"
+    @echo "  - register-intents: Guide to manual and codegen intent registration (skills/register-intents/SKILL.md)"
+    @echo "  - write-adapter: Guide to implementing custom platform/transport adapters (skills/write-adapter/SKILL.md)"
+
+

@@ -2,9 +2,9 @@ name: intentcall_webmcp
 description: PRE-RELEASE — WebMCP publish adapter for intentcall registry (navigator.modelContext).
 version: 0.1.0
 license: MIT
-repository: https://github.com/Arenukvern/mcp_flutter/tree/main/intentcall/packages/intentcall_webmcp
-issue_tracker: https://github.com/Arenukvern/mcp_flutter/issues
-homepage: https://github.com/Arenukvern/mcp_flutter/tree/main/intentcall/packages/intentcall_webmcp
+repository: https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_webmcp
+issue_tracker: https://github.com/Arenukvern/intentcall/issues
+homepage: https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_webmcp
 topics:
   - mcp
   - webmcp
