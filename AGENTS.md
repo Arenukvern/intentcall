@@ -46,3 +46,12 @@ npx skills add arenukvern/skill_steward
 ---
 
 Skill authoring detail → [.agents/skills/create-skill/SKILL.md](.agents/skills/create-skill/SKILL.md)
+
+## Governance & Skill Steward
+
+This repository strictly adheres to the Cascading Agent Surface architecture governed by **Skill Steward**.
+When writing code, documentation, or planning features:
+1. **You MUST obey `steward.yaml`**. It defines the required branding constraints, banned jargon, and documentation locations. 
+2. Before making architectural decisions, read the Ethics Charter at `docs/NORTH_STAR.mdx`.
+3. The repository utilizes standardized agent skills under `.agents/skills/`. Do not write new skills locally unless they are specific to this repository's domain; generalized skills must be pushed upstream to `skill_steward`.
+4. Run `just validate` to automatically validate your skills and brand compliance before committing.
