@@ -27,7 +27,7 @@ npx skills add arenukvern/skill_steward
 
 ## Non-negotiables
 
-- Run `just test && just analyze && just publish-dry-run` before opening a PR.
+- **Do NOT run bash scripts manually.** You must execute workflows via `steward mcp`. Run `steward_run_pipeline_test`, `steward_run_pipeline_analyze`, and `steward_run_pipeline_publish-dry-run` before opening a PR.
 - Significant design forks → ADR in `docs/decisions/` before coding.
 - No secrets, tokens, or private URLs in ADRs or docs.
 - Plan files are temporary — extract durable knowledge to ADR/FAQ then delete.
@@ -51,7 +51,7 @@ Skill authoring detail → [.agents/skills/create-skill/SKILL.md](.agents/skills
 
 This repository strictly adheres to the Cascading Agent Surface architecture governed by **Skill Steward**.
 When writing code, documentation, or planning features:
-1. **You MUST obey `steward.yaml`**. It defines the required branding constraints, banned jargon, and documentation locations. 
-2. Before making architectural decisions, read the Ethics Charter at `docs/NORTH_STAR.mdx`.
-3. The repository utilizes standardized agent skills under `.agents/skills/`. Do not write new skills locally unless they are specific to this repository's domain; generalized skills must be pushed upstream to `skill_steward`.
-4. Run `just validate` to automatically validate your skills and brand compliance before committing.
+1. **You MUST attach to `steward mcp`**. The `steward.yaml` configuration defines the available pipeline tools (`test`, `analyze`, `publish-dry-run`) and documentation resources. Do not attempt to guess bash commands.
+2. Fetch required documentation directly via the `steward_read_governance` tool or `steward://docs/` URIs (e.g. read the Ethics Charter).
+3. The repository utilizes standardized agent skills under `.agents/skills/` and its own distributable skills under `skills/`. Use the `steward bundle` command to pack skills.
+4. Run `steward_run_pipeline_validate` (or `steward validate` natively) to automatically validate your skills and brand compliance before committing.
