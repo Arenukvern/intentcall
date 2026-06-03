@@ -254,9 +254,10 @@ Future<int> runValidate(Directory repoRoot) async {
 Future<int> runCheckPathDeps(Directory repoRoot) async {
   print('Running declarative validation via steward...');
   final result = await Process.run(
-    '/Users/anton/.local/bin/steward',
+    'steward',
     ['validate'],
     workingDirectory: repoRoot.path,
+    runInShell: true,
   );
   if (result.stdout.toString().isNotEmpty) {
     stdout.write(result.stdout);
@@ -265,6 +266,12 @@ Future<int> runCheckPathDeps(Directory repoRoot) async {
     stderr.write(result.stderr);
   }
   if (result.exitCode != 0) {
+    if (result.stderr.toString().contains('command not found') || 
+        result.stdout.toString().contains('is not recognized') ||
+        result.stderr.toString().contains('No such file or directory')) {
+      print('Error: \'steward\' command not found.');
+      print('Please install via: curl -fsSL https://raw.githubusercontent.com/arenukvern/skill_steward/main/install.sh | bash');
+    }
     return result.exitCode;
   }
 
