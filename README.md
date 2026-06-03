@@ -8,8 +8,8 @@
 
 Transport-agnostic agent intent platform for Dart/Flutter — central registry (`AgentRegistry`), typed invocation model, and adapters for MCP, WebMCP, and native surfaces. Extracted from [mcp_flutter](https://github.com/Arenukvern/mcp_flutter).
 
-**Charter:** [docs/NORTH_STAR.md](docs/NORTH_STAR.md) · **Agent map:** [AGENTS.md](AGENTS.md)  
-**Why / how:** [DESIGN_FAQ.md](DESIGN_FAQ.md) · [DX_FAQ.md](DX_FAQ.md) · [Decisions](docs/decisions/) · [CONTRIBUTING.md](CONTRIBUTING.md)
+**Charter:** [docs/NORTH_STAR.mdx](docs/NORTH_STAR.mdx) · **Agent map:** [AGENTS.md](AGENTS.md)  
+**Why / how:** [docs/DESIGN_FAQ.mdx](docs/DESIGN_FAQ.mdx) · [docs/DX_FAQ.mdx](docs/DX_FAQ.mdx) · [Decisions](docs/decisions/) · [CONTRIBUTING.md](CONTRIBUTING.md)
 
 GitHub: [Arenukvern/intentcall](https://github.com/Arenukvern/intentcall)
 
@@ -54,7 +54,7 @@ just analyze
 just publish-dry-run   # pub.dev dry-run (all packages)
 ```
 
-See [DX_FAQ.md](DX_FAQ.md) for detailed workflows.
+See [docs/DX_FAQ.mdx](docs/DX_FAQ.mdx) for detailed workflows.
 
 ## Git history
 

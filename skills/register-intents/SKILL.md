@@ -2,6 +2,7 @@
 name: register-intents
 description: Guide to registering tool and resource intents in an IntentCall application, either manually or using `@AgentTool` code generation. Use when an agent needs to expose a Dart/Flutter function or resource endpoint to transport adapters.
 license: MIT
+type: developer
 metadata:
   author: intentcall
   version: "1.0.0"
@@ -101,5 +102,5 @@ void main() {
 
 ## Related Documents
 
-- [DESIGN_FAQ.md](../../DESIGN_FAQ.md) — Why IntentCall is designed this way.
-- [DX_FAQ.md](../../DX_FAQ.md) — General workflow and CLI commands.
+- [DESIGN_FAQ.mdx](../../docs/DESIGN_FAQ.mdx) — Why IntentCall is designed this way.
+- [DX_FAQ.mdx](../../docs/DX_FAQ.mdx) — General workflow and CLI commands.

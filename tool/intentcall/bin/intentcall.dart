@@ -219,42 +219,53 @@ Future<int> runValidate(Directory repoRoot) async {
   }
   
   print('OK: All packages are synchronized at version $commonVersion.');
+
+  // 3. Run plan hygiene check
+  print('\nChecking plan hygiene (active plan files)...');
+  final activePlans = <String>[];
+  final taskFile = File(p.join(repoRoot.path, 'task.md'));
+  if (taskFile.existsSync()) activePlans.add('task.md');
+  final planFile = File(p.join(repoRoot.path, 'implementation_plan.md'));
+  if (planFile.existsSync()) activePlans.add('implementation_plan.md');
+  
+  final activePlansDir = Directory(p.join(repoRoot.path, 'docs', 'exec-plans', 'active'));
+  if (activePlansDir.existsSync()) {
+    try {
+      final files = activePlansDir.listSync().whereType<File>();
+      for (final f in files) {
+        final name = p.basename(f.path);
+        if (!name.startsWith('.')) {
+          activePlans.add('docs/exec-plans/active/$name');
+        }
+      }
+    } catch (_) {}
+  }
+  
+  if (activePlans.isNotEmpty) {
+    stderr.writeln('FAIL: Stale/active plan files found: ${activePlans.join(", ")}');
+    stderr.writeln('Please extract durable findings to docs/decisions/ or DESIGN_FAQ.mdx, then delete the plan files.');
+    return 1;
+  }
+  
+  print('OK: No active plan files found.');
   return 0;
 }
 
 Future<int> runCheckPathDeps(Directory repoRoot) async {
-  final targetDirs = ['mcp_toolkit', 'mcp_server_dart', 'packages', 'flutter_test_app'];
-  bool foundPathDep = false;
-
-  for (final dirName in targetDirs) {
-    final dir = Directory(p.join(repoRoot.path, dirName));
-    if (!dir.existsSync()) continue;
-
-    await for (final entity in dir.list(recursive: true, followLinks: false)) {
-      if (entity is File && p.basename(entity.path) == 'pubspec.yaml') {
-        final parts = p.split(entity.path);
-        if (parts.contains('.dart_tool') || parts.contains('build')) {
-          continue;
-        }
-
-        final content = await entity.readAsString();
-        if (content.contains('intentcall/packages')) {
-          print('path dep still present: ${p.relative(entity.path, from: repoRoot.path)}');
-          final lines = content.split('\n');
-          for (var i = 0; i < lines.length; i++) {
-            if (lines[i].contains('intentcall/packages')) {
-              print('  Line ${i + 1}: ${lines[i].trim()}');
-            }
-          }
-          foundPathDep = true;
-        }
-      }
-    }
+  print('Running declarative validation via steward...');
+  final result = await Process.run(
+    '/Users/anton/.local/bin/steward',
+    ['validate'],
+    workingDirectory: repoRoot.path,
+  );
+  if (result.stdout.toString().isNotEmpty) {
+    stdout.write(result.stdout);
   }
-
-  if (foundPathDep) {
-    stderr.writeln('FAIL: migrate to hosted intentcall deps (see docs/intentcall/hosted_cutover.md)');
-    return 1;
+  if (result.stderr.toString().isNotEmpty) {
+    stderr.write(result.stderr);
+  }
+  if (result.exitCode != 0) {
+    return result.exitCode;
   }
 
   print('OK: no intentcall path deps in consumers');

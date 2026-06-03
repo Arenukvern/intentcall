@@ -40,7 +40,7 @@ Significant design changes (new transport, schema field change, package split) r
 
 ## Adding a package
 
-See [DX_FAQ.md](DX_FAQ.md) — "How do I add a new `intentcall_*` package to the workspace?"
+See [docs/DX_FAQ.mdx](docs/DX_FAQ.mdx) — "How do I add a new `intentcall_*` package to the workspace?"
 
 ## Publishing
 

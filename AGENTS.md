@@ -13,11 +13,11 @@ npx skills add arenukvern/skill_steward
 
 | Question | Go to |
 |---|---|
-| Where is the full doc map? | [docs/start_here/docs_map.md](docs/start_here/docs_map.md) |
-| What does this repo own? | [docs/NORTH_STAR.md](docs/NORTH_STAR.md) |
-| Why is it built this way? | [DESIGN_FAQ.md](DESIGN_FAQ.md) |
-| How do I use / extend it? | [DX_FAQ.md](DX_FAQ.md) |
-| Why was X decided? | [docs/decisions/](docs/decisions/README.md) |
+| Where is the full doc map? | [docs/start_here/docs_map.mdx](docs/start_here/docs_map.mdx) |
+| What does this repo own? | [docs/NORTH_STAR.mdx](docs/NORTH_STAR.mdx) |
+| Why is it built this way? | [docs/DESIGN_FAQ.mdx](docs/DESIGN_FAQ.mdx) |
+| How do I use / extend it? | [docs/DX_FAQ.mdx](docs/DX_FAQ.mdx) |
+| Why was X decided? | [docs/decisions/README.md](docs/decisions/README.md) |
 | How do I contribute? | [CONTRIBUTING.md](CONTRIBUTING.md) |
 | How do I publish to pub.dev? | [PUBLISHING.md](PUBLISHING.md) |
 | What is the pre-release status? | [PRE_RELEASE.md](PRE_RELEASE.md) |
