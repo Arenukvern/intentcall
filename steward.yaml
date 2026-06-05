@@ -62,7 +62,11 @@ actions:
       shell: false
     cwd: .
     effects:
-      fs_read: ["."]
+      fs_read:
+        - tool/intentcall/**
+        - packages/**
+        - pubspec.yaml
+        - pubspec.lock
       fs_write: []
       git: false
       network: false
