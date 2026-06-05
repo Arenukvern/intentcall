@@ -24,13 +24,26 @@ void main(List<String> arguments) async {
     ..addCommand('check-path-deps')
     ..addCommand(
       'print-hosted-deps',
-      ArgParser()..addOption('version', abbr: 'v', help: 'Version to print dependencies for'),
+      ArgParser()..addOption(
+        'version',
+        abbr: 'v',
+        help: 'Version to print dependencies for',
+      ),
     )
     ..addCommand(
       'publish-all',
       ArgParser()
-        ..addFlag('execute', negatable: false, help: 'Execute publishing instead of dry-run')
-        ..addFlag('dry-run', negatable: false, help: 'Run publish in dry-run mode (default)', defaultsTo: true),
+        ..addFlag(
+          'execute',
+          negatable: false,
+          help: 'Execute publishing instead of dry-run',
+        )
+        ..addFlag(
+          'dry-run',
+          negatable: false,
+          help: 'Run publish in dry-run mode (default)',
+          defaultsTo: true,
+        ),
     );
 
   ArgResults results;
@@ -103,10 +116,16 @@ void printUsage(ArgParser parser) {
   print('Usage: dart run tool/intentcall [command] [options]');
   print('\nCommands:');
   print('  doctor                Check developer environment health.');
-  print('  validate              Validate path dependencies and version consistency.');
-  print('  check-path-deps       Scan workspace for invalid path dependencies.');
+  print(
+    '  validate              Validate path dependencies and version consistency.',
+  );
+  print(
+    '  check-path-deps       Scan workspace for invalid path dependencies.',
+  );
   print('  print-hosted-deps     Print hosted pub.dev dependency blocks.');
-  print('  publish-all           Publish all workspace packages to pub.dev in order.');
+  print(
+    '  publish-all           Publish all workspace packages to pub.dev in order.',
+  );
   print('\nOptions:');
   print(parser.usage);
 }
@@ -177,47 +196,56 @@ Future<int> runDoctor(Directory repoRoot) async {
 
 Future<int> runValidate(Directory repoRoot) async {
   print('== Running Workspace Validation ==');
-  
+
   // 1. Run check-path-deps
   final pathDepsExitCode = await runCheckPathDeps(repoRoot);
   if (pathDepsExitCode != 0) {
     return pathDepsExitCode;
   }
-  
+
   // 2. Run version consistency check
   print('\nChecking version consistency across packages...');
   String? commonVersion;
   bool versionMismatch = false;
-  
+
   for (final pkg in publishOrder) {
-    final pubspecFile = File(p.join(repoRoot.path, 'packages', pkg, 'pubspec.yaml'));
+    final pubspecFile = File(
+      p.join(repoRoot.path, 'packages', pkg, 'pubspec.yaml'),
+    );
     if (!pubspecFile.existsSync()) {
       stderr.writeln('ERROR: pubspec.yaml not found for package: $pkg');
       return 1;
     }
-    
+
     final content = await pubspecFile.readAsString();
-    final versionMatch = RegExp(r'^version:\s*([^\s]+)', multiLine: true).firstMatch(content);
+    final versionMatch = RegExp(
+      r'^version:\s*([^\s]+)',
+      multiLine: true,
+    ).firstMatch(content);
     if (versionMatch == null) {
-      stderr.writeln('ERROR: Could not find version in pubspec.yaml for package: $pkg');
+      stderr.writeln(
+        'ERROR: Could not find version in pubspec.yaml for package: $pkg',
+      );
       return 1;
     }
-    
+
     final version = versionMatch.group(1);
     print('  - $pkg: $version');
     if (commonVersion == null) {
       commonVersion = version;
     } else if (commonVersion != version) {
-      stderr.writeln('ERROR: Version mismatch for package $pkg ($version). Expected $commonVersion.');
+      stderr.writeln(
+        'ERROR: Version mismatch for package $pkg ($version). Expected $commonVersion.',
+      );
       versionMismatch = true;
     }
   }
-  
+
   if (versionMismatch) {
     stderr.writeln('FAIL: Package versions are not synchronized.');
     return 1;
   }
-  
+
   print('OK: All packages are synchronized at version $commonVersion.');
 
   // 3. Run plan hygiene check
@@ -227,8 +255,10 @@ Future<int> runValidate(Directory repoRoot) async {
   if (taskFile.existsSync()) activePlans.add('task.md');
   final planFile = File(p.join(repoRoot.path, 'implementation_plan.md'));
   if (planFile.existsSync()) activePlans.add('implementation_plan.md');
-  
-  final activePlansDir = Directory(p.join(repoRoot.path, 'docs', 'exec-plans', 'active'));
+
+  final activePlansDir = Directory(
+    p.join(repoRoot.path, 'docs', 'exec-plans', 'active'),
+  );
   if (activePlansDir.existsSync()) {
     try {
       final files = activePlansDir.listSync().whereType<File>();
@@ -240,39 +270,50 @@ Future<int> runValidate(Directory repoRoot) async {
       }
     } catch (_) {}
   }
-  
+
   if (activePlans.isNotEmpty) {
-    stderr.writeln('FAIL: Stale/active plan files found: ${activePlans.join(", ")}');
-    stderr.writeln('Please extract durable findings to docs/decisions/ or DESIGN_FAQ.mdx, then delete the plan files.');
+    stderr.writeln(
+      'FAIL: Stale/active plan files found: ${activePlans.join(", ")}',
+    );
+    stderr.writeln(
+      'Please extract durable findings to docs/decisions/ or DESIGN_FAQ.mdx, then delete the plan files.',
+    );
     return 1;
   }
-  
+
   print('OK: No active plan files found.');
   return 0;
 }
 
 Future<int> runCheckPathDeps(Directory repoRoot) async {
-  print('Running declarative validation via steward...');
-  final result = await Process.run(
-    'steward',
-    ['validate'],
-    workingDirectory: repoRoot.path,
-    runInShell: true,
-  );
-  if (result.stdout.toString().isNotEmpty) {
-    stdout.write(result.stdout);
-  }
-  if (result.stderr.toString().isNotEmpty) {
-    stderr.write(result.stderr);
-  }
-  if (result.exitCode != 0) {
-    if (result.stderr.toString().contains('command not found') || 
-        result.stdout.toString().contains('is not recognized') ||
-        result.stderr.toString().contains('No such file or directory')) {
-      print('Error: \'steward\' command not found.');
-      print('Please install via: curl -fsSL https://raw.githubusercontent.com/arenukvern/skill_steward/main/install.sh | bash');
+  print('Checking for invalid intentcall path dependencies...');
+  final matches = <String>[];
+  for (final entity in repoRoot.listSync(recursive: true)) {
+    if (entity is! File) {
+      continue;
     }
-    return result.exitCode;
+    if (p.basename(entity.path) != 'pubspec.yaml') {
+      continue;
+    }
+    final relativePath = p.relative(entity.path, from: repoRoot.path);
+    if (relativePath.startsWith('.dart_tool${p.separator}') ||
+        relativePath.startsWith('build${p.separator}')) {
+      continue;
+    }
+    final content = entity.readAsStringSync();
+    if (content.contains('intentcall/packages')) {
+      matches.add(relativePath);
+    }
+  }
+
+  if (matches.isNotEmpty) {
+    stderr.writeln(
+      'FAIL: Sibling path overrides are not allowed in published packages.',
+    );
+    for (final path in matches) {
+      stderr.writeln('  - $path');
+    }
+    return 1;
   }
 
   print('OK: no intentcall path deps in consumers');
@@ -314,8 +355,14 @@ Future<int> runPublishAll(Directory repoRoot, {required bool dryRun}) async {
   return 0;
 }
 
-Future<int> runCommand(String executable, List<String> arguments, String workingDirectory) async {
-  print('Running command: $executable ${arguments.join(' ')} (in $workingDirectory)');
+Future<int> runCommand(
+  String executable,
+  List<String> arguments,
+  String workingDirectory,
+) async {
+  print(
+    'Running command: $executable ${arguments.join(' ')} (in $workingDirectory)',
+  );
   final process = await Process.start(
     executable,
     arguments,
