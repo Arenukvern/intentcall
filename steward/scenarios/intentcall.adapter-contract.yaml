@@ -1,0 +1,24 @@
+schema: steward/scenario-manifest/v1
+repo: intentcall
+scenario: intentcall.adapter-contract
+status: runnable
+source:
+  git: https://github.com/Arenukvern/intentcall
+  commit: 37eda66e36c2b4271c02504077a6930f9583301f
+  steward_contract: steward.yaml
+safe_first_probe: intentcall.validate
+required_actions:
+  - intentcall.validate
+artifacts:
+  - id: steward_contract
+    kind: yaml
+    path: steward.yaml
+    required: true
+    durability: input
+  - id: intentcall_cli
+    kind: dart
+    path: tool/intentcall/bin/intentcall.dart
+    required: true
+    durability: input
+blocked_by: null
+owner: intentcall
