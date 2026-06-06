@@ -35,7 +35,7 @@ final class GemmaPublishAdapter implements AgentAdapter {
   String get id => 'gemma';
 
   @override
-  bool get watchesRegistry => true;
+  bool get watchesRegistry => false;
 
   final List<String> _registered = <String>[];
 

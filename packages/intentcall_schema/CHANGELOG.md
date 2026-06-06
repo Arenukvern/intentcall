@@ -2,5 +2,6 @@
 
 ## 0.1.0
 
-- In-repo intentcall stack (pre Phase 7 extract).
-
+- First pre-release of IntentCall schema primitives.
+- Includes `AgentResult`, wire argument helpers, JSON Schema validation, schema
+  coercion, and result envelope helpers.

@@ -4,6 +4,7 @@ import 'package:intentcall_schema/intentcall_schema.dart';
 import 'resource_registration.dart';
 import 'resource_template_registration.dart';
 import 'tool_registration.dart';
+import 'uri_template.dart';
 
 /// Builds a [ToolRegistration] from a codegen [AgentCallEntry].
 ///
@@ -91,7 +92,9 @@ RegisteredAgentIntent resourceTemplateRegistrationToRegistration({
   required final String capabilityId,
   required final ResourceTemplateRegistration registration,
 }) {
-  final inputSchema = clientResourceTemplateReadInputSchema();
+  final inputSchema = clientResourceTemplateReadInputSchema(
+    templateVariables: uriTemplateVariableNames(registration.uriTemplate),
+  );
   final descriptor = AgentIntentDescriptor(
     namespace: capabilityId,
     name: registration.name,

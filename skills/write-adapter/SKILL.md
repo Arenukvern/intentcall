@@ -68,7 +68,13 @@ class MyCustomAdapter implements AgentAdapter {
       handler: (arguments) async {
         // Delegate execution to the core registry
         final result = await registry.invoke(descriptor.qualifiedName, arguments);
-        return result.toMap(); // Or translate to transport result format
+        return <String, Object?>{
+          'ok': result.ok,
+          'message': result.message,
+          if (result.ok) ...result.data,
+          if (!result.ok) 'code': result.code,
+          if (!result.ok) 'details': result.details,
+        };
       },
     );
   }

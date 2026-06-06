@@ -77,7 +77,7 @@ final class McpPublishAdapter implements AgentAdapter {
             _syncDescriptor(reg, intent.descriptor, registryKey: qualifiedName);
           }
         case IntentUnregistered(:final qualifiedName):
-          _unpublishKey(qualifiedName, reg);
+          _unpublishTransportKey(qualifiedName);
       }
     });
   }
@@ -86,10 +86,7 @@ final class McpPublishAdapter implements AgentAdapter {
   Future<void> detach() async {
     await _events?.cancel();
     _events = null;
-    final registry = _registry;
-    if (registry != null) {
-      unpublishAll(registry: registry);
-    }
+    unpublishAll();
     _registry = null;
   }
 
@@ -140,36 +137,27 @@ final class McpPublishAdapter implements AgentAdapter {
     required final AgentRegistry registry,
     required final String fullName,
   }) {
-    _unpublishKey(fullName, registry);
+    _unpublishTransportKey(fullName);
   }
 
   void unpublishRegistryResource({
     required final AgentRegistry registry,
     required final String uri,
   }) {
-    _unpublishKey(uri, registry);
+    _unpublishTransportKey(uri);
   }
 
-  void unpublishAll({required final AgentRegistry registry}) {
-    for (final name in _publishedTools.toList()) {
-      unpublishRegistryTool(registry: registry, fullName: name);
-    }
-    for (final uri in _publishedResources.toList()) {
-      unpublishRegistryResource(registry: registry, uri: uri);
-    }
-    for (final uriTemplate in _publishedResourceTemplates.toList()) {
-      unpublishRegistryResourceTemplate(
-        registry: registry,
-        uriTemplate: uriTemplate,
-      );
-    }
+  void unpublishAll({final AgentRegistry? registry}) {
+    _publishedTools.toList().forEach(_unpublishTransportKey);
+    _publishedResources.toList().forEach(_unpublishTransportKey);
+    _publishedResourceTemplates.toList().forEach(_unpublishTransportKey);
   }
 
   void unpublishRegistryResourceTemplate({
     required final AgentRegistry registry,
     required final String uriTemplate,
   }) {
-    _unpublishKey(uriTemplate, registry);
+    _unpublishTransportKey(uriTemplate);
   }
 
   void _syncDescriptor(
@@ -289,8 +277,7 @@ final class McpPublishAdapter implements AgentAdapter {
     _publishedResourceTemplates.add(key);
   }
 
-  void _unpublishKey(final String key, final AgentRegistry registry) {
-    registry.unregister(key);
+  void _unpublishTransportKey(final String key) {
     if (_publishedTools.remove(key)) {
       unpublishTool(key);
     }

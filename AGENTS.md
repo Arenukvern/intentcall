@@ -27,7 +27,9 @@ npx skills add arenukvern/skill_steward
 
 ## Non-negotiables
 
-- **Do NOT run bash scripts manually.** You must execute workflows via `steward mcp`. Run `steward_run_pipeline_test`, `steward_run_pipeline_analyze`, and `steward_run_pipeline_publish-dry-run` before opening a PR.
+- Start agent work with `steward doctor --json`, `steward actions list --json`, and `steward action inspect <id> --json` before running declared actions.
+- Use `steward benchmark --scenario intentcall.adapter-contract --json` for the first Steward dogfood scenario.
+- Do not use legacy `steward mcp` pipeline execution or `steward_run_pipeline_*` tools for v1 contracts.
 - Significant design forks → ADR in `docs/decisions/` before coding.
 - No secrets, tokens, or private URLs in ADRs or docs.
 - Plan files are temporary — extract durable knowledge to ADR/FAQ then delete.
@@ -51,7 +53,8 @@ Skill authoring detail → [.agents/skills/create-skill/SKILL.md](.agents/skills
 
 This repository strictly adheres to the Cascading Agent Surface architecture governed by **Skill Steward**.
 When writing code, documentation, or planning features:
-1. **You MUST attach to `steward mcp`**. The `steward.yaml` configuration defines the available pipeline tools (`test`, `analyze`, `publish-dry-run`) and documentation resources. Do not attempt to guess bash commands.
-2. Fetch required documentation directly via the `steward_read_governance` tool or `steward://docs/` URIs (e.g. read the Ethics Charter).
-3. The repository utilizes standardized agent skills under `.agents/skills/` and its own distributable skills under `skills/`. Use the `steward bundle` command to pack skills.
-4. Run `steward_run_pipeline_validate` (or `steward validate` natively) to automatically validate your skills and brand compliance before committing.
+1. Run `steward doctor --json` to inspect the v1 contract without executing repository actions.
+2. Run `steward actions list --json` and inspect intended actions with `steward action inspect <id> --json`.
+3. Run `steward probe --json --profile quick` for the safe first pass.
+4. Run `steward benchmark --scenario intentcall.adapter-contract --json` for the first dogfood loop.
+5. The repository uses standardized agent skills under `.agents/skills/` and distributable skills under `skills/`; skills remain installed separately from hook/plugin wiring.

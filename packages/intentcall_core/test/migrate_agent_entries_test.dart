@@ -1,4 +1,4 @@
-import 'package:intentcall_core/intentcall_core.dart';
+import 'package:intentcall_core/intentcall_core_migration.dart';
 import 'package:test/test.dart';
 
 void main() {

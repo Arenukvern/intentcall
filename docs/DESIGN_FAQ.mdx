@@ -54,7 +54,7 @@ A: WebMCP's hot-sync model (persistent browser connection, delta dispatch) requi
 **Q: Why are all packages at `0.1.x` pre-release instead of `1.0.0`?**
 A: The wire contract in `intentcall_schema` and the registry API in `intentcall_core` are still being exercised across real adapters. Publishing a `1.0.0` would imply API stability we cannot guarantee yet. Pre-release allows breaking changes to land without a semver major while the design stabilizes.
 
-**Q: Why does CI run `make publish-dry-run` on every PR?**
+**Q: Why does CI run a publish dry-run on every PR?**
 A: pub.dev publish validation catches issues (missing `README.md`, bad `pubspec.yaml` constraints, platform tag mismatches) that `dart analyze` misses. Catching them early in PR review prevents a broken pub.dev publish in a release workflow.
 
 **Q: Why is `pubspec.lock` committed for the workspace?**

@@ -21,6 +21,26 @@
       "package-name": "intentcall_webmcp",
       "component": "intentcall_webmcp"
     },
+    "packages/intentcall_gemma": {
+      "release-type": "dart",
+      "package-name": "intentcall_gemma",
+      "component": "intentcall_gemma"
+    },
+    "packages/intentcall_apple": {
+      "release-type": "dart",
+      "package-name": "intentcall_apple",
+      "component": "intentcall_apple"
+    },
+    "packages/intentcall_android": {
+      "release-type": "dart",
+      "package-name": "intentcall_android",
+      "component": "intentcall_android"
+    },
+    "packages/intentcall_codegen": {
+      "release-type": "dart",
+      "package-name": "intentcall_codegen",
+      "component": "intentcall_codegen"
+    },
     "packages/intentcall_platform": {
       "release-type": "dart",
       "package-name": "intentcall_platform",

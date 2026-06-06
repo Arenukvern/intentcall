@@ -22,8 +22,10 @@ final class InMemoryAgentRegistry implements AgentRegistry {
   Stream<AgentRegistryEvent> get events => _events.stream;
 
   @override
-  String qualify({required final String namespace, required final String name}) =>
-      qualifyName(namespace: namespace, name: name);
+  String qualify({
+    required final String namespace,
+    required final String name,
+  }) => qualifyName(namespace: namespace, name: name);
 
   @override
   void register(
@@ -35,7 +37,9 @@ final class InMemoryAgentRegistry implements AgentRegistry {
       throw AgentIntentCollisionError('Intent "$key" registered twice.');
     }
     _intents[key] = intent;
-    _events.add(IntentRegistered(timestamp: DateTime.now(), qualifiedName: key));
+    _events.add(
+      IntentRegistered(timestamp: DateTime.now(), qualifiedName: key),
+    );
   }
 
   @override
@@ -51,7 +55,8 @@ final class InMemoryAgentRegistry implements AgentRegistry {
   }
 
   @override
-  RegisteredAgentIntent? get(final String qualifiedName) => _intents[qualifiedName];
+  RegisteredAgentIntent? get(final String qualifiedName) =>
+      _intents[qualifiedName];
 
   @override
   Iterable<AgentIntentDescriptor> listDescriptors({final String? namespace}) {
@@ -75,17 +80,29 @@ final class InMemoryAgentRegistry implements AgentRegistry {
         message: 'No intent registered for $qualifiedName',
       );
     }
-    final coerced = coerceArgumentsForSchema(
-      intent.descriptor.inputSchema,
-      arguments,
-    );
-    intent.validate(coerced);
-    return intent.execute(
-      AgentInvocation(
-        descriptor: intent.descriptor,
-        arguments: coerced,
-        correlationId: correlationId,
-      ),
-    );
+    try {
+      final coerced = coerceArgumentsForSchema(
+        intent.descriptor.inputSchema,
+        arguments,
+      );
+      intent.validate(coerced);
+      return await intent.execute(
+        AgentInvocation(
+          descriptor: intent.descriptor,
+          arguments: coerced,
+          correlationId: correlationId,
+        ),
+      );
+    } on AgentValidationException catch (error) {
+      return AgentResult.failure(
+        code: 'validation_error',
+        message: error.message,
+      );
+    } on Object catch (error) {
+      return AgentResult.failure(
+        code: 'intent_execution_error',
+        message: error.toString(),
+      );
+    }
   }
 }

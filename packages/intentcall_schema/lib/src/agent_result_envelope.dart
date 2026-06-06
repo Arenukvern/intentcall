@@ -11,16 +11,16 @@ extension AgentResultEnvelope on AgentResult {
     final int schemaVersion = 1,
     final Map<String, Object?>? extra,
   }) => AgentResult.success(
-      message: message,
-      data: {
-        'schema_version': schemaVersion,
-        'kind': kind,
-        'tool_name': kind,
-        'snapshot': snapshot,
-        'snapshot_json': jsonEncode(snapshot),
-        if (extra != null) ...extra,
-      },
-    );
+    message: message,
+    data: {
+      'schema_version': schemaVersion,
+      'kind': kind,
+      'tool_name': kind,
+      'snapshot': snapshot,
+      'snapshot_json': jsonEncode(snapshot),
+      if (extra != null) ...extra,
+    },
+  );
 
   static AgentResult resourceEnvelope({
     required final String resourceName,
@@ -51,11 +51,11 @@ extension AgentResultEnvelope on AgentResult {
     );
   }
 
-  /// `visual://localhost/a/b` from `a_b` name segments.
+  /// `intentcall://resource/a/b` from `a_b` name segments.
   static String resourceUriForName(final String name) {
     if (name.isEmpty) {
-      return 'visual://localhost/unknown';
+      return 'intentcall://resource/unknown';
     }
-    return 'visual://localhost/${name.split('_').join('/')}';
+    return 'intentcall://resource/${name.split('_').join('/')}';
   }
 }

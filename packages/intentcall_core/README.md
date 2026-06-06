@@ -1,4 +1,4 @@
-> ⚠️ **Pre-release (0.1.x)** — Highly experimental. APIs may change without notice. Not for production. [Details](../../PRE_RELEASE.md).
+> ⚠️ **Pre-release (0.1.x)** — Highly experimental. APIs may change without notice. Not for production. [Details](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md).
 
 
 # intentcall_core
@@ -41,6 +41,20 @@ await runtime.start();
 - `AgentResult.envelope` / `resourceEnvelope` (`intentcall_schema`)
 - `AgentWireArgs` for string-key maps
 - `AgentClientInstall.once` in `mcp_toolkit` for lazy registration
+
+## Migration helpers
+
+The main `intentcall_core.dart` barrel is the runtime/authoring API. The legacy
+`MCPCallEntry` migration helpers are intentionally exposed through a separate
+library so downstream packages can depend on them explicitly:
+
+```dart
+import 'package:intentcall_core/intentcall_core_migration.dart';
+```
+
+Use this import for `MigrateAgentEntriesMigrator`,
+`MigrateAgentEntriesReport`, `MigrateAgentEntriesPathNotFound`, and
+`migrateAgentEntriesAtPath`.
 
 ## Related packages
 

@@ -25,11 +25,14 @@ jobs:
       - name: dart pub get
         run: dart pub get
 
-      - name: make test
-        run: make test
+      - name: test
+        run: dart test packages/intentcall_schema packages/intentcall_core packages/intentcall_mcp packages/intentcall_webmcp packages/intentcall_gemma packages/intentcall_apple packages/intentcall_android packages/intentcall_platform packages/intentcall_codegen packages/intentcall_testing tool/intentcall
 
-      - name: make analyze
-        run: make analyze
+      - name: analyze
+        run: dart analyze .
+
+      - name: validate workspace
+        run: dart run tool/intentcall/bin/intentcall.dart validate
 
       - name: pub.dev dry-run (all packages)
-        run: make publish-dry-run
+        run: dart run tool/intentcall/bin/intentcall.dart publish-all

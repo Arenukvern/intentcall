@@ -28,3 +28,15 @@ Map<String, String>? matchUriTemplate(
   }
   return params;
 }
+
+/// Returns the variable names used in `{param}` path segments.
+List<String> uriTemplateVariableNames(final String uriTemplate) {
+  final templateUri = Uri.parse(uriTemplate);
+  final names = <String>[];
+  for (final segment in templateUri.pathSegments) {
+    if (segment.startsWith('{') && segment.endsWith('}')) {
+      names.add(segment.substring(1, segment.length - 1));
+    }
+  }
+  return names;
+}

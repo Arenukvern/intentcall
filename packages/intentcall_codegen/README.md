@@ -1,4 +1,4 @@
-> ⚠️ **Pre-release (0.1.x)** — Highly experimental. APIs may change without notice. Not for production. [Details](../../PRE_RELEASE.md).
+> ⚠️ **Pre-release (0.1.x)** — Highly experimental. APIs may change without notice. Not for production. [Details](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md).
 
 
 # intentcall_codegen
@@ -13,10 +13,9 @@ Hand-written `AgentCallEntry` remains first-class; codegen is opt-in for stable 
 
 ```yaml
 dependencies:
-  intentcall_codegen:
-    path: ../intentcall_codegen
-  intentcall_core:
-  intentcall_schema:
+  intentcall_codegen: ^0.1.0
+  intentcall_core: ^0.1.0
+  intentcall_schema: ^0.1.0
 
 dev_dependencies:
   build_runner: ^2.4.15

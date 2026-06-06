@@ -44,7 +44,7 @@ See [docs/DX_FAQ.mdx](docs/DX_FAQ.mdx) — "How do I add a new `intentcall_*` pa
 
 ## Publishing
 
-Publishing to pub.dev is maintainer-gated. See [PUBLISHING.md](PUBLISHING.md).
+Publishing to pub.dev is maintainer-gated. Maintainers run `just publish-preflight-first` for the first publish, `just publish-preflight` for later releases, then `just publish-dry-run` before `just publish-execute`. See [PUBLISHING.md](PUBLISHING.md).
 
 ## Pre-release note
 

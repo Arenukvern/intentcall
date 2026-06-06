@@ -1,0 +1,142 @@
+{
+  "schema": "steward/benchmark-summary/v1",
+  "repo": "intentcall",
+  "repo_commit": "caf5d757907ec787289269e7a6877d46a7a9e3e3",
+  "dirty": true,
+  "runner": "steward@0.3.4",
+  "scenario": "intentcall.adapter-contract",
+  "scenario_source": {
+    "git": "https://github.com/Arenukvern/intentcall",
+    "commit": "37eda66e36c2b4271c02504077a6930f9583301f",
+    "steward_contract": "steward.yaml"
+  },
+  "scenario_manifest": "steward/scenarios/intentcall.adapter-contract.yaml",
+  "scenario_manifest_sha256": "fff9b849b8ff9cb108d1a720ffb980e2a9fb6036ba7860584f290ea893a37ad9",
+  "run_id": "2026-06-05T15:23:41.732893Z",
+  "mode": "cold_start",
+  "result": "pass",
+  "steps": 1,
+  "actions_run": [
+    "intentcall.validate"
+  ],
+  "selection_trace": {
+    "safe_first_probe": {
+      "id": "intentcall.validate",
+      "status": "accepted",
+      "reason_code": null,
+      "reasons": [],
+      "inspect_ref": "steward action inspect intentcall.validate --json"
+    },
+    "considered_actions": [
+      "intentcall.validate"
+    ],
+    "selected_actions": [
+      "intentcall.validate"
+    ],
+    "rejected_actions": []
+  },
+  "execution_summaries": [
+    {
+      "action_id": "intentcall.validate",
+      "status": "passed",
+      "exit_code": 0,
+      "duration_ms": 328,
+      "stdout_sha256": "3387fe2c90cd68543c6e92d5a087209242226880748e965673762b476da7aaa7",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "output_truncated": false
+    }
+  ],
+  "artifacts": [
+    {
+      "id": "steward_contract",
+      "kind": "yaml",
+      "path": "steward.yaml",
+      "required": true,
+      "durability": "input",
+      "present": true,
+      "sha256": "c5e8d2b6eaff526e0e7ccd625aef868e7066d445d37a0d89c45ae0dd13442845"
+    },
+    {
+      "id": "intentcall_cli",
+      "kind": "dart",
+      "path": "tool/intentcall/bin/intentcall.dart",
+      "required": true,
+      "durability": "input",
+      "present": true,
+      "sha256": "d2646bb272d764860774cd5b423eba9faedb8dd8433b0c09d376081142dd48bd"
+    }
+  ],
+  "input_digests": {
+    "steward_contract": {
+      "path": "steward.yaml",
+      "sha256": "c5e8d2b6eaff526e0e7ccd625aef868e7066d445d37a0d89c45ae0dd13442845"
+    },
+    "scenario_manifest": {
+      "path": "steward/scenarios/intentcall.adapter-contract.yaml",
+      "sha256": "fff9b849b8ff9cb108d1a720ffb980e2a9fb6036ba7860584f290ea893a37ad9"
+    },
+    "artifact:steward_contract": {
+      "path": "steward.yaml",
+      "sha256": "c5e8d2b6eaff526e0e7ccd625aef868e7066d445d37a0d89c45ae0dd13442845"
+    },
+    "artifact:intentcall_cli": {
+      "path": "tool/intentcall/bin/intentcall.dart",
+      "sha256": "d2646bb272d764860774cd5b423eba9faedb8dd8433b0c09d376081142dd48bd"
+    }
+  },
+  "durability": {
+    "status": "ready",
+    "checked_paths": [
+      {
+        "kind": "steward_contract",
+        "path": "steward.yaml",
+        "git_status": "clean",
+        "clean": true,
+        "sha256": "c5e8d2b6eaff526e0e7ccd625aef868e7066d445d37a0d89c45ae0dd13442845"
+      },
+      {
+        "kind": "scenario_manifest",
+        "path": "steward/scenarios/intentcall.adapter-contract.yaml",
+        "git_status": "clean",
+        "clean": true,
+        "sha256": "fff9b849b8ff9cb108d1a720ffb980e2a9fb6036ba7860584f290ea893a37ad9"
+      },
+      {
+        "kind": "artifact:steward_contract",
+        "path": "steward.yaml",
+        "git_status": "clean",
+        "clean": true,
+        "sha256": "c5e8d2b6eaff526e0e7ccd625aef868e7066d445d37a0d89c45ae0dd13442845"
+      },
+      {
+        "kind": "artifact:intentcall_cli",
+        "path": "tool/intentcall/bin/intentcall.dart",
+        "git_status": "clean",
+        "clean": true,
+        "sha256": "d2646bb272d764860774cd5b423eba9faedb8dd8433b0c09d376081142dd48bd"
+      }
+    ],
+    "blocking_paths": [],
+    "warnings": [
+      "Local HEAD does not match source.commit; treating source.commit as the subject commit, not remote proof.",
+      "Repository has dirty files; unrelated dirty files do not block this benchmark."
+    ]
+  },
+  "proof": {
+    "mode": "strict",
+    "status": "ready",
+    "broad_read_actions": [],
+    "blocking_paths": [],
+    "warnings": []
+  },
+  "owner": "intentcall",
+  "blocked_by": null,
+  "lesson_status": "none",
+  "diagnostics": [
+    {
+      "severity": "warning",
+      "path": "durability",
+      "message": "Benchmark durability status is ready; inspect durability.checked_paths and durability.warnings."
+    }
+  ]
+}

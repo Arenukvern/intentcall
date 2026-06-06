@@ -23,6 +23,15 @@ void main(List<String> arguments) async {
     ..addCommand('validate')
     ..addCommand('check-path-deps')
     ..addCommand(
+      'publish-preflight',
+      ArgParser()..addFlag(
+        'first-publish',
+        negatable: false,
+        help:
+            'Also require all pub.dev package names to be currently available.',
+      ),
+    )
+    ..addCommand(
       'print-hosted-deps',
       ArgParser()..addOption(
         'version',
@@ -43,6 +52,12 @@ void main(List<String> arguments) async {
           negatable: false,
           help: 'Run publish in dry-run mode (default)',
           defaultsTo: true,
+        )
+        ..addFlag(
+          'ignore-warnings',
+          negatable: false,
+          help:
+              'Diagnostic dry-run only: continue despite pub warnings such as dirty git state.',
         ),
     );
 
@@ -75,6 +90,15 @@ void main(List<String> arguments) async {
       final code = await runCheckPathDeps(repoRoot);
       exit(code);
 
+    case 'publish-preflight':
+      final cmdResults = results.command!;
+      final firstPublish = cmdResults['first-publish'] as bool? ?? false;
+      final code = await runPublishPreflight(
+        repoRoot,
+        firstPublish: firstPublish,
+      );
+      exit(code);
+
     case 'print-hosted-deps':
       final cmdResults = results.command!;
       final envVersion = Platform.environment['INTENTCALL_VERSION'];
@@ -86,8 +110,13 @@ void main(List<String> arguments) async {
       final cmdResults = results.command!;
       // If --execute is passed, dryRun is false. If only --dry-run is passed or neither, dryRun is true.
       final execute = cmdResults['execute'] as bool? ?? false;
+      final ignoreWarnings = cmdResults['ignore-warnings'] as bool? ?? false;
       final dryRun = !execute;
-      final code = await runPublishAll(repoRoot, dryRun: dryRun);
+      final code = await runPublishAll(
+        repoRoot,
+        dryRun: dryRun,
+        ignoreWarnings: ignoreWarnings,
+      );
       exit(code);
 
     default:
@@ -121,6 +150,9 @@ void printUsage(ArgParser parser) {
   );
   print(
     '  check-path-deps       Scan workspace for invalid path dependencies.',
+  );
+  print(
+    '  publish-preflight     Check release cleanliness and pub.dev credentials.',
   );
   print('  print-hosted-deps     Print hosted pub.dev dependency blocks.');
   print(
@@ -328,7 +360,151 @@ void runPrintHostedDeps(String version) {
   }
 }
 
-Future<int> runPublishAll(Directory repoRoot, {required bool dryRun}) async {
+Future<int> runPublishPreflight(
+  Directory repoRoot, {
+  required bool firstPublish,
+}) async {
+  print('== IntentCall Publish Preflight ==');
+
+  final validateCode = await runValidate(repoRoot);
+  if (validateCode != 0) {
+    return validateCode;
+  }
+
+  final gitCode = await runReleaseGitCleanCheck(repoRoot);
+  final tokenCode = await runPubTokenCheck();
+  final availabilityCode = firstPublish ? await runFirstPublishNameCheck() : 0;
+
+  if (gitCode != 0 || tokenCode != 0 || availabilityCode != 0) {
+    return 1;
+  }
+
+  print('\nOK: publish preflight passed.');
+  return 0;
+}
+
+Future<int> runFirstPublishNameCheck() async {
+  print('\nChecking pub.dev first-publish package name availability...');
+  final client = HttpClient();
+  var hasConflict = false;
+  try {
+    for (final pkg in publishOrder) {
+      final uri = Uri.https('pub.dev', '/api/packages/$pkg');
+      try {
+        final request = await client.getUrl(uri);
+        final response = await request.close();
+        await response.drain<void>();
+
+        if (response.statusCode == HttpStatus.notFound) {
+          print('OK: $pkg is available (404)');
+        } else if (response.statusCode == HttpStatus.ok) {
+          stderr.writeln('FAIL: $pkg already exists on pub.dev.');
+          hasConflict = true;
+        } else {
+          stderr.writeln(
+            'FAIL: Unexpected pub.dev response for $pkg: HTTP ${response.statusCode}',
+          );
+          hasConflict = true;
+        }
+      } catch (e) {
+        stderr.writeln('FAIL: Could not check pub.dev package $pkg: $e');
+        hasConflict = true;
+      }
+    }
+  } finally {
+    client.close(force: true);
+  }
+
+  if (hasConflict) {
+    return 1;
+  }
+
+  print('OK: all first-publish package names are available.');
+  return 0;
+}
+
+Future<int> runReleaseGitCleanCheck(Directory repoRoot) async {
+  print('\nChecking release git state...');
+  final result = await Process.run('git', [
+    'status',
+    '--porcelain=v1',
+    '--untracked-files=all',
+    '--',
+    'packages',
+    'tool/intentcall',
+  ], workingDirectory: repoRoot.path);
+
+  if (result.exitCode != 0) {
+    stderr.writeln('FAIL: git status failed while checking release state.');
+    stderr.write(result.stderr);
+    return result.exitCode;
+  }
+
+  final dirtyLines = result.stdout
+      .toString()
+      .split('\n')
+      .where((line) => line.trim().isNotEmpty)
+      .where(_isReleaseStatusLine)
+      .toList();
+
+  if (dirtyLines.isNotEmpty) {
+    stderr.writeln(
+      'FAIL: Release-critical files are not clean. Commit or revert these files before publishing:',
+    );
+    for (final line in dirtyLines) {
+      stderr.writeln('  $line');
+    }
+    return 1;
+  }
+
+  print('OK: release-critical files are clean.');
+  return 0;
+}
+
+Future<int> runPackageGitCleanCheck(Directory repoRoot) =>
+    runReleaseGitCleanCheck(repoRoot);
+
+bool _isReleaseStatusLine(String line) {
+  final path = line.length > 3 ? line.substring(3).trim() : '';
+  final normalized = path.replaceAll('\\', '/');
+  if (publishOrder.any((pkg) => normalized.startsWith('packages/$pkg/'))) {
+    return true;
+  }
+  return normalized.startsWith('tool/intentcall/');
+}
+
+Future<int> runPubTokenCheck() async {
+  print('\nChecking pub.dev token configuration...');
+  final result = await Process.run('dart', ['pub', 'token', 'list']);
+  final output = '${result.stdout}${result.stderr}';
+
+  if (result.exitCode != 0) {
+    stderr.writeln('FAIL: dart pub token list failed.');
+    stderr.write(output);
+    return result.exitCode;
+  }
+
+  if (output.contains('You do not have any secret tokens')) {
+    stderr.writeln(
+      'FAIL: No pub.dev token configured. Run: dart pub token add https://pub.dev',
+    );
+    return 1;
+  }
+
+  print('OK: pub.dev token is configured.');
+  return 0;
+}
+
+Future<int> runPublishAll(
+  Directory repoRoot, {
+  required bool dryRun,
+  bool ignoreWarnings = false,
+}) async {
+  if (!dryRun && ignoreWarnings) {
+    stderr.writeln('FAIL: --ignore-warnings is only allowed with dry-runs.');
+    return 64;
+  }
+
   print('== Workspace pub get ==');
   final pubGetCode = await runCommand('dart', ['pub', 'get'], repoRoot.path);
   if (pubGetCode != 0) {
@@ -342,7 +518,10 @@ Future<int> runPublishAll(Directory repoRoot, {required bool dryRun}) async {
 
     final isPlatform = pkg == 'intentcall_platform';
     final exec = isPlatform ? 'flutter' : 'dart';
-    final args = ['pub', 'publish', dryRun ? '--dry-run' : '--force'];
+    final args = buildPublishArgs(
+      dryRun: dryRun,
+      ignoreWarnings: ignoreWarnings,
+    );
 
     final exitCode = await runCommand(exec, args, dirPath);
     if (exitCode != 0) {
@@ -353,6 +532,17 @@ Future<int> runPublishAll(Directory repoRoot, {required bool dryRun}) async {
 
   print('\nOK: publish_all complete (dryRun=$dryRun)');
   return 0;
+}
+
+List<String> buildPublishArgs({
+  required bool dryRun,
+  required bool ignoreWarnings,
+}) {
+  final args = ['pub', 'publish', dryRun ? '--dry-run' : '--force'];
+  if (ignoreWarnings) {
+    args.add('--ignore-warnings');
+  }
+  return args;
 }
 
 Future<int> runCommand(

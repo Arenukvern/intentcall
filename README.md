@@ -32,7 +32,7 @@ GitHub: [Arenukvern/intentcall](https://github.com/Arenukvern/intentcall)
 | `intentcall_platform` | Native/web emitters + Flutter plugin |
 | `intentcall_codegen` | Optional `@AgentTool` codegen |
 | `intentcall_testing` | Contract / invoke test helpers |
-| `intentcall_gemma` / `intentcall_apple` / `intentcall_android` | Optional surface adapters |
+| `intentcall_gemma` / `intentcall_apple` / `intentcall_android` | Optional experimental surface adapters |
 
 ## Agent Skills
 
@@ -54,6 +54,8 @@ just analyze
 just publish-dry-run   # pub.dev dry-run (all packages)
 ```
 
+Release maintainers additionally run `just publish-preflight-first` for the initial `0.1.0` publish, or `just publish-preflight` for later releases.
+
 See [docs/DX_FAQ.mdx](docs/DX_FAQ.mdx) for detailed workflows.
 
 ## Git history
@@ -70,4 +72,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). All PRs must pass `just test && just ana
 
 ## Publishing
 
-See [PUBLISHING.md](PUBLISHING.md). Execute publish only with pub.dev credentials: `bash tool/intentcall/publish_all.sh --execute`.
+See [PUBLISHING.md](PUBLISHING.md). Execute publish only from a clean release commit with pub.dev credentials: `just publish-execute`.

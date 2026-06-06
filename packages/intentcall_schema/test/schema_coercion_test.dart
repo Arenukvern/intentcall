@@ -78,15 +78,12 @@ void main() {
     expect(coerced['snapshotId'], 7);
   });
 
-  test('coerces nested wait_for predicate map wire strings', () {
+  test('does not coerce product-specific open object fields', () {
     const waitSchema = {
       'type': 'object',
       'required': ['predicate'],
       'properties': {
-        'predicate': {
-          'type': 'object',
-          'additionalProperties': true,
-        },
+        'predicate': {'type': 'object', 'additionalProperties': true},
         'timeoutMs': {'type': 'integer'},
       },
     };
@@ -94,19 +91,23 @@ void main() {
       'predicate': {'kind': 'time', 'ms': '50'},
       'timeoutMs': '1000',
     });
-    expect(coerced['predicate'], {'kind': 'time', 'ms': 50});
+    expect(coerced['predicate'], {'kind': 'time', 'ms': '50'});
     expect(coerced['timeoutMs'], 1000);
     expect(() => validateAgainstSchema(waitSchema, coerced), returnsNormally);
   });
 
-  test('coerces stable and text predicate fields in nested maps', () {
+  test('coerces nested values only when schema declares nested properties', () {
     const waitSchema = {
       'type': 'object',
       'required': ['predicate'],
       'properties': {
         'predicate': {
           'type': 'object',
-          'additionalProperties': true,
+          'required': ['kind', 'stableWindowMs'],
+          'properties': {
+            'kind': {'type': 'string'},
+            'stableWindowMs': {'type': 'integer'},
+          },
         },
       },
     };
@@ -114,10 +115,6 @@ void main() {
       'predicate': {'kind': 'stable', 'stableWindowMs': '300'},
     });
     expect(stable['predicate'], {'kind': 'stable', 'stableWindowMs': 300});
-
-    final text = coerceArgumentsForSchema(waitSchema, {
-      'predicate': {'kind': 'text', 'text': 'Dashboard'},
-    });
-    expect(text['predicate'], {'kind': 'text', 'text': 'Dashboard'});
+    expect(() => validateAgainstSchema(waitSchema, stable), returnsNormally);
   });
 }
