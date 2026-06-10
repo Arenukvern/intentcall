@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:intentcall_core/intentcall_core.dart';
 
-/// Callback surface matching `navigator.modelContext` tool registration.
+/// Callback surface matching WebMCP modelContext tool registration.
 typedef WebMcpToolPublisher =
     void Function({
       required String name,
@@ -18,7 +18,9 @@ typedef WebMcpToolUnpublisher = void Function(String name);
 
 /// Publishes registry tool intents to a WebMCP-compatible surface.
 ///
-/// In the browser, wire [publish] to `navigator.modelContext.registerTool`.
+/// In the browser, wire [publish] to `document.modelContext.registerTool`.
+/// Older experiments exposed `navigator.modelContext`; support that only as a
+/// compatibility shim.
 /// On VM/test, use an in-memory fake (see tests).
 final class WebMcpPublishAdapter implements AgentAdapter {
   WebMcpPublishAdapter({required this.publish, required this.unpublish});

@@ -3,4 +3,4 @@
 
 # intentcall_webmcp
 
-`WebMcpPublishAdapter` — registry hot-sync to `navigator.modelContext` tool registration.
+`WebMcpPublishAdapter` — registry hot-sync to WebMCP `document.modelContext` tool registration, with older `navigator.modelContext` experiments treated as a compatibility shim.

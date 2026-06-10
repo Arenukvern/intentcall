@@ -39,13 +39,19 @@ A: Native surface adapters differ sharply in their platform SDKs and entitlement
 ## Transport model
 
 **Q: Why is IntentCall "transport-agnostic" rather than MCP-first?**
-A: MCP is one wire format today; WebMCP, native Apple Intelligence, and Android AICore use different protocols. Building adapters against a shared registry interface means adding a new transport is one new package, not a fork of the registry.
+A: MCP is one wire format today; WebMCP, Apple App Intents, Android AppFunctions / App Actions, Windows App Actions, and protocol handlers all expose different contracts. IntentCall keeps the registry contract central, then projects it into the strongest available surface for each platform: semantic action/tool APIs where available, assistant or shortcut fulfillment where appropriate, and deep-link fallback where native support is incomplete.
 
 **Q: Why does `intentcall_mcp` use `dart_mcp` rather than a custom implementation?**
 A: Maintaining a custom MCP wire implementation would duplicate protocol work tracked upstream in the Dart ecosystem. `dart_mcp` is the canonical Dart MCP library; IntentCall wraps it with the registry bridge, staying thin.
 
 **Q: Why does `intentcall_webmcp` exist separately from `intentcall_mcp`?**
-A: WebMCP's hot-sync model (persistent browser connection, delta dispatch) requires different lifecycle management from the request/response MCP model. Mixing them in one adapter would make both harder to reason about and test.
+A: WebMCP's browser-hosted tool registration model requires different lifecycle management from request/response MCP. Current WebMCP drafts use `document.modelContext`; compatibility with older `navigator.modelContext` experiments should be treated as a shim, not the primary contract.
+
+**Q: Why does IntentCall use deep links if the goal is native agent integration?**
+A: Deep links are the universal fallback, not the whole vision. Some platforms expose semantic agent/action registries; others only provide launch routing today. IntentCall preserves one invocation contract across both: native metadata where the platform supports it, and `intentcall://invoke/...` or platform protocol handlers where it does not.
+
+**Q: How should platform support be described during pre-release?**
+A: Be explicit about tiers. Apple App Intents and WebMCP are semantic surfaces; Android AppFunctions and Windows App Actions are roadmap native semantic targets; Android App Actions and shortcuts are assistant/shortcut fulfillment; Windows protocol activation and Linux `x-scheme-handler` are protocol fallback. AAIF is ecosystem alignment around agent infrastructure, not a Linux desktop intent API.
 
 ---
 

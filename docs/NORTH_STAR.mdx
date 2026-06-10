@@ -2,7 +2,24 @@
 
 **Tagline:** *Register intents. Call them everywhere.*
 
-IntentCall is a **transport-agnostic agent intent platform** for Dart/Flutter. It provides a central registry (`AgentRegistry`), a typed invocation model (`AgentCallEntry` / `RegisteredAgentIntent`), and adapters that publish those intents to multiple transports — MCP, WebMCP, native Apple/Android surfaces — from a single source of truth.
+IntentCall is a **transport-agnostic agent intent platform** for Dart/Flutter. It provides a central registry (`AgentRegistry`), a typed invocation model (`AgentCallEntry` / `RegisteredAgentIntent`), and adapters that publish intents to MCP, WebMCP, and platform artifacts.
+
+The north star is **define intent truth once, then project it into the strongest available platform surface**. That means native semantic agent/tool registries where platforms provide them, assistant or shortcut declarations where those are the available user-facing surface, and a canonical protocol/deep-link fallback where native support is absent or still immature.
+
+Today, the repository implements the registry/runtime foundation, MCP/WebMCP adapters, and platform artifact emitters for `web`, `android`, `ios`, `macos`, `linux`, and `windows`. Full registry-backed generation remains a target state: some platform artifacts, including `agent_manifest.json`, are currently checked in and refreshed by sync tooling rather than generated live from `AgentRegistry`.
+
+---
+
+## Platform support model
+
+| Tier | Meaning | Current / target surfaces |
+|---|---|---|
+| Native semantic | Platform-recognized tool/action models that preserve intent metadata and structured invocation semantics. | Current: Apple App Intents emitter, MCP adapter, WebMCP adapter. Target: Android AppFunctions, Windows App Actions / Agent Launchers, WebMCP `document.modelContext` compatibility. |
+| Assistant / shortcut fulfillment | Assistant, shortcut, or launcher declarations that can route user-visible actions into app intent handling. | Current: Apple shortcuts artifacts, Android shortcut/deep-link artifacts, web/PWA artifacts. Target: richer Android App Actions capability generation. |
+| Protocol fallback | Stable URI/protocol invocation when no native semantic surface is available or implemented yet. | Current: `intentcall://invoke/...`, web protocol handlers, Windows protocol activation artifacts, Linux `x-scheme-handler/intentcall` artifacts. |
+| Ecosystem alignment | Compatibility with agent ecosystem conventions without claiming an OS-level integration contract. | Current: MCP conventions. Target: AAIF-hosted ecosystem alignment where relevant. |
+
+Support tiers are explicit on purpose. Linux is currently protocol-fallback first. Windows currently has protocol activation artifacts, while native Windows App Actions / Agent Launcher support remains roadmap. Android currently has shortcut/deep-link artifacts, while AppFunctions and fuller App Actions capability generation remain roadmap.
 
 ---
 
@@ -25,10 +42,12 @@ IntentCall is a **transport-agnostic agent intent platform** for Dart/Flutter. I
 
 ## Success criteria
 
-1. A Flutter app can register intents once and expose them over MCP and WebMCP without per-transport boilerplate.
+1. A Flutter app can register intent truth once and expose it over MCP, WebMCP, and platform artifacts without per-transport boilerplate where support exists.
 2. The `intentcall_schema` wire contract is stable enough that adapters can evolve independently without breaking consumers.
-3. `just test && just analyze && just publish-dry-run` stays green on every PR.
-4. A new adapter author can read `intentcall_core` + one existing adapter and ship a working adapter in a single session.
+3. Platform support is documented by tier: native semantic, assistant / shortcut fulfillment, protocol fallback, or roadmap.
+4. `intentcall://invoke/...` remains the canonical fallback invocation contract across platforms that lack implemented native semantic support.
+5. `just test && just analyze && just publish-dry-run` stays green on every PR.
+6. A new adapter author can read `intentcall_core` + one existing adapter and ship a working adapter in a single session.
 
 ---
 

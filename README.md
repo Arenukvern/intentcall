@@ -6,7 +6,7 @@
 
 *Register intents. Call them everywhere.*
 
-Transport-agnostic agent intent platform for Dart/Flutter — central registry (`AgentRegistry`), typed invocation model, and adapters for MCP, WebMCP, and native surfaces. Extracted from [mcp_flutter](https://github.com/Arenukvern/mcp_flutter).
+Transport-agnostic agent intent platform for Dart/Flutter: define intent truth once in `AgentRegistry`, then project it into the strongest available surface: MCP/WebMCP, native semantic action systems where supported, assistant/shortcut fulfillment, and canonical deep-link fallback where native support is incomplete. Extracted from [mcp_flutter](https://github.com/Arenukvern/mcp_flutter).
 
 **Charter:** [docs/NORTH_STAR.mdx](docs/NORTH_STAR.mdx) · **Agent map:** [AGENTS.md](AGENTS.md)  
 **Why / how:** [docs/DESIGN_FAQ.mdx](docs/DESIGN_FAQ.mdx) · [docs/DX_FAQ.mdx](docs/DX_FAQ.mdx) · [Decisions](docs/decisions/) · [CONTRIBUTING.md](CONTRIBUTING.md)
@@ -29,10 +29,12 @@ GitHub: [Arenukvern/intentcall](https://github.com/Arenukvern/intentcall)
 | `intentcall_core` | Registry, runtime, `AgentCallEntry` |
 | `intentcall_mcp` | MCP publish adapter (`dart_mcp`) |
 | `intentcall_webmcp` | WebMCP hot-sync adapter |
-| `intentcall_platform` | Native/web emitters + Flutter plugin |
+| `intentcall_platform` | Native/web emitters, protocol fallback artifacts, and Flutter plugin |
 | `intentcall_codegen` | Optional `@AgentTool` codegen |
 | `intentcall_testing` | Contract / invoke test helpers |
 | `intentcall_gemma` / `intentcall_apple` / `intentcall_android` | Optional experimental surface adapters |
+
+Platform support is tiered during `0.1.x`: current emitters cover web/PWA, Apple App Intents artifacts, Android shortcuts/deep links, Windows protocol activation, and Linux `x-scheme-handler`; Android AppFunctions, Android App Actions capabilities, Windows App Actions / Agent Launchers, and AAIF ecosystem alignment are roadmap targets unless documented otherwise.
 
 ## Agent Skills
 

@@ -4,12 +4,11 @@ import 'dart:js_interop_unsafe';
 
 import 'package:intentcall_core/intentcall_core.dart';
 import 'package:intentcall_schema/intentcall_schema.dart';
-import 'package:web/web.dart' as web;
 
 @JS('JSON.parse')
 external JSAny? _jsonParse(final JSString source);
 
-/// Tool names already published to `navigator.modelContext` (Dart bootstrap).
+/// Tool names already published to WebMCP by the Dart bootstrap.
 final _webMcpRegisteredToolNames = <String>{};
 
 /// Entries available to [__intentcallWebMcpDartExecute] when JS registered first.
@@ -37,7 +36,10 @@ extension type _WebMcpToolDefinition._(JSObject _) implements JSObject {
   });
 }
 
-/// Registers tools on `navigator.modelContext` after [MCPToolkitExtensions.addEntries].
+/// Registers tools on `document.modelContext` after [MCPToolkitExtensions.addEntries].
+///
+/// Older browser experiments exposed `navigator.modelContext`; that path is
+/// retained as a compatibility fallback.
 ///
 /// `web/intentcall_webmcp.generated.js` may register the same names before Flutter
 /// loads. Those handlers run JS `validateInput`, then delegate to
@@ -107,12 +109,20 @@ Future<JSAny?> _dartExecuteHook(
   return _invokeEntry(entry, rawArgs);
 }
 
-_ModelContext? _readModelContext() {
-  final navigator = web.window.navigator as JSObject;
-  if (!navigator.hasProperty('modelContext'.toJS).toDart) {
+_ModelContext? _readModelContext() =>
+    _readModelContextFromGlobalObject('document') ??
+    _readModelContextFromGlobalObject('navigator');
+
+_ModelContext? _readModelContextFromGlobalObject(final String name) {
+  final owner = globalContext.getProperty(name.toJS);
+  if (owner == null) {
     return null;
   }
-  final value = navigator.getProperty('modelContext'.toJS);
+  final object = owner as JSObject;
+  if (!object.hasProperty('modelContext'.toJS).toDart) {
+    return null;
+  }
+  final value = object.getProperty('modelContext'.toJS);
   if (value == null) {
     return null;
   }
