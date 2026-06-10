@@ -144,10 +144,10 @@ make check-intentcall-integration
 
 **Q: How do I publish?**
 
-See [PUBLISHING.md](PUBLISHING.md) for full instructions. In short:
+See [PUBLISHING.md](../PUBLISHING.md) for full instructions. In short:
 
 ```bash
-# first publish: release cleanliness, token, and pub.dev name availability
+# historical first-publish check: only for brand-new package names
 just publish-preflight-first
 
 # later releases: release cleanliness and token
@@ -166,11 +166,14 @@ This repo uses [release-please](https://github.com/googleapis/release-please). M
 
 ---
 
-## 🔗 Sibling repo path overrides
+## 🔗 Local sibling repo path overrides
 
-**Q: How do I use local path overrides from mcp_flutter?**
+**Q: When should I use local path overrides from mcp_flutter?**
 
-When cloned as siblings (`~/mcp/agentkit` and `~/mcp/mcp_flutter`), `mcp_flutter`'s pubspec uses:
+Normal consumers should use hosted `intentcall_*` packages from pub.dev. Use
+path overrides only for local IntentCall development before a release is
+published. When cloned as siblings (`~/mcp/agentkit` and `~/mcp/mcp_flutter`),
+a temporary local-development override looks like:
 
 ```yaml
 dependency_overrides:
@@ -179,7 +182,9 @@ dependency_overrides:
   # … etc
 ```
 
-After a GitHub rename to `intentcall`, update the path to `../intentcall/packages/…` or use `INTENTCALL_ROOT` env var:
+After a GitHub rename to `intentcall`, update the path to
+`../intentcall/packages/…` or use `INTENTCALL_ROOT` env var for local source
+validation:
 
 ```bash
 INTENTCALL_ROOT=~/mcp/intentcall make check-intentcall-integration
