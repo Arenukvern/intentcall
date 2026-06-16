@@ -8,6 +8,8 @@ The north star is **define intent truth once, then project it into the strongest
 
 Today, the repository implements the registry/runtime foundation, MCP/WebMCP adapters, and platform artifact emitters for `web`, `android`, `ios`, `macos`, `linux`, and `windows`. Full registry-backed generation remains a target state: some platform artifacts, including `agent_manifest.json`, are currently checked in and refreshed by sync tooling rather than generated live from `AgentRegistry`.
 
+IntentCall is also the canonical home for IntentCall philosophy, platform projection semantics, agentic experience (AX), developer experience (DX), and IntentPack direction. Consumer repositories such as `mcp_flutter` prove and document integration, but do not define IntentCall's architecture or platform contract.
+
 ---
 
 ## Platform support model
@@ -58,6 +60,16 @@ Support tiers are explicit on purpose. Linux is currently protocol-fallback firs
 | **IntentCall** (this repo) | Platform layer — registry + adapters |
 | **[mcp_flutter](https://github.com/Arenukvern/mcp_flutter)** | Product harness — `mcp_toolkit`, `flutter-mcp-toolkit` CLI |
 | **[Skill Steward](https://github.com/Arenukvern/skill_steward)** | Meta-layer — agent skills governance |
+
+---
+
+## AX and DX north star
+
+**Agentic experience (AX)** means an agent can discover, inspect, invoke, diagnose, and repair an app's intent surface without bespoke repository knowledge. The intended loop is: discover available intent surfaces, inspect intent schemas and examples, invoke through the best available transport, explain failures by capability/schema/permission/platform/runtime category, then suggest the next repair action.
+
+**Developer experience (DX)** means app and package authors define intent semantics once, keep handwritten entries first-class, and use optional generation or composition to project that surface into MCP, WebMCP, Flutter runtime registries, CLI hosts, deep links, and future native-platform artifacts with minimal boilerplate.
+
+The proposed public direction is **IntentPack**: a portable unit of agent surface area containing a stable pack id, name, description, entries/intents, schemas, examples, side-effect metadata, confirmation and safety policy, platform projection hints, runtime adapter hints, and compatibility metadata. IntentPack is direction, not a shipped stable API contract yet; current shipped authoring remains `AgentRegistry`, `AgentCallEntry`, and `RegisteredAgentIntent`.
 
 ---
 

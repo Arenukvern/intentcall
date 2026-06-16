@@ -79,7 +79,8 @@ Chosen option: **IntentCall** as the **public product name**.
 
 ## Links
 
-* [mcp_flutter intentcall design spec](https://github.com/Arenukvern/mcp_flutter/blob/main/docs/superpowers/specs/2026-05-25-intentcall-design.md) (renamed from agentkit-design)
+* [IntentCall North Star](../NORTH_STAR.mdx)
+* [IntentCall Design FAQ](../DESIGN_FAQ.mdx)
 * [PRE_RELEASE.md](../../PRE_RELEASE.md)
 * [PUBLISHING.md](../../PUBLISHING.md)
 * [Skill Steward ADR 0008 — naming pattern](https://github.com/Arenukvern/skill_steward/blob/main/docs/decisions/0008-adopt-skill-steward-product-name.md)

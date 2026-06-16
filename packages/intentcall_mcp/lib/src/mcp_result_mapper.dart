@@ -46,7 +46,7 @@ CallToolResult agentResultToMcpResult(final AgentResult result) {
     );
   }
   final text = result.data['text'];
-  if (text is String) {
+  if (text is String && result.data.length == 1) {
     return CallToolResult(content: [TextContent(text: text)]);
   }
   return CallToolResult(content: [TextContent(text: jsonEncode(result.data))]);

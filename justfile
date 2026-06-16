@@ -49,6 +49,10 @@ doctor:
 validate:
     dart run tool/intentcall/bin/intentcall.dart validate
 
+# Run the shared native adapter contract tests
+adapter-contract-test:
+    dart test packages/intentcall_testing/test/adapter_contract_test.dart packages/intentcall_mcp/test/mcp_adapter_contract_test.dart packages/intentcall_webmcp/test/webmcp_adapter_contract_test.dart packages/intentcall_gemma/test/gemma_adapter_contract_test.dart
+
 # List custom agent skills defined in this repository
 list-skills:
     @echo "Available Custom Agent Skills:"

@@ -15,6 +15,9 @@ A: OpenAI shipped a product named AgentKit in October 2025, creating a direct pu
 **Q: What problem does IntentCall solve that `dart_mcp` alone does not?**
 A: `dart_mcp` is a transport implementation. IntentCall adds a typed *intent registry* on top: a central `AgentRegistry` where tools declare `AgentCallEntry` objects once, and adapters publish them to any transport. Without IntentCall, each adapter re-implements registration, validation, and dispatch independently.
 
+**Q: Where should canonical IntentCall design decisions live?**
+A: In this repository. IntentCall owns the product philosophy, platform projection model, AX/DX contracts, adapter expectations, and public direction such as IntentPack. Consumer repositories such as `mcp_flutter` own proof and integration guidance: hosted dependency checks, Flutter MCP Toolkit bootstrap, migration recipes, regression checklists, and consumer-facing examples. They should route architectural questions back to this repo instead of defining IntentCall's platform contract.
+
 ---
 
 ## Architecture
@@ -30,6 +33,9 @@ A: Test helpers have `test` as a dependency, which must not bleed into productio
 
 **Q: Why is there an `intentcall_codegen` package?**
 A: Codegen is strictly optional — many adopters will register intents by hand. Keeping it separate means the core registry has zero `build_runner` dependency, and users who opt in to `@AgentTool` get a clean code-generation surface without it affecting tree-shaking for others.
+
+**Q: Why is IntentPack direction separate from today's registry API?**
+A: `AgentRegistry`, `AgentCallEntry`, and `RegisteredAgentIntent` are the current shipped authoring/runtime model. IntentPack is the proposed portable packaging layer above them: one app-level unit that can carry entries, schemas, examples, side-effect metadata, safety policy, platform projection hints, adapter hints, and compatibility metadata. Keeping that distinction explicit lets the repo document the destination without pretending the stable public API already exists.
 
 **Q: Why are there separate `intentcall_apple` / `intentcall_android` / `intentcall_gemma` packages instead of one `intentcall_native`?**
 A: Native surface adapters differ sharply in their platform SDKs and entitlement requirements. A single `intentcall_native` would force all three sets of platform SDKs into every build. Platform-specific packages let Flutter tree-shaker and pubspec `platforms` keys exclude irrelevant targets cleanly.

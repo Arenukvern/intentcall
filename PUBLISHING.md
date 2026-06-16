@@ -59,7 +59,7 @@ Status: the initial `0.1.0` hosted cutover is complete in `mcp_flutter`.
 For future IntentCall releases, update consumers only after the pub.dev package
 pages exist for the full publish order above.
 
-See `docs/intentcall/hosted_cutover.md` and run:
+See the `mcp_flutter` IntentCall consumer guide (`../mcp_flutter/docs/intentcall/README.md`) and run:
 
 ```bash
 just print-hosted-deps

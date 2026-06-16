@@ -1,6 +1,6 @@
 name: intentcall_workspace
 publish_to: none
-description: Standalone intentcall monorepo (extracted from mcp_flutter Phase 7).
+description: Standalone intentcall monorepo
 
 environment:
   sdk: ^3.11.0

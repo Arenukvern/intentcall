@@ -9,6 +9,7 @@ source:
 safe_first_probe: intentcall.validate
 required_actions:
   - intentcall.validate
+  - intentcall.adapter-contract-test
 artifacts:
   - id: steward_contract
     kind: yaml
@@ -20,5 +21,25 @@ artifacts:
     path: tool/intentcall/bin/intentcall.dart
     required: true
     durability: input
+  - id: adapter_contract_helper
+    kind: dart
+    path: packages/intentcall_testing/lib/src/adapter_contract.dart
+    required: true
+    durability: behavior
+  - id: mcp_adapter_contract_test
+    kind: dart
+    path: packages/intentcall_mcp/test/mcp_adapter_contract_test.dart
+    required: true
+    durability: behavior
+  - id: webmcp_adapter_contract_test
+    kind: dart
+    path: packages/intentcall_webmcp/test/webmcp_adapter_contract_test.dart
+    required: true
+    durability: behavior
+  - id: gemma_adapter_contract_test
+    kind: dart
+    path: packages/intentcall_gemma/test/gemma_adapter_contract_test.dart
+    required: true
+    durability: behavior
 blocked_by: null
 owner: intentcall

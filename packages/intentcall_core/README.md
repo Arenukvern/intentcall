@@ -3,14 +3,14 @@
 
 # intentcall_core
 
-Transport-agnostic agent intent registry and runtime for Flutter MCP Toolkit.
+Transport-agnostic agent intent registry and runtime for Dart and Flutter apps.
 
 ## Authoring
 
-| Style | Server | Client (`mcp_toolkit`) |
+| Style | Runtime registration | Consumer host |
 |-------|--------|------------------------|
-| Hand-written | `ToolRegistration` / `ResourceRegistration` via capability kernel | `AgentCallEntry` + `AgentModuleFromEntries` |
-| Codegen (optional) | `@AgentTool` + build_runner pilot | Same annotations (optional) |
+| Hand-written | `RegisteredAgentIntent` via `AgentCallEntry` | Flutter, CLI, MCP, WebMCP, or custom adapters |
+| Codegen (optional) | `@AgentTool` + build_runner pilot | Generated entries can be composed by any host |
 
 Authors define **descriptors + executors**; they do not implement a public `AgentIntent` interface. The registry stores `RegisteredAgentIntent` (descriptor + `execute`).
 
@@ -65,4 +65,4 @@ Use this import for `MigrateAgentEntriesMigrator`,
 - `intentcall_apple` / `intentcall_android` — `agent_manifest.json` codegen
 - `intentcall_testing` — registry contract helpers
 
-Design spec (in parent repo): [intentcall design](https://github.com/Arenukvern/mcp_flutter/blob/main/docs/superpowers/specs/2026-05-25-intentcall-design.md).
+Canonical design docs: [North Star](../../docs/NORTH_STAR.mdx), [Design FAQ](../../docs/DESIGN_FAQ.mdx), and [DX FAQ](../../docs/DX_FAQ.mdx).

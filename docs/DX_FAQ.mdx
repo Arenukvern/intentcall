@@ -91,6 +91,26 @@ Wire types (`AgentResult`, validation helpers, resource input schemas) live in `
 
 ---
 
+## 🧭 IntentPack direction
+
+**Q: Should I use `IntentPack` today?**
+
+Not as a stable public API yet. `IntentPack` is the direction for packaging an app's agent surface as one portable unit, but current authoring should still use `AgentRegistry`, `AgentCallEntry`, and `RegisteredAgentIntent`.
+
+**Q: What should an IntentPack eventually contain?**
+
+An IntentPack should carry a stable pack id, name, description, entries/intents, input and output schemas, examples, side-effect metadata, confirmation and safety policy, platform projection hints, runtime adapter hints, and version/compatibility metadata.
+
+**Q: What projections should one pack support?**
+
+The target is to project one pack into MCP tool registrations, WebMCP manifest material, Flutter runtime registry entries, CLI command bindings, deep-link routing metadata, and future native-platform artifacts where supported.
+
+**Q: Will code generation be required?**
+
+No. Handwritten entries remain first-class. Code generation should reduce repetition for stable surfaces, especially build-time artifacts such as manifests, web assets, native metadata, or generated skill snapshots; it should not become mandatory ceremony for local development, tests, CLI tools, or dynamic hosts.
+
+---
+
 ## 🧬 Codegen (`@AgentTool`)
 
 **Q: How do I opt in to codegen?**

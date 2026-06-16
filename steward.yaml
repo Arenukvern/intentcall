@@ -1,7 +1,7 @@
 schema: steward/v1
 repo:
   id: intentcall
-  archetype: platform_libs
+  archetype: library
 harness:
   name: intentcall
   mode: cli
@@ -21,6 +21,10 @@ stewardship:
   knowledge:
     docs_map: AGENTS.md
     source_policy: required_for_external_claims
+  repo_quality:
+    contract_spec: steward.yaml
+    maturity_model: general_stewardship
+    evidence: .steward/benchmark-summaries
   skill_lifecycle:
     installable_skills: true
     registry: skills.sh.json
@@ -88,10 +92,47 @@ actions:
     evidence:
       redaction: steward/redaction/v1
       summary_fields: [exit_code, duration_ms, output_digest]
+  intentcall.adapter-contract-test:
+    kind: command
+    desc: Run native adapter contract tests for MCP, WebMCP, and Gemma.
+    command:
+      argv: [just, adapter-contract-test]
+      shell: false
+    cwd: .
+    effects:
+      fs_read:
+        - justfile
+        - packages/intentcall_testing/**
+        - packages/intentcall_mcp/**
+        - packages/intentcall_webmcp/**
+        - packages/intentcall_gemma/**
+        - pubspec.yaml
+        - pubspec.lock
+      fs_write: []
+      git: false
+      network: false
+      secrets: false
+      destructive: false
+    safety:
+      class: bounded_local
+      default_policy: auto
+      requires_confirmation: false
+    limits:
+      timeout_ms: 10000
+      max_output_bytes: 200000
+    outputs:
+      - id: stdout
+        kind: stream
+        required: true
+        retention: summary
+        format: text
+    evidence:
+      redaction: steward/redaction/v1
+      summary_fields: [exit_code, duration_ms, output_digest]
 probes:
   quick:
     profile: quick
-    actions: [intentcall.validate]
+    actions: [intentcall.validate, intentcall.adapter-contract-test]
 diagnostics:
   cases: {}
 unknown_cases:
