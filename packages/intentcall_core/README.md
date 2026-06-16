@@ -1,16 +1,16 @@
-> ⚠️ **Pre-release (0.1.x)** — Highly experimental. APIs may change without notice. Not for production. [Details](../../PRE_RELEASE.md).
+> ⚠️ **Pre-release (0.1.x)** — Highly experimental. APIs may change without notice. Not for production. [Details](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md).
 
 
 # intentcall_core
 
-Transport-agnostic agent intent registry and runtime for Flutter MCP Toolkit.
+Transport-agnostic agent intent registry and runtime for Dart and Flutter apps.
 
 ## Authoring
 
-| Style | Server | Client (`mcp_toolkit`) |
+| Style | Runtime registration | Consumer host |
 |-------|--------|------------------------|
-| Hand-written | `ToolRegistration` / `ResourceRegistration` via capability kernel | `AgentCallEntry` + `AgentModuleFromEntries` |
-| Codegen (optional) | `@AgentTool` + build_runner pilot | Same annotations (optional) |
+| Hand-written | `RegisteredAgentIntent` via `AgentCallEntry` | Flutter, CLI, MCP, WebMCP, or custom adapters |
+| Codegen (optional) | `@AgentTool` + build_runner pilot | Generated entries can be composed by any host |
 
 Authors define **descriptors + executors**; they do not implement a public `AgentIntent` interface. The registry stores `RegisteredAgentIntent` (descriptor + `execute`).
 
@@ -42,6 +42,20 @@ await runtime.start();
 - `AgentWireArgs` for string-key maps
 - `AgentClientInstall.once` in `mcp_toolkit` for lazy registration
 
+## Migration helpers
+
+The main `intentcall_core.dart` barrel is the runtime/authoring API. The legacy
+`MCPCallEntry` migration helpers are intentionally exposed through a separate
+library so downstream packages can depend on them explicitly:
+
+```dart
+import 'package:intentcall_core/intentcall_core_migration.dart';
+```
+
+Use this import for `MigrateAgentEntriesMigrator`,
+`MigrateAgentEntriesReport`, `MigrateAgentEntriesPathNotFound`, and
+`migrateAgentEntriesAtPath`.
+
 ## Related packages
 
 - `intentcall_schema` — results, validation, wire args
@@ -51,4 +65,4 @@ await runtime.start();
 - `intentcall_apple` / `intentcall_android` — `agent_manifest.json` codegen
 - `intentcall_testing` — registry contract helpers
 
-Design spec (in parent repo): [intentcall design](https://github.com/Arenukvern/mcp_flutter/blob/main/docs/superpowers/specs/2026-05-25-intentcall-design.md).
+Canonical design docs: [North Star](../../docs/NORTH_STAR.mdx), [Design FAQ](../../docs/DESIGN_FAQ.mdx), and [DX FAQ](../../docs/DX_FAQ.mdx).

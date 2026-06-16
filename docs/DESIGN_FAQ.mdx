@@ -1,0 +1,73 @@
+# IntentCall — Design FAQ
+
+*Why IntentCall is built the way it is.* For usage patterns, see [DX_FAQ.mdx](DX_FAQ.mdx).
+
+---
+
+## Origin & positioning
+
+**Q: Why was IntentCall extracted from mcp_flutter?**
+A: As `mcp_flutter` scaled, the intent registry, wire types, and adapters became a distinct platform concern separate from the product harness (`mcp_toolkit`). Extracting to a standalone repo clarifies the dependency boundary: `mcp_flutter` is a consumer of IntentCall, not its host. See [ADR 0010](decisions/0010-adopt-intentcall-product-name.md).
+
+**Q: Why is it called IntentCall and not AgentKit?**
+A: OpenAI shipped a product named AgentKit in October 2025, creating a direct pub.dev and search collision. IntentCall — "register intents, call them everywhere" — describes the registry-plus-invoke model without overlap. See [ADR 0010](decisions/0010-adopt-intentcall-product-name.md).
+
+**Q: What problem does IntentCall solve that `dart_mcp` alone does not?**
+A: `dart_mcp` is a transport implementation. IntentCall adds a typed *intent registry* on top: a central `AgentRegistry` where tools declare `AgentCallEntry` objects once, and adapters publish them to any transport. Without IntentCall, each adapter re-implements registration, validation, and dispatch independently.
+
+**Q: Where should canonical IntentCall design decisions live?**
+A: In this repository. IntentCall owns the product philosophy, platform projection model, AX/DX contracts, adapter expectations, and public direction such as IntentPack. Consumer repositories such as `mcp_flutter` own proof and integration guidance: hosted dependency checks, Flutter MCP Toolkit bootstrap, migration recipes, regression checklists, and consumer-facing examples. They should route architectural questions back to this repo instead of defining IntentCall's platform contract.
+
+---
+
+## Architecture
+
+**Q: Why is the monorepo split into so many `intentcall_*` packages?**
+A: Each package has a distinct dependency footprint and deployment target. `intentcall_schema` has zero Flutter dependencies; `intentcall_platform` requires Flutter. Keeping them separate lets backend-only consumers (CLI tools, servers) depend only on `intentcall_schema` + `intentcall_core` without pulling in Flutter.
+
+**Q: Why does `intentcall_schema` own the wire types rather than `intentcall_core`?**
+A: Schema types cross transport boundaries — they must be importable by every adapter and by the testing package without pulling in registry runtime logic. Keeping them in a leaf package with minimal dependencies prevents circular imports and keeps the contract stable even as the core evolves.
+
+**Q: Why is `intentcall_testing` a separate package?**
+A: Test helpers have `test` as a dependency, which must not bleed into production packages. Isolating them in `intentcall_testing` lets app authors add it as a `dev_dependency` without the production graph growing.
+
+**Q: Why is there an `intentcall_codegen` package?**
+A: Codegen is strictly optional — many adopters will register intents by hand. Keeping it separate means the core registry has zero `build_runner` dependency, and users who opt in to `@AgentTool` get a clean code-generation surface without it affecting tree-shaking for others.
+
+**Q: Why is IntentPack direction separate from today's registry API?**
+A: `AgentRegistry`, `AgentCallEntry`, and `RegisteredAgentIntent` are the current shipped authoring/runtime model. IntentPack is the proposed portable packaging layer above them: one app-level unit that can carry entries, schemas, examples, side-effect metadata, safety policy, platform projection hints, adapter hints, and compatibility metadata. Keeping that distinction explicit lets the repo document the destination without pretending the stable public API already exists.
+
+**Q: Why are there separate `intentcall_apple` / `intentcall_android` / `intentcall_gemma` packages instead of one `intentcall_native`?**
+A: Native surface adapters differ sharply in their platform SDKs and entitlement requirements. A single `intentcall_native` would force all three sets of platform SDKs into every build. Platform-specific packages let Flutter tree-shaker and pubspec `platforms` keys exclude irrelevant targets cleanly.
+
+---
+
+## Transport model
+
+**Q: Why is IntentCall "transport-agnostic" rather than MCP-first?**
+A: MCP is one wire format today; WebMCP, Apple App Intents, Android AppFunctions / App Actions, Windows App Actions, and protocol handlers all expose different contracts. IntentCall keeps the registry contract central, then projects it into the strongest available surface for each platform: semantic action/tool APIs where available, assistant or shortcut fulfillment where appropriate, and deep-link fallback where native support is incomplete.
+
+**Q: Why does `intentcall_mcp` use `dart_mcp` rather than a custom implementation?**
+A: Maintaining a custom MCP wire implementation would duplicate protocol work tracked upstream in the Dart ecosystem. `dart_mcp` is the canonical Dart MCP library; IntentCall wraps it with the registry bridge, staying thin.
+
+**Q: Why does `intentcall_webmcp` exist separately from `intentcall_mcp`?**
+A: WebMCP's browser-hosted tool registration model requires different lifecycle management from request/response MCP. Current WebMCP drafts use `document.modelContext`; compatibility with older `navigator.modelContext` experiments should be treated as a shim, not the primary contract.
+
+**Q: Why does IntentCall use deep links if the goal is native agent integration?**
+A: Deep links are the universal fallback, not the whole vision. Some platforms expose semantic agent/action registries; others only provide launch routing today. IntentCall preserves one invocation contract across both: native metadata where the platform supports it, and `intentcall://invoke/...` or platform protocol handlers where it does not.
+
+**Q: How should platform support be described during pre-release?**
+A: Be explicit about tiers. Apple App Intents and WebMCP are semantic surfaces; Android AppFunctions and Windows App Actions are roadmap native semantic targets; Android App Actions and shortcuts are assistant/shortcut fulfillment; Windows protocol activation and Linux `x-scheme-handler` are protocol fallback. AAIF is ecosystem alignment around agent infrastructure, not a Linux desktop intent API.
+
+---
+
+## Quality & stability
+
+**Q: Why are all packages at `0.1.x` pre-release instead of `1.0.0`?**
+A: The wire contract in `intentcall_schema` and the registry API in `intentcall_core` are still being exercised across real adapters. Publishing a `1.0.0` would imply API stability we cannot guarantee yet. Pre-release allows breaking changes to land without a semver major while the design stabilizes.
+
+**Q: Why does CI run a publish dry-run on every PR?**
+A: pub.dev publish validation catches issues (missing `README.md`, bad `pubspec.yaml` constraints, platform tag mismatches) that `dart analyze` misses. Catching them early in PR review prevents a broken pub.dev publish in a release workflow.
+
+**Q: Why is `pubspec.lock` committed for the workspace?**
+A: Workspace-level lock files ensure CI reproduces exactly the dependency graph that developers tested locally, avoiding "works on my machine" failures caused by transitive dependency updates. Per-package locks are not committed (pub.dev consumers resolve fresh).

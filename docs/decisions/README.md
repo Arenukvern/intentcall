@@ -3,7 +3,7 @@
 Architecture Decision Records (ADRs) for IntentCall.
 Format: [MADR](https://adr.github.io/madr/) — see any existing ADR for the template.
 
-Next ADR number: **0012**
+Next ADR number: **0014**
 
 ---
 
@@ -12,7 +12,9 @@ Next ADR number: **0012**
 | ADR | Status | Title | Date |
 |-----|--------|-------|------|
 | [0010](0010-adopt-intentcall-product-name.md) | accepted | Adopt IntentCall as the public product name | 2026-05-29 |
-| [0011](0011-agent-skills-discoverability-for-intentcall.md) | proposed | Agent Skills Discoverability and Custom Skills for IntentCall | 2026-06-02 |
+| [0011](0011-agent-skills-discoverability-for-intentcall.md) | accepted | Agent Skills Discoverability and Custom Skills for IntentCall | 2026-06-02 |
+| [0012](0012-adopt-platform-support-tiers.md) | accepted | Adopt platform support tiers for IntentCall | 2026-06-10 |
+| [0013](0013-delete-implemented-plans-after-durable-extraction.md) | accepted | Delete implemented plans after durable extraction | 2026-06-10 |
 
 ---
 

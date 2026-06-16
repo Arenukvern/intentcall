@@ -2,6 +2,7 @@
 name: write-adapter
 description: Guide to implementing a custom transport/surface adapter for IntentCall (such as custom MCP or native Apple/Android emitters). Use when an agent needs to publish registry-backed intents to a new protocol or platform surface.
 license: MIT
+type: developer
 metadata:
   author: intentcall
   version: "1.0.0"
@@ -67,7 +68,13 @@ class MyCustomAdapter implements AgentAdapter {
       handler: (arguments) async {
         // Delegate execution to the core registry
         final result = await registry.invoke(descriptor.qualifiedName, arguments);
-        return result.toMap(); // Or translate to transport result format
+        return <String, Object?>{
+          'ok': result.ok,
+          'message': result.message,
+          if (result.ok) ...result.data,
+          if (!result.ok) 'code': result.code,
+          if (!result.ok) 'details': result.details,
+        };
       },
     );
   }
@@ -90,5 +97,5 @@ class MyCustomAdapter implements AgentAdapter {
 
 ## Related Documents
 
-- [DESIGN_FAQ.md](../../DESIGN_FAQ.md) — Adapter modularity details.
-- [DX_FAQ.md](../../DX_FAQ.md) — Sibling overrides and testing custom adapters.
+- [DESIGN_FAQ.mdx](../../docs/DESIGN_FAQ.mdx) — Adapter modularity details.
+- [DX_FAQ.mdx](../../docs/DX_FAQ.mdx) — Sibling overrides and testing custom adapters.

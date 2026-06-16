@@ -42,7 +42,7 @@ final class MigrateAgentEntriesReport {
 
 /// Text migrator for MCPCallEntry → AgentCallEntry (Phase 6f).
 ///
-/// Limitations (documented in migration_intentcall_phase6.md):
+/// Limitations (documented in migration_mcp_call_entry_to_agent_call_entry.md):
 /// - Extension types wrapping MCPCallEntry need manual namespace/handler review.
 /// - Nested [ObjectSchema] / array fields are only partially preserved; see
 ///   `TODO(migrate)` comments in generated `inputSchema` and refine manually.

@@ -6,7 +6,7 @@ default:
 
 # Run tests for all packages in the workspace
 test:
-    dart test packages/intentcall_schema packages/intentcall_core packages/intentcall_mcp packages/intentcall_webmcp packages/intentcall_gemma packages/intentcall_apple packages/intentcall_android packages/intentcall_platform packages/intentcall_codegen packages/intentcall_testing
+    dart test packages/intentcall_schema packages/intentcall_core packages/intentcall_mcp packages/intentcall_webmcp packages/intentcall_gemma packages/intentcall_apple packages/intentcall_android packages/intentcall_platform packages/intentcall_codegen packages/intentcall_testing tool/intentcall
 
 # Analyze the Dart code in the workspace
 analyze:
@@ -15,6 +15,19 @@ analyze:
 # Dry-run publishing all packages in order (default)
 publish-dry-run:
     dart run tool/intentcall/bin/intentcall.dart publish-all
+
+# Diagnostic package archive validation. Ignores pub warnings such as dirty git,
+# but still fails real archive/content validation errors.
+publish-dry-run-ignore-warnings:
+    dart run tool/intentcall/bin/intentcall.dart publish-all --ignore-warnings
+
+# Check release cleanliness and pub.dev credentials before publishing
+publish-preflight:
+    dart run tool/intentcall/bin/intentcall.dart publish-preflight
+
+# Check first-publish readiness, including pub.dev package name availability
+publish-preflight-first:
+    dart run tool/intentcall/bin/intentcall.dart publish-preflight --first-publish
 
 # Execute publishing all packages (requires credentials)
 publish-execute:
@@ -36,10 +49,12 @@ doctor:
 validate:
     dart run tool/intentcall/bin/intentcall.dart validate
 
+# Run the shared native adapter contract tests
+adapter-contract-test:
+    dart test packages/intentcall_testing/test/adapter_contract_test.dart packages/intentcall_mcp/test/mcp_adapter_contract_test.dart packages/intentcall_webmcp/test/webmcp_adapter_contract_test.dart packages/intentcall_gemma/test/gemma_adapter_contract_test.dart
+
 # List custom agent skills defined in this repository
 list-skills:
     @echo "Available Custom Agent Skills:"
     @echo "  - register-intents: Guide to manual and codegen intent registration (skills/register-intents/SKILL.md)"
     @echo "  - write-adapter: Guide to implementing custom platform/transport adapters (skills/write-adapter/SKILL.md)"
-
-

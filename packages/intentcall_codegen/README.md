@@ -1,9 +1,9 @@
-> ⚠️ **Pre-release (0.1.x)** — Highly experimental. APIs may change without notice. Not for production. [Details](../../PRE_RELEASE.md).
+> ⚠️ **Pre-release (0.1.x)** — Highly experimental. APIs may change without notice. Not for production. [Details](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md).
 
 
 # intentcall_codegen
 
-Optional `@AgentTool` / `@AgentParam` annotations and **build_runner** codegen pilot (Phase 5-C).
+Optional `@AgentTool` / `@AgentParam` annotations and **build_runner** codegen pilot.
 
 Hand-written `AgentCallEntry` remains first-class; codegen is opt-in for stable tools with typed parameters.
 
@@ -13,10 +13,9 @@ Hand-written `AgentCallEntry` remains first-class; codegen is opt-in for stable 
 
 ```yaml
 dependencies:
-  intentcall_codegen:
-    path: ../intentcall_codegen
-  intentcall_core:
-  intentcall_schema:
+  intentcall_codegen: ^0.1.0
+  intentcall_core: ^0.1.0
+  intentcall_schema: ^0.1.0
 
 dev_dependencies:
   build_runner: ^2.4.15
@@ -67,4 +66,4 @@ Supported parameter types: `String`, `int`, `bool`, `double`.
 - Tool kind only (resources: hand-write `AgentCallEntry.resource`)
 - Test fixture: `test/fixtures/demo_ping_tool.dart`
 
-See [intentcall design](https://github.com/Arenukvern/mcp_flutter/blob/main/docs/superpowers/specs/2026-05-25-intentcall-design.md) (declarative authoring).
+See [DX FAQ](../../docs/DX_FAQ.mdx) for current codegen workflow and [Design FAQ](../../docs/DESIGN_FAQ.mdx) for the IntentPack direction.

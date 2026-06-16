@@ -2,5 +2,6 @@
 
 ## 0.1.0
 
-- In-repo intentcall stack (pre Phase 7 extract).
-
+- First pre-release of Apple manifest helpers for IntentCall.
+- Includes App Intents / Shortcuts-oriented manifest generation from
+  IntentCall descriptors.

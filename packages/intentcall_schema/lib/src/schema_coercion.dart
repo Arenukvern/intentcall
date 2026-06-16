@@ -100,13 +100,13 @@ Map<String, Object?> _coerceObjectValue(
 }
 
 /// Shallow coercion for object schemas with empty [properties] and
-/// `additionalProperties: true` (e.g. [wait_for] predicate maps).
+/// `additionalProperties: true`.
 Map<String, Object?> _coerceOpenObjectMap(final Map<String, Object?> value) {
   final coerced = <String, Object?>{};
   for (final entry in value.entries) {
     coerced[entry.key] = _coerceOpenObjectEntryValue(entry.value);
   }
-  return _coerceWaitPredicateFields(coerced);
+  return coerced;
 }
 
 Object? _coerceOpenObjectEntryValue(final Object? value) {
@@ -124,64 +124,6 @@ Object? _coerceOpenObjectEntryValue(final Object? value) {
     return _coerceOpenObjectMap(Map<String, Object?>.from(value));
   }
   return value;
-}
-
-Map<String, Object?> _coerceWaitPredicateFields(final Map<String, Object?> value) {
-  final kind = value['kind'];
-  if (kind is! String) {
-    return value;
-  }
-  final out = Map<String, Object?>.from(value);
-  switch (kind) {
-    case 'time':
-      _coerceIntField(out, 'ms');
-    case 'text':
-    case 'noText':
-      _coerceStringField(out, 'text');
-    case 'stable':
-      _coerceIntField(out, 'stableWindowMs');
-    case 'noError':
-      break;
-    default:
-      break;
-  }
-  return out;
-}
-
-void _coerceIntField(final Map<String, Object?> map, final String key) {
-  final raw = map[key];
-  if (raw == null) {
-    return;
-  }
-  if (raw is int) {
-    return;
-  }
-  if (raw is num) {
-    map[key] = raw.toInt();
-    return;
-  }
-  if (raw is String) {
-    final trimmed = raw.trim();
-    if (trimmed.isEmpty) {
-      map.remove(key);
-      return;
-    }
-    final parsed = int.tryParse(trimmed);
-    if (parsed != null) {
-      map[key] = parsed;
-    }
-  }
-}
-
-void _coerceStringField(final Map<String, Object?> map, final String key) {
-  final raw = map[key];
-  if (raw == null) {
-    return;
-  }
-  if (raw is String) {
-    return;
-  }
-  map[key] = raw.toString();
 }
 
 List<Object?> _coerceArrayValue(
@@ -232,7 +174,9 @@ bool? _parseWireBool(final String normalized) {
   return null;
 }
 
-Map<String, Map<String, Object?>> _propertySchemas(final Map<String, Object?> schema) {
+Map<String, Map<String, Object?>> _propertySchemas(
+  final Map<String, Object?> schema,
+) {
   final raw = schema['properties'];
   if (raw is! Map) {
     return const {};

@@ -2,5 +2,6 @@
 
 ## 0.1.0
 
-- In-repo intentcall stack (pre Phase 7 extract).
-
+- First pre-release of optional IntentCall code generation.
+- Includes `@AgentTool` / `@AgentParam` annotations and a build_runner
+  generator for simple tool registrations.

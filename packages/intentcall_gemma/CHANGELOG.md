@@ -2,5 +2,5 @@
 
 ## 0.1.0
 
-- In-repo intentcall stack (pre Phase 7 extract).
-
+- First pre-release of the optional Gemma adapter for IntentCall experiments.
+- Includes function-registration plumbing over the shared IntentCall registry.

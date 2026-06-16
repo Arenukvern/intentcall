@@ -23,14 +23,42 @@ void main(List<String> arguments) async {
     ..addCommand('validate')
     ..addCommand('check-path-deps')
     ..addCommand(
+      'publish-preflight',
+      ArgParser()..addFlag(
+        'first-publish',
+        negatable: false,
+        help:
+            'Also require all pub.dev package names to be currently available.',
+      ),
+    )
+    ..addCommand(
       'print-hosted-deps',
-      ArgParser()..addOption('version', abbr: 'v', help: 'Version to print dependencies for'),
+      ArgParser()..addOption(
+        'version',
+        abbr: 'v',
+        help: 'Version to print dependencies for',
+      ),
     )
     ..addCommand(
       'publish-all',
       ArgParser()
-        ..addFlag('execute', negatable: false, help: 'Execute publishing instead of dry-run')
-        ..addFlag('dry-run', negatable: false, help: 'Run publish in dry-run mode (default)', defaultsTo: true),
+        ..addFlag(
+          'execute',
+          negatable: false,
+          help: 'Execute publishing instead of dry-run',
+        )
+        ..addFlag(
+          'dry-run',
+          negatable: false,
+          help: 'Run publish in dry-run mode (default)',
+          defaultsTo: true,
+        )
+        ..addFlag(
+          'ignore-warnings',
+          negatable: false,
+          help:
+              'Diagnostic dry-run only: continue despite pub warnings such as dirty git state.',
+        ),
     );
 
   ArgResults results;
@@ -62,6 +90,15 @@ void main(List<String> arguments) async {
       final code = await runCheckPathDeps(repoRoot);
       exit(code);
 
+    case 'publish-preflight':
+      final cmdResults = results.command!;
+      final firstPublish = cmdResults['first-publish'] as bool? ?? false;
+      final code = await runPublishPreflight(
+        repoRoot,
+        firstPublish: firstPublish,
+      );
+      exit(code);
+
     case 'print-hosted-deps':
       final cmdResults = results.command!;
       final envVersion = Platform.environment['INTENTCALL_VERSION'];
@@ -73,8 +110,13 @@ void main(List<String> arguments) async {
       final cmdResults = results.command!;
       // If --execute is passed, dryRun is false. If only --dry-run is passed or neither, dryRun is true.
       final execute = cmdResults['execute'] as bool? ?? false;
+      final ignoreWarnings = cmdResults['ignore-warnings'] as bool? ?? false;
       final dryRun = !execute;
-      final code = await runPublishAll(repoRoot, dryRun: dryRun);
+      final code = await runPublishAll(
+        repoRoot,
+        dryRun: dryRun,
+        ignoreWarnings: ignoreWarnings,
+      );
       exit(code);
 
     default:
@@ -103,10 +145,19 @@ void printUsage(ArgParser parser) {
   print('Usage: dart run tool/intentcall [command] [options]');
   print('\nCommands:');
   print('  doctor                Check developer environment health.');
-  print('  validate              Validate path dependencies and version consistency.');
-  print('  check-path-deps       Scan workspace for invalid path dependencies.');
+  print(
+    '  validate              Validate path dependencies and version consistency.',
+  );
+  print(
+    '  check-path-deps       Scan workspace for invalid path dependencies.',
+  );
+  print(
+    '  publish-preflight     Check release cleanliness and pub.dev credentials.',
+  );
   print('  print-hosted-deps     Print hosted pub.dev dependency blocks.');
-  print('  publish-all           Publish all workspace packages to pub.dev in order.');
+  print(
+    '  publish-all           Publish all workspace packages to pub.dev in order.',
+  );
   print('\nOptions:');
   print(parser.usage);
 }
@@ -177,83 +228,123 @@ Future<int> runDoctor(Directory repoRoot) async {
 
 Future<int> runValidate(Directory repoRoot) async {
   print('== Running Workspace Validation ==');
-  
+
   // 1. Run check-path-deps
   final pathDepsExitCode = await runCheckPathDeps(repoRoot);
   if (pathDepsExitCode != 0) {
     return pathDepsExitCode;
   }
-  
+
   // 2. Run version consistency check
   print('\nChecking version consistency across packages...');
   String? commonVersion;
   bool versionMismatch = false;
-  
+
   for (final pkg in publishOrder) {
-    final pubspecFile = File(p.join(repoRoot.path, 'packages', pkg, 'pubspec.yaml'));
+    final pubspecFile = File(
+      p.join(repoRoot.path, 'packages', pkg, 'pubspec.yaml'),
+    );
     if (!pubspecFile.existsSync()) {
       stderr.writeln('ERROR: pubspec.yaml not found for package: $pkg');
       return 1;
     }
-    
+
     final content = await pubspecFile.readAsString();
-    final versionMatch = RegExp(r'^version:\s*([^\s]+)', multiLine: true).firstMatch(content);
+    final versionMatch = RegExp(
+      r'^version:\s*([^\s]+)',
+      multiLine: true,
+    ).firstMatch(content);
     if (versionMatch == null) {
-      stderr.writeln('ERROR: Could not find version in pubspec.yaml for package: $pkg');
+      stderr.writeln(
+        'ERROR: Could not find version in pubspec.yaml for package: $pkg',
+      );
       return 1;
     }
-    
+
     final version = versionMatch.group(1);
     print('  - $pkg: $version');
     if (commonVersion == null) {
       commonVersion = version;
     } else if (commonVersion != version) {
-      stderr.writeln('ERROR: Version mismatch for package $pkg ($version). Expected $commonVersion.');
+      stderr.writeln(
+        'ERROR: Version mismatch for package $pkg ($version). Expected $commonVersion.',
+      );
       versionMismatch = true;
     }
   }
-  
+
   if (versionMismatch) {
     stderr.writeln('FAIL: Package versions are not synchronized.');
     return 1;
   }
-  
+
   print('OK: All packages are synchronized at version $commonVersion.');
+
+  // 3. Run plan hygiene check
+  print('\nChecking plan hygiene (active plan files)...');
+  final activePlans = <String>[];
+  final taskFile = File(p.join(repoRoot.path, 'task.md'));
+  if (taskFile.existsSync()) activePlans.add('task.md');
+  final planFile = File(p.join(repoRoot.path, 'implementation_plan.md'));
+  if (planFile.existsSync()) activePlans.add('implementation_plan.md');
+
+  final activePlansDir = Directory(
+    p.join(repoRoot.path, 'docs', 'exec-plans', 'active'),
+  );
+  if (activePlansDir.existsSync()) {
+    try {
+      final files = activePlansDir.listSync().whereType<File>();
+      for (final f in files) {
+        final name = p.basename(f.path);
+        if (!name.startsWith('.')) {
+          activePlans.add('docs/exec-plans/active/$name');
+        }
+      }
+    } catch (_) {}
+  }
+
+  if (activePlans.isNotEmpty) {
+    stderr.writeln(
+      'FAIL: Stale/active plan files found: ${activePlans.join(", ")}',
+    );
+    stderr.writeln(
+      'Please extract durable findings to docs/decisions/ or DESIGN_FAQ.mdx, then delete the plan files.',
+    );
+    return 1;
+  }
+
+  print('OK: No active plan files found.');
   return 0;
 }
 
 Future<int> runCheckPathDeps(Directory repoRoot) async {
-  final targetDirs = ['mcp_toolkit', 'mcp_server_dart', 'packages', 'flutter_test_app'];
-  bool foundPathDep = false;
-
-  for (final dirName in targetDirs) {
-    final dir = Directory(p.join(repoRoot.path, dirName));
-    if (!dir.existsSync()) continue;
-
-    await for (final entity in dir.list(recursive: true, followLinks: false)) {
-      if (entity is File && p.basename(entity.path) == 'pubspec.yaml') {
-        final parts = p.split(entity.path);
-        if (parts.contains('.dart_tool') || parts.contains('build')) {
-          continue;
-        }
-
-        final content = await entity.readAsString();
-        if (content.contains('intentcall/packages')) {
-          print('path dep still present: ${p.relative(entity.path, from: repoRoot.path)}');
-          final lines = content.split('\n');
-          for (var i = 0; i < lines.length; i++) {
-            if (lines[i].contains('intentcall/packages')) {
-              print('  Line ${i + 1}: ${lines[i].trim()}');
-            }
-          }
-          foundPathDep = true;
-        }
-      }
+  print('Checking for invalid intentcall path dependencies...');
+  final matches = <String>[];
+  for (final entity in repoRoot.listSync(recursive: true)) {
+    if (entity is! File) {
+      continue;
+    }
+    if (p.basename(entity.path) != 'pubspec.yaml') {
+      continue;
+    }
+    final relativePath = p.relative(entity.path, from: repoRoot.path);
+    if (relativePath.startsWith('.dart_tool${p.separator}') ||
+        relativePath.startsWith('build${p.separator}')) {
+      continue;
+    }
+    final content = entity.readAsStringSync();
+    if (content.contains('intentcall/packages')) {
+      matches.add(relativePath);
     }
   }
 
-  if (foundPathDep) {
-    stderr.writeln('FAIL: migrate to hosted intentcall deps (see docs/intentcall/hosted_cutover.md)');
+  if (matches.isNotEmpty) {
+    stderr.writeln(
+      'FAIL: Sibling path overrides are not allowed in published packages.',
+    );
+    for (final path in matches) {
+      stderr.writeln('  - $path');
+    }
     return 1;
   }
 
@@ -269,7 +360,151 @@ void runPrintHostedDeps(String version) {
   }
 }
 
-Future<int> runPublishAll(Directory repoRoot, {required bool dryRun}) async {
+Future<int> runPublishPreflight(
+  Directory repoRoot, {
+  required bool firstPublish,
+}) async {
+  print('== IntentCall Publish Preflight ==');
+
+  final validateCode = await runValidate(repoRoot);
+  if (validateCode != 0) {
+    return validateCode;
+  }
+
+  final gitCode = await runReleaseGitCleanCheck(repoRoot);
+  final tokenCode = await runPubTokenCheck();
+  final availabilityCode = firstPublish ? await runFirstPublishNameCheck() : 0;
+
+  if (gitCode != 0 || tokenCode != 0 || availabilityCode != 0) {
+    return 1;
+  }
+
+  print('\nOK: publish preflight passed.');
+  return 0;
+}
+
+Future<int> runFirstPublishNameCheck() async {
+  print('\nChecking pub.dev first-publish package name availability...');
+  final client = HttpClient();
+  var hasConflict = false;
+  try {
+    for (final pkg in publishOrder) {
+      final uri = Uri.https('pub.dev', '/api/packages/$pkg');
+      try {
+        final request = await client.getUrl(uri);
+        final response = await request.close();
+        await response.drain<void>();
+
+        if (response.statusCode == HttpStatus.notFound) {
+          print('OK: $pkg is available (404)');
+        } else if (response.statusCode == HttpStatus.ok) {
+          stderr.writeln('FAIL: $pkg already exists on pub.dev.');
+          hasConflict = true;
+        } else {
+          stderr.writeln(
+            'FAIL: Unexpected pub.dev response for $pkg: HTTP ${response.statusCode}',
+          );
+          hasConflict = true;
+        }
+      } catch (e) {
+        stderr.writeln('FAIL: Could not check pub.dev package $pkg: $e');
+        hasConflict = true;
+      }
+    }
+  } finally {
+    client.close(force: true);
+  }
+
+  if (hasConflict) {
+    return 1;
+  }
+
+  print('OK: all first-publish package names are available.');
+  return 0;
+}
+
+Future<int> runReleaseGitCleanCheck(Directory repoRoot) async {
+  print('\nChecking release git state...');
+  final result = await Process.run('git', [
+    'status',
+    '--porcelain=v1',
+    '--untracked-files=all',
+    '--',
+    'packages',
+    'tool/intentcall',
+  ], workingDirectory: repoRoot.path);
+
+  if (result.exitCode != 0) {
+    stderr.writeln('FAIL: git status failed while checking release state.');
+    stderr.write(result.stderr);
+    return result.exitCode;
+  }
+
+  final dirtyLines = result.stdout
+      .toString()
+      .split('\n')
+      .where((line) => line.trim().isNotEmpty)
+      .where(_isReleaseStatusLine)
+      .toList();
+
+  if (dirtyLines.isNotEmpty) {
+    stderr.writeln(
+      'FAIL: Release-critical files are not clean. Commit or revert these files before publishing:',
+    );
+    for (final line in dirtyLines) {
+      stderr.writeln('  $line');
+    }
+    return 1;
+  }
+
+  print('OK: release-critical files are clean.');
+  return 0;
+}
+
+Future<int> runPackageGitCleanCheck(Directory repoRoot) =>
+    runReleaseGitCleanCheck(repoRoot);
+
+bool _isReleaseStatusLine(String line) {
+  final path = line.length > 3 ? line.substring(3).trim() : '';
+  final normalized = path.replaceAll('\\', '/');
+  if (publishOrder.any((pkg) => normalized.startsWith('packages/$pkg/'))) {
+    return true;
+  }
+  return normalized.startsWith('tool/intentcall/');
+}
+
+Future<int> runPubTokenCheck() async {
+  print('\nChecking pub.dev token configuration...');
+  final result = await Process.run('dart', ['pub', 'token', 'list']);
+  final output = '${result.stdout}${result.stderr}';
+
+  if (result.exitCode != 0) {
+    stderr.writeln('FAIL: dart pub token list failed.');
+    stderr.write(output);
+    return result.exitCode;
+  }
+
+  if (output.contains('You do not have any secret tokens')) {
+    stderr.writeln(
+      'FAIL: No pub.dev token configured. Run: dart pub token add https://pub.dev',
+    );
+    return 1;
+  }
+
+  print('OK: pub.dev token is configured.');
+  return 0;
+}
+
+Future<int> runPublishAll(
+  Directory repoRoot, {
+  required bool dryRun,
+  bool ignoreWarnings = false,
+}) async {
+  if (!dryRun && ignoreWarnings) {
+    stderr.writeln('FAIL: --ignore-warnings is only allowed with dry-runs.');
+    return 64;
+  }
+
   print('== Workspace pub get ==');
   final pubGetCode = await runCommand('dart', ['pub', 'get'], repoRoot.path);
   if (pubGetCode != 0) {
@@ -283,7 +518,10 @@ Future<int> runPublishAll(Directory repoRoot, {required bool dryRun}) async {
 
     final isPlatform = pkg == 'intentcall_platform';
     final exec = isPlatform ? 'flutter' : 'dart';
-    final args = ['pub', 'publish', dryRun ? '--dry-run' : '--force'];
+    final args = buildPublishArgs(
+      dryRun: dryRun,
+      ignoreWarnings: ignoreWarnings,
+    );
 
     final exitCode = await runCommand(exec, args, dirPath);
     if (exitCode != 0) {
@@ -296,8 +534,25 @@ Future<int> runPublishAll(Directory repoRoot, {required bool dryRun}) async {
   return 0;
 }
 
-Future<int> runCommand(String executable, List<String> arguments, String workingDirectory) async {
-  print('Running command: $executable ${arguments.join(' ')} (in $workingDirectory)');
+List<String> buildPublishArgs({
+  required bool dryRun,
+  required bool ignoreWarnings,
+}) {
+  final args = ['pub', 'publish', dryRun ? '--dry-run' : '--force'];
+  if (ignoreWarnings) {
+    args.add('--ignore-warnings');
+  }
+  return args;
+}
+
+Future<int> runCommand(
+  String executable,
+  List<String> arguments,
+  String workingDirectory,
+) async {
+  print(
+    'Running command: $executable ${arguments.join(' ')} (in $workingDirectory)',
+  );
   final process = await Process.start(
     executable,
     arguments,

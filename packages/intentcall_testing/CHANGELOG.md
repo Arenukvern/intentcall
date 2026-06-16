@@ -2,5 +2,5 @@
 
 ## 0.1.0
 
-- In-repo intentcall stack (pre Phase 7 extract).
-
+- First pre-release of IntentCall testing helpers.
+- Includes entry invocation helpers and registry contract test utilities.

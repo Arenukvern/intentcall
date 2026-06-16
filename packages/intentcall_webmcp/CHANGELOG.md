@@ -2,5 +2,5 @@
 
 ## 0.1.0
 
-- In-repo intentcall stack (pre Phase 7 extract).
-
+- First pre-release of the WebMCP publish adapter for IntentCall.
+- Includes registry hot-sync into browser `modelContext` tool registration.

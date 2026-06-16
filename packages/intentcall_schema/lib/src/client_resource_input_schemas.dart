@@ -31,20 +31,31 @@ InputSchema clientResourceReadInputSchema() => <String, Object?>{
   },
 };
 
-/// Default read-args schema for dynamic client resource templates
-/// (e.g. `visual://localhost/app/errors/{count}`).
-InputSchema clientResourceTemplateReadInputSchema() => <String, Object?>{
-  'type': 'object',
-  'additionalProperties': false,
-  'required': <String>['uri'],
-  'properties': <String, Object?>{
+/// Default read-args schema for dynamic client resource templates.
+InputSchema clientResourceTemplateReadInputSchema({
+  final Iterable<String> templateVariables = const <String>['count'],
+}) {
+  final properties = <String, Object?>{
     'uri': <String, Object?>{
       'type': 'string',
       'description': 'Concrete resource URI matching the template.',
     },
-    'count': <String, Object?>{'type': 'integer'},
-  },
-};
+  };
+  for (final variable in templateVariables) {
+    if (variable == 'uri') {
+      continue;
+    }
+    properties[variable] = <String, Object?>{
+      'type': variable == 'count' ? 'integer' : 'string',
+    };
+  }
+  return <String, Object?>{
+    'type': 'object',
+    'additionalProperties': false,
+    'required': <String>['uri'],
+    'properties': properties,
+  };
+}
 
 InputSchema _deepCopySchemaMap(final Map<Object?, Object?> raw) => raw.map(
   (final key, final value) =>

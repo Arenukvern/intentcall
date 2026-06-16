@@ -74,4 +74,31 @@ void main() {
       await adapter.detach();
     },
   );
+
+  test('McpPublishAdapter detach does not unregister source intents', () async {
+    final registry = InMemoryAgentRegistry()
+      ..register(
+        RegisteredAgentIntent(
+          descriptor: AgentIntentDescriptor(
+            namespace: 'app',
+            name: 'hello',
+            description: 'hello',
+            kind: AgentIntentKind.tool,
+            inputSchema: const <String, Object?>{'type': 'object'},
+          ),
+          execute: (_) async => AgentResult.success(),
+        ),
+      );
+    final unpublished = <String>[];
+    final adapter = McpPublishAdapter(
+      publishTool: (_, final _) {},
+      unpublishTool: unpublished.add,
+    );
+
+    await adapter.attach(registry);
+    await adapter.detach();
+
+    expect(unpublished, contains('app_hello'));
+    expect(registry.get('app_hello'), isNotNull);
+  });
 }

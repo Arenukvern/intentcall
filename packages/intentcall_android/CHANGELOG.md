@@ -2,5 +2,6 @@
 
 ## 0.1.0
 
-- In-repo intentcall stack (pre Phase 7 extract).
-
+- First pre-release of Android manifest helpers for IntentCall.
+- Includes dynamic-shortcut-oriented manifest generation from IntentCall
+  descriptors.

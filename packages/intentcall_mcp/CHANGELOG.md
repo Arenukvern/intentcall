@@ -2,5 +2,6 @@
 
 ## 0.1.0
 
-- In-repo intentcall stack (pre Phase 7 extract).
-
+- First pre-release of the MCP bridge for IntentCall.
+- Includes MCP tool/resource registration adapters, resource mapping, URI
+  template helpers, and registry publish/unpublish synchronization.

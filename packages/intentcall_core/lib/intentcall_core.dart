@@ -6,7 +6,6 @@ export 'src/intent/agent_intent_descriptor.dart';
 export 'src/intent/agent_intent_kind.dart';
 export 'src/intent/agent_invocation.dart';
 export 'src/intent/registered_agent_intent.dart';
-export 'src/migrate_agent_entries.dart';
 export 'src/module/agent_module.dart';
 export 'src/module/agent_module_from_entries.dart';
 export 'src/naming/qualified_name.dart';

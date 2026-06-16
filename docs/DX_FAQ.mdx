@@ -1,0 +1,211 @@
+# IntentCall — DX FAQ
+
+*How to use and extend IntentCall.* For architectural rationale, see [DESIGN_FAQ.mdx](DESIGN_FAQ.mdx).
+
+---
+
+## 🏠 Getting started
+
+**Q: How do I set up the workspace locally?**
+
+```bash
+git clone https://github.com/Arenukvern/intentcall.git
+cd intentcall
+dart pub get
+just test
+just analyze
+```
+
+**Q: How do I run only the tests for one package?**
+
+```bash
+dart test packages/intentcall_core
+```
+
+**Q: How do I run static analysis?**
+
+```bash
+just analyze
+# equivalent to: dart analyze .
+```
+
+**Q: How do I validate all packages are publishable without publishing?**
+
+```bash
+just publish-dry-run
+# equivalent to: dart run tool/intentcall/bin/intentcall.dart publish-all
+```
+
+---
+
+## 🏭 Adding a dependency
+
+**Q: How do I add a dependency to a package?**
+
+Edit the target package's `pubspec.yaml`, then run `dart pub get` from the workspace root. Workspace resolution propagates automatically.
+
+**Q: How do I add a path dependency on a sibling package within this monorepo?**
+
+```yaml
+# in packages/intentcall_platform/pubspec.yaml
+dependencies:
+  intentcall_core:
+    path: ../intentcall_core
+```
+
+The workspace resolver handles this; no extra steps needed.
+
+---
+
+## 🔧 Adding a new package
+
+**Q: How do I add a new `intentcall_*` package to the workspace?**
+
+1. Create `packages/intentcall_foo/` with a valid `pubspec.yaml`.
+2. Add `- packages/intentcall_foo` to the `workspace:` list in the root `pubspec.yaml`.
+3. Add the package to the `test` target in `justfile` and the `publishOrder` list in `tool/intentcall/bin/intentcall.dart`.
+4. Add a row to the package table in `README.md`.
+5. Add the package to `release-please-config.json` if it will be published to pub.dev.
+6. Run `dart pub get` to re-resolve.
+
+---
+
+## 🔌 Writing a new adapter
+
+**Q: What is the minimal interface a new adapter must implement?**
+
+An adapter imports `intentcall_core`, reads entries from `AgentRegistry`, and bridges them to the target transport. Look at `intentcall_mcp` as the reference implementation — it is the simplest production adapter.
+
+**Q: How does an adapter discover registered intents?**
+
+```dart
+import 'package:intentcall_core/intentcall_core.dart';
+
+final registry = InMemoryAgentRegistry();
+final descriptors = registry.listDescriptors();
+```
+
+**Q: Where do wire types live?**
+
+Wire types (`AgentResult`, validation helpers, resource input schemas) live in `intentcall_schema`. Registry and authoring types (`AgentRegistry`, `AgentCallEntry`, `RegisteredAgentIntent`) live in `intentcall_core`.
+
+---
+
+## 🧭 IntentPack direction
+
+**Q: Should I use `IntentPack` today?**
+
+Not as a stable public API yet. `IntentPack` is the direction for packaging an app's agent surface as one portable unit, but current authoring should still use `AgentRegistry`, `AgentCallEntry`, and `RegisteredAgentIntent`.
+
+**Q: What should an IntentPack eventually contain?**
+
+An IntentPack should carry a stable pack id, name, description, entries/intents, input and output schemas, examples, side-effect metadata, confirmation and safety policy, platform projection hints, runtime adapter hints, and version/compatibility metadata.
+
+**Q: What projections should one pack support?**
+
+The target is to project one pack into MCP tool registrations, WebMCP manifest material, Flutter runtime registry entries, CLI command bindings, deep-link routing metadata, and future native-platform artifacts where supported.
+
+**Q: Will code generation be required?**
+
+No. Handwritten entries remain first-class. Code generation should reduce repetition for stable surfaces, especially build-time artifacts such as manifests, web assets, native metadata, or generated skill snapshots; it should not become mandatory ceremony for local development, tests, CLI tools, or dynamic hosts.
+
+---
+
+## 🧬 Codegen (`@AgentTool`)
+
+**Q: How do I opt in to codegen?**
+
+Add `intentcall_codegen` as a `dev_dependency` and `build_runner` to run the generator:
+
+```yaml
+dev_dependencies:
+  intentcall_codegen:
+    path: ../../packages/intentcall_codegen
+  build_runner: ^2.0.0
+```
+
+Then annotate your intent class with `@AgentTool` and run:
+
+```bash
+dart run build_runner build --delete-conflicting-outputs
+```
+
+**Q: Is codegen required?**
+
+No. You can register `AgentCallEntry` objects manually. Codegen is a convenience layer.
+
+---
+
+## 🧪 Testing
+
+**Q: How do I test an adapter against the contract?**
+
+Add `intentcall_testing` as a `dev_dependency` and use the provided `AgentCallContractTest` mixin. See the test suite in `packages/intentcall_mcp/test/` for a concrete example.
+
+**Q: How do I run integration tests against the mcp_flutter sibling repo?**
+
+```bash
+# from the mcp_flutter repo root:
+make check-intentcall-integration
+# (defaults INTENTCALL_ROOT=../agentkit when cloned as siblings)
+```
+
+---
+
+## 📦 Publishing to pub.dev
+
+**Q: What is the correct publish order?**
+
+1. `intentcall_schema`
+2. `intentcall_core`
+3. `intentcall_mcp`, `intentcall_webmcp`, `intentcall_gemma`, `intentcall_apple`, `intentcall_android`, `intentcall_codegen` (parallel)
+4. `intentcall_platform`
+5. `intentcall_testing`
+
+**Q: How do I publish?**
+
+See [PUBLISHING.md](../PUBLISHING.md) for full instructions. In short:
+
+```bash
+# historical first-publish check: only for brand-new package names
+just publish-preflight-first
+
+# later releases: release cleanliness and token
+just publish-preflight
+
+# archive validation, no publish
+just publish-dry-run
+
+# execute from the same clean release commit
+just publish-execute
+```
+
+**Q: How do I cut a release?**
+
+This repo uses [release-please](https://github.com/googleapis/release-please). Merge a release PR generated by release-please, then run the publish command above.
+
+---
+
+## 🔗 Local sibling repo path overrides
+
+**Q: When should I use local path overrides from mcp_flutter?**
+
+Normal consumers should use hosted `intentcall_*` packages from pub.dev. Use
+path overrides only for local IntentCall development before a release is
+published. When cloned as siblings (`~/mcp/agentkit` and `~/mcp/mcp_flutter`),
+a temporary local-development override looks like:
+
+```yaml
+dependency_overrides:
+  intentcall_core:
+    path: ../agentkit/packages/intentcall_core
+  # … etc
+```
+
+After a GitHub rename to `intentcall`, update the path to
+`../intentcall/packages/…` or use `INTENTCALL_ROOT` env var for local source
+validation:
+
+```bash
+INTENTCALL_ROOT=~/mcp/intentcall make check-intentcall-integration
+```

@@ -10,19 +10,15 @@ void main() {
       name: 'app_errors',
       description: 'errors',
       mimeType: 'application/json',
-      handler: (final uri) async => AgentResult.success(
-        data: <String, Object?>{'uri': uri},
-      ),
+      handler: (final uri) async =>
+          AgentResult.success(data: <String, Object?>{'uri': uri}),
     );
     final intent = resourceRegistrationToRegistration(
       capabilityId: 'fmt',
       registration: registration,
     );
     expect(intent.descriptor.kind, AgentIntentKind.resource);
-    expect(
-      intent.descriptor.inputSchema,
-      clientResourceReadInputSchema(),
-    );
+    expect(intent.descriptor.inputSchema, clientResourceReadInputSchema());
     final result = await intent.execute(
       AgentInvocation(
         descriptor: intent.descriptor,
@@ -41,9 +37,7 @@ void main() {
       mimeType: 'application/json',
       handler: (final uri) async {
         handlerCalled = true;
-        return AgentResult.success(
-          data: <String, Object?>{'uri': uri},
-        );
+        return AgentResult.success(data: <String, Object?>{'uri': uri});
       },
     );
     final intent = resourceRegistrationToRegistration(
@@ -76,37 +70,52 @@ void main() {
     expect(handlerCalled, isFalse);
   });
 
-  test('resourceTemplateRegistrationToRegistration rejects unknown keys', () {
-    final registration = ResourceTemplateRegistration(
-      uriTemplate: 'visual://localhost/errors/{count}',
-      name: 'application_errors',
-      description: 'errors',
-      mimeType: 'application/json',
-      handler: (final uri) async => AgentResult.success(
-        data: <String, Object?>{'uri': uri},
-      ),
-    );
-    final intent = resourceTemplateRegistrationToRegistration(
-      capabilityId: 'fmt',
-      registration: registration,
-    );
+  test(
+    'resourceTemplateRegistrationToRegistration uses template variables',
+    () async {
+      final registration = ResourceTemplateRegistration(
+        uriTemplate: 'visual://localhost/errors/{category}',
+        name: 'application_errors',
+        description: 'errors',
+        mimeType: 'application/json',
+        handler: (final uri) async =>
+            AgentResult.success(data: <String, Object?>{'uri': uri}),
+      );
+      final intent = resourceTemplateRegistrationToRegistration(
+        capabilityId: 'fmt',
+        registration: registration,
+      );
 
-    expect(
-      intent.descriptor.inputSchema,
-      clientResourceTemplateReadInputSchema(),
-    );
+      expect(
+        intent.descriptor.inputSchema,
+        clientResourceTemplateReadInputSchema(templateVariables: ['category']),
+      );
 
-    expect(
-      () => intent.execute(
-        AgentInvocation(
-          descriptor: intent.descriptor,
-          arguments: const <String, Object?>{
-            'uri': 'visual://localhost/errors/3',
-            'unexpected': true,
-          },
+      await expectLater(
+        intent.execute(
+          AgentInvocation(
+            descriptor: intent.descriptor,
+            arguments: const <String, Object?>{
+              'uri': 'visual://localhost/errors/critical',
+              'category': 'critical',
+            },
+          ),
         ),
-      ),
-      throwsA(isA<AgentValidationException>()),
-    );
-  });
+        completion(isA<AgentResult>()),
+      );
+
+      expect(
+        () => intent.execute(
+          AgentInvocation(
+            descriptor: intent.descriptor,
+            arguments: const <String, Object?>{
+              'uri': 'visual://localhost/errors/critical',
+              'unexpected': true,
+            },
+          ),
+        ),
+        throwsA(isA<AgentValidationException>()),
+      );
+    },
+  );
 }

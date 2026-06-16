@@ -2,6 +2,7 @@
 name: register-intents
 description: Guide to registering tool and resource intents in an IntentCall application, either manually or using `@AgentTool` code generation. Use when an agent needs to expose a Dart/Flutter function or resource endpoint to transport adapters.
 license: MIT
+type: developer
 metadata:
   author: intentcall
   version: "1.0.0"
@@ -18,12 +19,13 @@ Manual registration uses the `AgentRegistry` and `AgentCallEntry` classes from `
 
 ```dart
 import 'package:intentcall_core/intentcall_core.dart';
+import 'package:intentcall_schema/intentcall_schema.dart';
 
 void main() {
-  final registry = AgentRegistry.instance;
+  final registry = InMemoryAgentRegistry();
 
   registry.register(
-    AgentCallEntry(
+    AgentCallEntry.tool(
       namespace: 'custom',
       name: 'ping',
       description: 'Ping the local agent surface.',
@@ -35,9 +37,9 @@ void main() {
       },
       handler: (arguments) async {
         final message = arguments['message'] as String? ?? 'pong';
-        return AgentResult.success(<String, Object?>{'reply': message});
+        return AgentResult.success(data: <String, Object?>{'reply': message});
       },
-    ),
+    ).toRegistration(),
   );
 }
 ```
@@ -64,7 +66,9 @@ dev_dependencies:
 Create your tool definition and annotate it with `@AgentTool`:
 
 ```dart
+import 'package:intentcall_codegen/intentcall_codegen.dart';
 import 'package:intentcall_core/intentcall_core.dart';
+import 'package:intentcall_schema/intentcall_schema.dart';
 
 part 'ping_tool.g.dart';
 
@@ -72,8 +76,10 @@ part 'ping_tool.g.dart';
   name: 'ping',
   description: 'Ping the local agent surface.',
 )
-Future<AgentResult> pingTool(String? message) async {
-  return AgentResult.success(<String, Object?>{'reply': message ?? 'pong'});
+Future<AgentResult> pingTool(
+  @AgentParam('Test message.') String message,
+) async {
+  return AgentResult.success(data: <String, Object?>{'reply': message});
 }
 ```
 
@@ -81,8 +87,7 @@ Future<AgentResult> pingTool(String? message) async {
 Run the build command to generate the code mapping:
 
 ```bash
-just build-runner
-# or: dart run build_runner build --delete-conflicting-outputs
+dart run build_runner build --delete-conflicting-outputs
 ```
 
 ### Step 4: Register generated tools
@@ -93,7 +98,7 @@ import 'package:intentcall_core/intentcall_core.dart';
 import 'ping_tool.dart';
 
 void main() {
-  AgentRegistry.instance.register(pingToolRegistration);
+  final registry = InMemoryAgentRegistry()..register(pingToolRegistration);
 }
 ```
 
@@ -101,5 +106,5 @@ void main() {
 
 ## Related Documents
 
-- [DESIGN_FAQ.md](../../DESIGN_FAQ.md) — Why IntentCall is designed this way.
-- [DX_FAQ.md](../../DX_FAQ.md) — General workflow and CLI commands.
+- [DESIGN_FAQ.mdx](../../docs/DESIGN_FAQ.mdx) — Why IntentCall is designed this way.
+- [DX_FAQ.mdx](../../docs/DX_FAQ.mdx) — General workflow and CLI commands.
