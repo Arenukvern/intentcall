@@ -4,7 +4,6 @@
   "packages/intentcall_session": "0.1.0",
   "packages/intentcall_mcp": "0.1.0",
   "packages/intentcall_webmcp": "0.1.0",
-  "packages/intentcall_gemma": "0.1.0",
   "packages/intentcall_apple": "0.1.0",
   "packages/intentcall_android": "0.1.0",
   "packages/intentcall_codegen": "0.1.0",

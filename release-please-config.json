@@ -12,7 +12,6 @@
         "intentcall_session",
         "intentcall_mcp",
         "intentcall_webmcp",
-        "intentcall_gemma",
         "intentcall_apple",
         "intentcall_android",
         "intentcall_codegen",
@@ -41,11 +40,6 @@
       "release-type": "dart",
       "package-name": "intentcall_webmcp",
       "component": "intentcall_webmcp"
-    },
-    "packages/intentcall_gemma": {
-      "release-type": "dart",
-      "package-name": "intentcall_gemma",
-      "component": "intentcall_gemma"
     },
     "packages/intentcall_apple": {
       "release-type": "dart",

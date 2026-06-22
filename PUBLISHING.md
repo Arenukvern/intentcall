@@ -43,7 +43,6 @@ intentcall_core-v{{version}}
 intentcall_session-v{{version}}
 intentcall_mcp-v{{version}}
 intentcall_webmcp-v{{version}}
-intentcall_gemma-v{{version}}
 intentcall_apple-v{{version}}
 intentcall_android-v{{version}}
 intentcall_codegen-v{{version}}
@@ -66,7 +65,7 @@ uses GitHub OIDC through `dart-lang/setup-dart`.
 1. `intentcall_schema`
 2. `intentcall_core`
 3. `intentcall_session`
-4. `intentcall_mcp`, `intentcall_webmcp`, `intentcall_gemma`, `intentcall_apple`, `intentcall_android`, `intentcall_codegen`
+4. `intentcall_mcp`, `intentcall_webmcp`, `intentcall_apple`, `intentcall_android`, `intentcall_codegen`
 5. `intentcall_platform` (Flutter plugin — may need `flutter pub publish`)
 6. `intentcall_testing`
 
@@ -109,6 +108,9 @@ For `intentcall_platform`, if `dart pub publish` fails on Flutter constraints, r
 ```bash
 cd packages/intentcall_platform && flutter pub publish --dry-run
 ```
+
+`intentcall_gemma` is an example-only workspace package and is marked
+`publish_to: none`; do not include it in the pub.dev release train.
 
 ## After publish (mcp_flutter cutover)
 

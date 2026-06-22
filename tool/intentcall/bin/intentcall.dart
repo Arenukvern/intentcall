@@ -10,7 +10,6 @@ const publishOrder = [
   'intentcall_session',
   'intentcall_mcp',
   'intentcall_webmcp',
-  'intentcall_gemma',
   'intentcall_apple',
   'intentcall_android',
   'intentcall_codegen',
