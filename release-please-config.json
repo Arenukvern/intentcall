@@ -50,6 +50,11 @@
       "release-type": "dart",
       "package-name": "intentcall_testing",
       "component": "intentcall_testing"
+    },
+    "packages/intentcall_session": {
+      "release-type": "dart",
+      "package-name": "intentcall_session",
+      "component": "intentcall_session"
     }
   }
 }

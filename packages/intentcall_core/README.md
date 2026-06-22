@@ -40,6 +40,8 @@ await runtime.start();
 
 - `AgentResult.envelope` / `resourceEnvelope` (`intentcall_schema`)
 - `AgentWireArgs` for string-key maps
+- Tool/resource registration contracts for hosts that expose capability
+  surfaces without depending on a concrete transport adapter
 - `AgentClientInstall.once` in `mcp_toolkit` for lazy registration
 
 ## Migration helpers
@@ -59,6 +61,8 @@ Use this import for `MigrateAgentEntriesMigrator`,
 ## Related packages
 
 - `intentcall_schema` — results, validation, wire args
+- `intentcall_session` — reusable runtime session state, lifecycle, and JSON
+  snapshot persistence
 - `intentcall_mcp` — MCP bridge, publish adapter, resource mapper
 - `intentcall_webmcp` — WebMCP `modelContext` publish adapter
 - `intentcall_gemma` — on-device Gemma function-calling adapter

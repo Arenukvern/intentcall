@@ -3,7 +3,8 @@ import 'package:intentcall_schema/intentcall_schema.dart';
 import 'agent_intent_descriptor.dart';
 import 'agent_invocation.dart';
 
-typedef AgentExecutor = Future<AgentResult> Function(AgentInvocation invocation);
+typedef AgentExecutor =
+    Future<AgentResult> Function(AgentInvocation invocation);
 typedef AgentValidator = void Function(AgentArguments arguments);
 
 final class RegisteredAgentIntent {

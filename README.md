@@ -27,6 +27,7 @@ GitHub: [Arenukvern/intentcall](https://github.com/Arenukvern/intentcall)
 |---------|------|
 | `intentcall_schema` | Wire types, validation, `AgentResult` |
 | `intentcall_core` | Registry, runtime, `AgentCallEntry` |
+| `intentcall_session` | Runtime session lifecycle, persisted session state, and registry execution inside a session |
 | `intentcall_mcp` | MCP publish adapter (`dart_mcp`) |
 | `intentcall_webmcp` | WebMCP hot-sync adapter |
 | `intentcall_platform` | Native/web emitters, protocol fallback artifacts, and Flutter plugin |
