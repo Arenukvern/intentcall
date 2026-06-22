@@ -16,6 +16,7 @@ workspace:
   - packages/intentcall_android
   - packages/intentcall_platform
   - packages/intentcall_testing
+  - packages/intentcall_session
   - tool/intentcall
 
 dev_dependencies:

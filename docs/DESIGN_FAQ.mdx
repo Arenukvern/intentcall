@@ -40,6 +40,29 @@ A: `AgentRegistry`, `AgentCallEntry`, and `RegisteredAgentIntent` are the curren
 **Q: Why are there separate `intentcall_apple` / `intentcall_android` / `intentcall_gemma` packages instead of one `intentcall_native`?**
 A: Native surface adapters differ sharply in their platform SDKs and entitlement requirements. A single `intentcall_native` would force all three sets of platform SDKs into every build. Platform-specific packages let Flutter tree-shaker and pubspec `platforms` keys exclude irrelevant targets cleanly.
 
+## Runtime sessions
+
+**Q: Why does `intentcall_session` exist?**
+A: Sessions are runtime context for calling intents: which live app/tool endpoint is active, how it was selected, and when it was last used. That belongs beside IntentCall invocation, not inside a Flutter MCP consumer repo or a facade package. See [ADR 0014](decisions/0014-own-runtime-sessions-in-intentcall.md).
+
+**Q: What is a session in IntentCall?**
+A: A session is a persisted runtime attachment record, not a command catalog and not a transcript store. It keeps identity, endpoint, connection mode, active/sticky selection, and timestamps so CLI, MCP, app, and agent flows can reconnect to the same runtime without importing transport internals.
+
+**Q: What is the difference between a session manager and a broker?**
+A: `IntentSessionManager` owns lifecycle and persistence; `IntentSessionExecutor` resolves a session before invoking an `AgentRegistry`. A broker is a product-level composition of sessions, registry invocation, transport, and domain artifacts, so IntentCall exposes the reusable pieces instead of naming a separate broker facade.
+
+**Q: Why keep file-backed persistence instead of using only memory?**
+A: CLI/MCP debug loops often span multiple process calls, so memory-only state would lose the active endpoint between commands. `StateStore`, `StateLockManager`, and `SafeFileWriter` keep the existing durable behavior while still allowing tests or embedded hosts to provide temporary files.
+
+**Q: What remains adapter-specific after session extraction?**
+A: The `IntentSessionConnector` implementation remains runtime-specific. Flutter MCP keeps VM service discovery, DTD, Flutter extension calls, screenshots, widget inspection, and concrete CLI/MCP wiring; another runtime should provide its own connector and reuse the session manager.
+
+**Q: Why is dynamic registry not part of `intentcall_session`?**
+A: Dynamic registry is registry and adapter responsibility: descriptors, resource/tool snapshots, events, validation, and invocation are IntentCall core/MCP concerns. Sessions answer "which runtime am I attached to?", while registry answers "what can I call there?"
+
+**Q: Why does `intentcall_session` include `IntentSnapshotStore`?**
+A: Snapshot persistence is session-adjacent durable state: save a JSON runtime artifact, list it, load it, and diff it later. The store intentionally does not execute commands or know any transport; concrete hosts such as Flutter MCP build domain snapshots and pass plain JSON payloads into it.
+
 ---
 
 ## Transport model

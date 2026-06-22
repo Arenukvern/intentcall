@@ -12,14 +12,15 @@ void validateBareName(final String name) {
   }
 }
 
-String qualifyName({required final String namespace, required final String name}) {
+String qualifyName({
+  required final String namespace,
+  required final String name,
+}) {
   validateNamespace(namespace);
   validateBareName(name);
   final prefix = '${namespace}_';
   if (name.startsWith(prefix)) {
-    throw ArgumentError(
-      'Bare name must not include namespace prefix: $name',
-    );
+    throw ArgumentError('Bare name must not include namespace prefix: $name');
   }
   return '${namespace}_$name';
 }

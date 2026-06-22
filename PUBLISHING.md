@@ -15,9 +15,10 @@ checks only as historical/diagnostic guidance.
 
 1. `intentcall_schema`
 2. `intentcall_core`
-3. `intentcall_mcp`, `intentcall_webmcp`, `intentcall_gemma`, `intentcall_apple`, `intentcall_android`, `intentcall_codegen`
-4. `intentcall_platform` (Flutter plugin — may need `flutter pub publish`)
-5. `intentcall_testing`
+3. `intentcall_session`
+4. `intentcall_mcp`, `intentcall_webmcp`, `intentcall_gemma`, `intentcall_apple`, `intentcall_android`, `intentcall_codegen`
+5. `intentcall_platform` (Flutter plugin — may need `flutter pub publish`)
+6. `intentcall_testing`
 
 ## Commands
 

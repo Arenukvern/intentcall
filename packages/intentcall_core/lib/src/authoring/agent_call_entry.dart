@@ -24,8 +24,7 @@ typedef _AgentCallEntryValue = ({
 
 extension type const AgentCallEntry._(
   MapEntry<String, _AgentCallEntryValue> _entry
-)
-    implements MapEntry<String, _AgentCallEntryValue> {
+) implements MapEntry<String, _AgentCallEntryValue> {
   factory AgentCallEntry.tool({
     required final String namespace,
     required final String name,
@@ -95,10 +94,7 @@ extension type const AgentCallEntry._(
     );
     registration.validate(coerced);
     return registration.execute(
-      AgentInvocation(
-        descriptor: registration.descriptor,
-        arguments: coerced,
-      ),
+      AgentInvocation(descriptor: registration.descriptor, arguments: coerced),
     );
   }
 }

@@ -91,6 +91,109 @@ Wire types (`AgentResult`, validation helpers, resource input schemas) live in `
 
 ---
 
+## 🧭 Runtime sessions
+
+**Q: How do I add reusable runtime session lifecycle to a CLI or tool?**
+
+Use `intentcall_session` with a connector that knows how to attach to your runtime. The connector owns target discovery and transport details; `IntentSessionManager` owns persisted session state.
+
+```dart
+import 'package:intentcall_session/intentcall_session.dart';
+
+final sessions = IntentSessionManager(
+  connector: myConnector,
+  stateStore: StateStore(path: '.intentcall/session_state.json'),
+);
+
+await sessions.load();
+final start = await sessions.startSession(
+  const IntentSessionStartRequest(
+    mode: IntentSessionConnectionMode.uri,
+    uri: 'ws://127.0.0.1:8181/ws',
+    sessionId: 'debug',
+  ),
+);
+```
+
+**Q: What does my connector need to implement?**
+
+Implement `IntentSessionConnector`. Return a stable `activeEndpointDisplay` after `connect`; throw `IntentSessionConnectionException` with `multipleTargets`, `targetNotFound`, `noTargets`, `invalidUri`, or `invalidTargetId` when selection fails.
+
+```dart
+final class MyConnector implements IntentSessionConnector {
+  @override
+  String? activeEndpointDisplay;
+
+  @override
+  Map<String, Object?> get lastSelectionDiagnostics => const {};
+
+  @override
+  Future<Map<String, Object?>> connect({
+    IntentSessionConnectionMode mode = IntentSessionConnectionMode.auto,
+    String? targetId,
+    String? uri,
+    String? host,
+    int? port,
+    bool forceReconnect = false,
+  }) async {
+    activeEndpointDisplay = uri ?? 'runtime://current';
+    return {'connected': true, 'reusedConnection': false};
+  }
+
+  @override
+  Future<void> disconnect() async {
+    activeEndpointDisplay = null;
+  }
+}
+```
+
+**Q: How do I invoke an intent inside the active session?**
+
+Use `IntentSessionExecutor`. It attaches first, invokes the registry, and marks the session used after successful calls.
+
+```dart
+import 'package:intentcall_core/intentcall_core.dart';
+import 'package:intentcall_session/intentcall_session.dart';
+
+final executor = IntentSessionExecutor(
+  sessions: sessions,
+  registry: registry,
+);
+
+final result = await executor.invoke(
+  qualifiedName: 'debug_select',
+  arguments: const {'id': 'node-7'},
+  sessionId: 'debug',
+);
+```
+
+**Q: Should I build a broker package on top of this?**
+
+Usually no. Compose `IntentSessionManager`, `IntentSessionExecutor`, `AgentRegistry`, and your transport adapter directly; introduce a named broker only when it owns real product behavior such as routing policy, artifact storage, or multi-runtime coordination.
+
+**Q: How do I persist and diff JSON runtime snapshots?**
+
+Use `IntentSnapshotStore` for storage only. Build the snapshot payload in your host, then let the store handle safe writes, listing, loading, and structural diffs.
+
+```dart
+final snapshots = IntentSnapshotStore(
+  snapshotsDir: '.intentcall/snapshots',
+);
+
+await snapshots.saveSnapshot(
+  id: 'before',
+  snapshot: const {
+    'id': 'before',
+    'createdAt': '2026-06-22T00:00:00.000Z',
+    'result': {'selected': 'node-7'},
+  },
+);
+
+final diff = await snapshots.diffSnapshots(fromId: 'before', toId: 'after');
+```
+
+---
+
 ## 🧭 IntentPack direction
 
 **Q: Should I use `IntentPack` today?**
@@ -142,6 +245,17 @@ No. You can register `AgentCallEntry` objects manually. Codegen is a convenience
 
 Add `intentcall_testing` as a `dev_dependency` and use the provided `AgentCallContractTest` mixin. See the test suite in `packages/intentcall_mcp/test/` for a concrete example.
 
+**Q: How do I test session lifecycle without Flutter or MCP?**
+
+Use an in-memory fake connector and a temporary `StateStore` path. This proves persistence, lock handling, and session executor behavior without importing adapter internals.
+
+```dart
+final manager = IntentSessionManager(
+  connector: FakeConnector(endpoint: 'runtime://test'),
+  stateStore: StateStore(path: '${tempDir.path}/state.json'),
+);
+```
+
 **Q: How do I run integration tests against the mcp_flutter sibling repo?**
 
 ```bash
@@ -158,9 +272,10 @@ make check-intentcall-integration
 
 1. `intentcall_schema`
 2. `intentcall_core`
-3. `intentcall_mcp`, `intentcall_webmcp`, `intentcall_gemma`, `intentcall_apple`, `intentcall_android`, `intentcall_codegen` (parallel)
-4. `intentcall_platform`
-5. `intentcall_testing`
+3. `intentcall_session`
+4. `intentcall_mcp`, `intentcall_webmcp`, `intentcall_gemma`, `intentcall_apple`, `intentcall_android`, `intentcall_codegen` (parallel)
+5. `intentcall_platform`
+6. `intentcall_testing`
 
 **Q: How do I publish?**
 
@@ -202,10 +317,9 @@ dependency_overrides:
   # … etc
 ```
 
-After a GitHub rename to `intentcall`, update the path to
-`../intentcall/packages/…` or use `INTENTCALL_ROOT` env var for local source
-validation:
+If your checkout uses a different local folder name, update the path or use
+`INTENTCALL_ROOT` for local source validation:
 
 ```bash
-INTENTCALL_ROOT=~/mcp/intentcall make check-intentcall-integration
+INTENTCALL_ROOT=~/mcp/agentkit make check-intentcall-integration
 ```

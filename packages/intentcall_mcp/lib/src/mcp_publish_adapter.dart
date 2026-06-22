@@ -6,9 +6,6 @@ import 'package:intentcall_core/intentcall_core.dart';
 import 'agent_bridge.dart';
 import 'mcp_resource_mapper.dart';
 import 'mcp_result_mapper.dart';
-import 'resource_registration.dart';
-import 'resource_template_registration.dart';
-import 'tool_registration.dart';
 import 'uri_template.dart';
 
 typedef McpToolPublisher =
@@ -52,6 +49,7 @@ final class McpPublishAdapter implements AgentAdapter {
   final Set<String> _publishedTools = <String>{};
   final Set<String> _publishedResources = <String>{};
   final Set<String> _publishedResourceTemplates = <String>{};
+  final Set<String> _publishedResourceTemplatePatterns = <String>{};
   StreamSubscription<AgentRegistryEvent>? _events;
   AgentRegistry? _registry;
 
@@ -241,6 +239,33 @@ final class McpPublishAdapter implements AgentAdapter {
       ),
     );
     _publishedResources.add(key);
+
+    final publishTemplate = publishResourceTemplate;
+    if (publishTemplate == null || _publishedResourceTemplates.contains(key)) {
+      return;
+    }
+    final uriTemplate = registration?.uri ?? d.effectiveResourceUri;
+    if (_publishedResourceTemplatePatterns.contains(uriTemplate)) {
+      return;
+    }
+    publishTemplate(
+      ResourceTemplate(
+        uriTemplate: uriTemplate,
+        name: registration?.name ?? d.name,
+        description: registration?.description ?? d.description,
+        mimeType: registration?.mimeType ?? d.mimeType ?? 'application/json',
+      ),
+      (final request) async {
+        final params = matchUriTemplate(uriTemplate, request.uri);
+        if (params == null) return null;
+        return agentResultToReadResourceResult(
+          await registry.invoke(key, <String, Object?>{'uri': request.uri}),
+          uri: request.uri,
+        );
+      },
+    );
+    _publishedResourceTemplates.add(key);
+    _publishedResourceTemplatePatterns.add(uriTemplate);
   }
 
   void _publishResourceTemplateIntent({
@@ -252,6 +277,9 @@ final class McpPublishAdapter implements AgentAdapter {
     final publish = publishResourceTemplate;
     if (publish == null) return;
     final uriTemplate = registration?.uriTemplate ?? descriptor!.resourceUri!;
+    if (_publishedResourceTemplatePatterns.contains(uriTemplate)) {
+      return;
+    }
     publish(
       ResourceTemplate(
         uriTemplate: uriTemplate,
@@ -275,6 +303,7 @@ final class McpPublishAdapter implements AgentAdapter {
       },
     );
     _publishedResourceTemplates.add(key);
+    _publishedResourceTemplatePatterns.add(uriTemplate);
   }
 
   void _unpublishTransportKey(final String key) {

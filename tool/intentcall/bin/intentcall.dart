@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 const publishOrder = [
   'intentcall_schema',
   'intentcall_core',
+  'intentcall_session',
   'intentcall_mcp',
   'intentcall_webmcp',
   'intentcall_gemma',
@@ -333,7 +334,8 @@ Future<int> runCheckPathDeps(Directory repoRoot) async {
       continue;
     }
     final content = entity.readAsStringSync();
-    if (content.contains('intentcall/packages')) {
+    if (content.contains('intentcall/packages') ||
+        content.contains('agentkit/packages')) {
       matches.add(relativePath);
     }
   }
@@ -348,12 +350,12 @@ Future<int> runCheckPathDeps(Directory repoRoot) async {
     return 1;
   }
 
-  print('OK: no intentcall path deps in consumers');
+  print('OK: no local intentcall path deps in publishable packages');
   return 0;
 }
 
 void runPrintHostedDeps(String version) {
-  print('# Replace path: ../intentcall/packages/<name> with:');
+  print('# Replace path: ../agentkit/packages/<name> with:');
   print('');
   for (final pkg in publishOrder) {
     print('$pkg: ^$version');

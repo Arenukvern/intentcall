@@ -6,7 +6,7 @@ default:
 
 # Run tests for all packages in the workspace
 test:
-    dart test packages/intentcall_schema packages/intentcall_core packages/intentcall_mcp packages/intentcall_webmcp packages/intentcall_gemma packages/intentcall_apple packages/intentcall_android packages/intentcall_platform packages/intentcall_codegen packages/intentcall_testing tool/intentcall
+    dart test packages/intentcall_schema packages/intentcall_core packages/intentcall_session packages/intentcall_mcp packages/intentcall_webmcp packages/intentcall_gemma packages/intentcall_apple packages/intentcall_android packages/intentcall_platform packages/intentcall_codegen packages/intentcall_testing tool/intentcall
 
 # Analyze the Dart code in the workspace
 analyze:
@@ -33,7 +33,7 @@ publish-preflight-first:
 publish-execute:
     dart run tool/intentcall/bin/intentcall.dart publish-all --execute
 
-# Check for path dependencies pointing to intentcall/packages
+# Check for local IntentCall path dependencies in publishable packages
 check-path-deps:
     dart run tool/intentcall/bin/intentcall.dart check-path-deps
 
