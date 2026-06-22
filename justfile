@@ -33,6 +33,14 @@ publish-preflight-first:
 publish-execute:
     dart run tool/intentcall/bin/intentcall.dart publish-all --execute
 
+# Dry-run the package selected by a release tag, for example intentcall_core-v0.1.1
+publish-tag-dry-run tag:
+    dart run tool/intentcall/bin/intentcall.dart publish-tag --tag {{tag}} --skip-existing
+
+# Publish the package selected by a release tag (CI-only in normal release flow)
+publish-tag-execute tag:
+    dart run tool/intentcall/bin/intentcall.dart publish-tag --tag {{tag}} --execute --skip-existing
+
 # Check for local IntentCall path dependencies in publishable packages
 check-path-deps:
     dart run tool/intentcall/bin/intentcall.dart check-path-deps

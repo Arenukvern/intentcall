@@ -36,6 +36,27 @@ just publish-dry-run
 # equivalent to: dart run tool/intentcall/bin/intentcall.dart publish-all
 ```
 
+**Q: How are IntentCall packages released automatically?**
+
+Release Please opens a release PR from `release-please-config.json` and
+`.release-please-manifest.json`. The packages are linked as one synchronized
+`intentcall_*` train, so merging the release PR creates component tags such as
+`intentcall_core-v0.1.1`. Each tag triggers `.github/workflows/pub_publish.yml`,
+which publishes the package named by the tag through pub.dev automated
+publishing.
+
+**Q: How do I dry-run the package selected by a release tag?**
+
+```bash
+just publish-tag-dry-run intentcall_session-v0.1.0
+# equivalent to: dart run tool/intentcall/bin/intentcall.dart publish-tag --tag intentcall_session-v0.1.0 --skip-existing
+```
+
+Pub.dev automated publishing must be enabled for every package with tag pattern
+`<package>-v{{version}}` and GitHub Actions environment `pub.dev`. The release
+workflow should use `RELEASE_PLEASE_TOKEN`; using only `GITHUB_TOKEN` can create
+tags without triggering the downstream publish workflow.
+
 ---
 
 ## 🏭 Adding a dependency

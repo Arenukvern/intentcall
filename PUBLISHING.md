@@ -4,6 +4,56 @@ Status: `0.1.0` has been published to pub.dev for the `intentcall_*`
 package train. Use this runbook for future releases; keep the first-publish
 checks only as historical/diagnostic guidance.
 
+## Automatic release and publish flow
+
+IntentCall uses manifest-driven Release Please plus tag-triggered pub.dev
+publishing:
+
+1. Conventional commits land on `main`.
+2. `.github/workflows/release-please.yml` opens or updates one release PR from
+   `release-please-config.json` and `.release-please-manifest.json`.
+3. The Release Please config links every publishable `intentcall_*` component
+   into one package train, including `intentcall_session`, so versions remain
+   synchronized.
+4. Merging the release PR creates component tags such as
+   `intentcall_core-v0.1.1`.
+5. `.github/workflows/pub_publish.yml` runs for each `intentcall_*-v*` tag and
+   publishes the package named by that tag. The workflow is skip-existing safe,
+   so rerunning a tag does not republish an already visible package version.
+
+This mirrors the `mcp_flutter` release pattern: Release Please owns version and
+changelog generation, while the native repo publish script owns pub.dev
+preflight and publishing.
+
+## Required GitHub and pub.dev configuration
+
+- Add a repository secret named `RELEASE_PLEASE_TOKEN` with permission to create
+  releases and tags that trigger follow-up workflows. If Release Please falls
+  back to `GITHUB_TOKEN`, GitHub can suppress the downstream tag-triggered
+  publish workflow.
+- Create a GitHub Actions environment named `pub.dev`. Add required reviewers
+  there if release publishing should be gated.
+- On pub.dev, enable automated publishing for every existing package in the
+  train. Use repository `Arenukvern/intentcall`, environment `pub.dev`, and the
+  package-specific tag pattern:
+
+```text
+intentcall_schema-v{{version}}
+intentcall_core-v{{version}}
+intentcall_session-v{{version}}
+intentcall_mcp-v{{version}}
+intentcall_webmcp-v{{version}}
+intentcall_gemma-v{{version}}
+intentcall_apple-v{{version}}
+intentcall_android-v{{version}}
+intentcall_codegen-v{{version}}
+intentcall_platform-v{{version}}
+intentcall_testing-v{{version}}
+```
+
+No long-lived pub.dev token is required in GitHub Actions. The publish workflow
+uses GitHub OIDC through `dart-lang/setup-dart`.
+
 ## Prerequisites
 
 - `dart pub` logged in (`dart pub token add https://pub.dev`)
@@ -32,11 +82,17 @@ just publish-preflight
 # Validate all packages (CI uses this)
 just publish-dry-run
 
+# Validate one package tag the way automated publishing does
+just publish-tag-dry-run intentcall_session-v0.1.0
+
 # Diagnostic only while release-critical files are dirty; still fails archive/content errors
 just publish-dry-run-ignore-warnings
 
 # After credentials are configured
 just publish-execute
+
+# CI normally runs this from .github/workflows/pub_publish.yml on tag push
+just publish-tag-execute intentcall_session-v0.1.0
 ```
 
 For a brand-new package name, treat `just publish-preflight-first` as the release desk:
