@@ -6,6 +6,7 @@ IntentCall runtime sessions for commandable tools and apps.
 
 Use this package when a CLI, MCP server, app host, or agent tool needs to keep a
 durable attachment to a live runtime before invoking IntentCall registry entries.
+See `example/session_example.dart` for a complete runnable in-memory example.
 
 This package owns reusable runtime persistence mechanics:
 
@@ -55,6 +56,11 @@ final result = await manager.startSession(
 );
 ```
 
+The connector is implemented by the host. A minimal connector only needs to
+resolve an endpoint display string and report any target-selection diagnostics.
+The package does not open sockets or know about Flutter, MCP, devices, browsers,
+or daemons by itself.
+
 ## Invoke through a session
 
 ```dart
@@ -95,6 +101,16 @@ final diff = await snapshots.diffSnapshots(fromId: 'before', toId: 'after');
 Hosts own how snapshots are produced. For example, Flutter MCP has a command
 snapshot service that executes its command catalog and stores the resulting JSON
 through this package.
+
+## Run the example
+
+```bash
+dart run packages/intentcall_session/example/session_example.dart
+```
+
+The example creates a fake connector, starts a persisted session, invokes an
+`AgentRegistry` entry through that session, writes two JSON snapshots, and prints
+a structural diff.
 
 ## Boundaries
 

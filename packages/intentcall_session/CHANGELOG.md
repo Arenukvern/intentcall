@@ -5,3 +5,5 @@
 - First pre-release of IntentCall runtime session persistence and invocation helpers.
 - Includes file-backed session state, state locking, safe writes, session lifecycle
   management, and an `AgentRegistry` session executor.
+- Documents the public session, invocation, and snapshot flow with a runnable
+  package example.
