@@ -39,6 +39,44 @@ void main() {
     });
   });
 
+  group('release tag publishing', () {
+    test('parses package release tags', () {
+      final release = intentcall_cli.parsePackageReleaseTag(
+        'intentcall_session-v0.1.2',
+      );
+
+      expect(release, isNotNull);
+      expect(release!.package, 'intentcall_session');
+      expect(release.version, '0.1.2');
+    });
+
+    test('rejects non-package release tags', () {
+      expect(intentcall_cli.parsePackageReleaseTag('v0.1.2'), isNull);
+      expect(
+        intentcall_cli.parsePackageReleaseTag('intentcall_session-0.1.2'),
+        isNull,
+      );
+    });
+
+    test('detects same-train dependencies for publish waits', () {
+      final dependencies = intentcall_cli.sameTrainDependencies(
+        '''
+dependencies:
+  intentcall_core: ^0.2.0
+  path: ^1.9.1
+dev_dependencies:
+  intentcall_testing: ^0.2.0
+''',
+        const intentcall_cli.PackageRelease(
+          package: 'intentcall_mcp',
+          version: '0.2.0',
+        ),
+      );
+
+      expect(dependencies, ['intentcall_core', 'intentcall_testing']);
+    });
+  });
+
   group('runReleaseGitCleanCheck', () {
     test('passes when release-critical files are clean', () async {
       final repo = await _createGitRepo();

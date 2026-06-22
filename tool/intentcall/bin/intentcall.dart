@@ -10,7 +10,6 @@ const publishOrder = [
   'intentcall_session',
   'intentcall_mcp',
   'intentcall_webmcp',
-  'intentcall_gemma',
   'intentcall_apple',
   'intentcall_android',
   'intentcall_codegen',
@@ -59,6 +58,25 @@ void main(List<String> arguments) async {
           negatable: false,
           help:
               'Diagnostic dry-run only: continue despite pub warnings such as dirty git state.',
+        ),
+    )
+    ..addCommand(
+      'publish-tag',
+      ArgParser()
+        ..addOption(
+          'tag',
+          help:
+              'Release tag in the form <package>-v<version>, for example intentcall_core-v0.1.1.',
+        )
+        ..addFlag(
+          'execute',
+          negatable: false,
+          help: 'Execute publishing instead of dry-run preflight.',
+        )
+        ..addFlag(
+          'skip-existing',
+          negatable: false,
+          help: 'Skip when pub.dev already exposes this package version.',
         ),
     );
 
@@ -120,6 +138,21 @@ void main(List<String> arguments) async {
       );
       exit(code);
 
+    case 'publish-tag':
+      final cmdResults = results.command!;
+      final tag =
+          cmdResults['tag'] as String? ??
+          Platform.environment['GITHUB_REF_NAME'];
+      final execute = cmdResults['execute'] as bool? ?? false;
+      final skipExisting = cmdResults['skip-existing'] as bool? ?? false;
+      final code = await runPublishTag(
+        repoRoot,
+        tag: tag,
+        dryRun: !execute,
+        skipExisting: skipExisting,
+      );
+      exit(code);
+
     default:
       printUsage(parser);
       exit(64);
@@ -158,6 +191,9 @@ void printUsage(ArgParser parser) {
   print('  print-hosted-deps     Print hosted pub.dev dependency blocks.');
   print(
     '  publish-all           Publish all workspace packages to pub.dev in order.',
+  );
+  print(
+    '  publish-tag           Publish one package selected by a release tag.',
   );
   print('\nOptions:');
   print(parser.usage);
@@ -536,6 +572,270 @@ Future<int> runPublishAll(
   return 0;
 }
 
+Future<int> runPublishTag(
+  Directory repoRoot, {
+  required String? tag,
+  required bool dryRun,
+  required bool skipExisting,
+}) async {
+  if (tag == null || tag.trim().isEmpty) {
+    stderr.writeln(
+      'FAIL: publish-tag requires --tag or GITHUB_REF_NAME in the form <package>-v<version>.',
+    );
+    return 64;
+  }
+
+  final release = parsePackageReleaseTag(tag.trim());
+  if (release == null) {
+    stderr.writeln(
+      'FAIL: release tag "$tag" does not match an IntentCall package tag. Expected one of:',
+    );
+    for (final pkg in publishOrder) {
+      stderr.writeln('  - $pkg-v<version>');
+    }
+    return 64;
+  }
+
+  print(
+    '== IntentCall package release: ${release.package} ${release.version} ==',
+  );
+
+  final validateCode = await runValidate(repoRoot);
+  if (validateCode != 0) {
+    return validateCode;
+  }
+
+  final staticCode = await runReleasePackageStaticCheck(repoRoot, release);
+  if (staticCode != 0) {
+    return staticCode;
+  }
+
+  if (skipExisting &&
+      await packageHasVersion(release.package, release.version)) {
+    print(
+      'OK: pub.dev already exposes ${release.package} ${release.version}; skipping.',
+    );
+    return 0;
+  }
+
+  final packageDir = p.join(repoRoot.path, 'packages', release.package);
+  final isPlatform = release.package == 'intentcall_platform';
+  final exec = isPlatform ? 'flutter' : 'dart';
+
+  if (dryRun) {
+    final args = ['pub', 'publish', '--dry-run', '--skip-validation'];
+    final code = await runCommand(exec, args, packageDir);
+    if (code != 0) {
+      stderr.writeln(
+        'FAIL: publish preflight for ${release.package} failed with exit code $code',
+      );
+      return code;
+    }
+    print('\nOK: publish-tag preflight complete.');
+    return 0;
+  }
+
+  final dependencyWaitCode = await waitForReleaseDependencies(
+    repoRoot,
+    release,
+  );
+  if (dependencyWaitCode != 0) {
+    return dependencyWaitCode;
+  }
+
+  var code = await runCommand(exec, [
+    'pub',
+    'publish',
+    '--dry-run',
+  ], packageDir);
+  if (code != 0) {
+    stderr.writeln(
+      'FAIL: strict publish dry-run for ${release.package} failed with exit code $code',
+    );
+    return code;
+  }
+
+  code = await runCommand(exec, ['pub', 'publish', '--force'], packageDir);
+  if (code != 0) {
+    stderr.writeln(
+      'FAIL: publishing ${release.package} failed with exit code $code',
+    );
+    return code;
+  }
+
+  final waitCode = await waitForPubVersion(release.package, release.version);
+  if (waitCode != 0) {
+    return waitCode;
+  }
+
+  print('\nOK: publish-tag complete.');
+  return 0;
+}
+
+PackageRelease? parsePackageReleaseTag(String tag) {
+  for (final pkg in publishOrder) {
+    final prefix = '$pkg-v';
+    if (tag.startsWith(prefix)) {
+      final version = tag.substring(prefix.length);
+      if (isSemver(version)) {
+        return PackageRelease(package: pkg, version: version);
+      }
+    }
+  }
+  return null;
+}
+
+bool isSemver(String version) => RegExp(
+  r'^[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$',
+).hasMatch(version);
+
+Future<int> runReleasePackageStaticCheck(
+  Directory repoRoot,
+  PackageRelease release,
+) async {
+  final packageDir = p.join(repoRoot.path, 'packages', release.package);
+  final pubspec = File(p.join(packageDir, 'pubspec.yaml'));
+  final changelog = File(p.join(packageDir, 'CHANGELOG.md'));
+
+  if (!pubspec.existsSync()) {
+    stderr.writeln('FAIL: missing ${release.package}/pubspec.yaml');
+    return 1;
+  }
+  final pubspecContent = await pubspec.readAsString();
+  if (RegExp(
+    r'^publish_to:\s*none\b',
+    multiLine: true,
+  ).hasMatch(pubspecContent)) {
+    stderr.writeln('FAIL: ${release.package} is marked publish_to: none');
+    return 1;
+  }
+  if (!RegExp(
+    '^version:\\s*${RegExp.escape(release.version)}(?:\\s|#|\$)',
+    multiLine: true,
+  ).hasMatch(pubspecContent)) {
+    stderr.writeln(
+      'FAIL: ${release.package}/pubspec.yaml version does not match ${release.version}.',
+    );
+    return 1;
+  }
+  if (RegExp(
+    r'^\s{4}(path|git):\s',
+    multiLine: true,
+  ).hasMatch(pubspecContent)) {
+    stderr.writeln(
+      'FAIL: ${release.package}/pubspec.yaml contains a path/git dependency.',
+    );
+    return 1;
+  }
+
+  if (!changelog.existsSync()) {
+    stderr.writeln('FAIL: missing ${release.package}/CHANGELOG.md');
+    return 1;
+  }
+  final changelogContent = await changelog.readAsString();
+  if (!RegExp(
+    '(^#\\s+${RegExp.escape(release.version)}\\b|'
+    '^##\\s+\\[${RegExp.escape(release.version)}\\]|'
+    '^##\\s+${RegExp.escape(release.version)}\\b)',
+    multiLine: true,
+  ).hasMatch(changelogContent)) {
+    stderr.writeln(
+      'FAIL: ${release.package}/CHANGELOG.md has no entry for ${release.version}.',
+    );
+    return 1;
+  }
+
+  print('OK: static release checks passed for ${release.package}.');
+  return 0;
+}
+
+Future<int> waitForReleaseDependencies(
+  Directory repoRoot,
+  PackageRelease release,
+) async {
+  final packageDir = p.join(repoRoot.path, 'packages', release.package);
+  final pubspec = File(p.join(packageDir, 'pubspec.yaml'));
+  final content = await pubspec.readAsString();
+  final dependencies = sameTrainDependencies(content, release);
+  for (final dependency in dependencies) {
+    print(
+      'Waiting for pub.dev to expose $dependency ${release.version} before publishing ${release.package}...',
+    );
+    final code = await waitForPubVersion(dependency, release.version);
+    if (code != 0) {
+      return code;
+    }
+  }
+  return 0;
+}
+
+List<String> sameTrainDependencies(
+  String pubspecContent,
+  PackageRelease release,
+) {
+  final dependencies = <String>[];
+  for (final pkg in publishOrder) {
+    if (pkg == release.package) {
+      continue;
+    }
+    final pattern = RegExp(
+      '^\\s{2}${RegExp.escape(pkg)}:\\s*\\^${RegExp.escape(release.version)}(?:\\s|#|\$)',
+      multiLine: true,
+    );
+    if (pattern.hasMatch(pubspecContent)) {
+      dependencies.add(pkg);
+    }
+  }
+  return dependencies;
+}
+
+Future<bool> packageHasVersion(String package, String version) async {
+  final client = HttpClient();
+  try {
+    final uri = Uri.https('pub.dev', '/api/packages/$package');
+    final request = await client.getUrl(uri);
+    final response = await request.close();
+    if (response.statusCode == HttpStatus.notFound) {
+      await response.drain<void>();
+      return false;
+    }
+    if (response.statusCode != HttpStatus.ok) {
+      await response.drain<void>();
+      stderr.writeln(
+        'FAIL: Unexpected pub.dev response for $package: HTTP ${response.statusCode}',
+      );
+      throw StateError('Unexpected pub.dev response');
+    }
+
+    final body = await response.transform(SystemEncoding().decoder).join();
+    return body.contains('"version":"$version"');
+  } finally {
+    client.close(force: true);
+  }
+}
+
+Future<int> waitForPubVersion(String package, String version) async {
+  final waitSeconds =
+      int.tryParse(Platform.environment['PUB_PUBLISH_WAIT_SECONDS'] ?? '') ??
+      300;
+  final deadline = DateTime.now().add(Duration(seconds: waitSeconds));
+
+  while (DateTime.now().isBefore(deadline)) {
+    try {
+      if (await packageHasVersion(package, version)) {
+        print('OK: pub.dev exposes $package $version.');
+        return 0;
+      }
+    } catch (_) {
+      return 1;
+    }
+    await Future<void>.delayed(const Duration(seconds: 10));
+  }
+
+  stderr.writeln('FAIL: timed out waiting for $package $version on pub.dev.');
+  return 1;
+}
+
 List<String> buildPublishArgs({
   required bool dryRun,
   required bool ignoreWarnings,
@@ -562,4 +862,11 @@ Future<int> runCommand(
     mode: ProcessStartMode.inheritStdio,
   );
   return process.exitCode;
+}
+
+final class PackageRelease {
+  const PackageRelease({required this.package, required this.version});
+
+  final String package;
+  final String version;
 }

@@ -1,5 +1,5 @@
 name: intentcall_session
-description: PRE-RELEASE — IntentCall runtime session persistence and invocation helpers.
+description: Pre-release runtime session persistence, attachment, and invocation helpers for IntentCall.
 version: 0.1.0
 license: MIT
 repository: https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_session

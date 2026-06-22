@@ -1,5 +1,25 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "include-component-in-tag": true,
+  "group-pull-request-title-pattern": "chore: release intentcall packages",
+  "plugins": [
+    {
+      "type": "linked-versions",
+      "groupName": "intentcall package train",
+      "components": [
+        "intentcall_schema",
+        "intentcall_core",
+        "intentcall_session",
+        "intentcall_mcp",
+        "intentcall_webmcp",
+        "intentcall_apple",
+        "intentcall_android",
+        "intentcall_codegen",
+        "intentcall_platform",
+        "intentcall_testing"
+      ]
+    }
+  ],
   "packages": {
     "packages/intentcall_schema": {
       "release-type": "dart",
@@ -20,11 +40,6 @@
       "release-type": "dart",
       "package-name": "intentcall_webmcp",
       "component": "intentcall_webmcp"
-    },
-    "packages/intentcall_gemma": {
-      "release-type": "dart",
-      "package-name": "intentcall_gemma",
-      "component": "intentcall_gemma"
     },
     "packages/intentcall_apple": {
       "release-type": "dart",

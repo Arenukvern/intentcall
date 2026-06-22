@@ -1,5 +1,6 @@
 name: intentcall_gemma
-description: PRE-RELEASE — Example Gemma publish adapter for intentcall (optional on-device bridge).
+publish_to: none
+description: Example-only Gemma adapter for IntentCall experiments; not published to pub.dev.
 version: 0.1.0
 license: MIT
 repository: https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_gemma
