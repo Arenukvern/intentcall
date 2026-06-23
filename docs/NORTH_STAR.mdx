@@ -30,8 +30,9 @@ Support tiers are explicit on purpose. Linux is currently protocol-fallback firs
 | In scope | Out of scope |
 |---|---|
 | `intentcall_schema` — wire types, validation, `AgentResult` | Product harness for app authors → **mcp_flutter / mcp_toolkit** |
-| `intentcall_core` — registry, runtime, call entries | Agent skill meta-layer → **Skill Steward** |
-| `intentcall_mcp` — MCP publish adapter | Embedding / RAG / LLM backends |
+| `intentcall_core` — registry, runtime, call entries, neutral tool/resource registration vocabulary | Agent skill meta-layer → **Skill Steward** |
+| `intentcall_session` — runtime session lifecycle, persistence, snapshots | Runtime discovery and inspection inside concrete apps → **mcp_flutter / mcp_toolkit** |
+| `intentcall_mcp` — MCP publish adapter and MCP mapping only | Embedding / RAG / LLM backends |
 | `intentcall_webmcp` — WebMCP hot-sync adapter | UI rendering, visual harness reconstruction |
 | `intentcall_platform` — native/web emitters + Flutter plugin | Any production app serving end users |
 | `intentcall_codegen` — optional `@AgentTool` code generation | |

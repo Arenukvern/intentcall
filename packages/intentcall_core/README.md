@@ -44,6 +44,22 @@ await runtime.start();
   surfaces without depending on a concrete transport adapter
 - `AgentClientInstall.once` in `mcp_toolkit` for lazy registration
 
+## Public surface ownership
+
+`intentcall_core` owns the transport-neutral registry, invocation, and
+registration vocabulary:
+
+- `AgentRegistry`, `AgentRuntime`, `AgentCallEntry`, and
+  `RegisteredAgentIntent`
+- `ToolRegistration` / `ToolHandler`
+- `ResourceRegistration`, `ResourceTemplateRegistration`, and
+  `ResourceHandler`
+
+Adapters may re-export these value objects for source compatibility, but they
+should treat `intentcall_core` as the canonical owner. Use
+`intentcall_mcp` only when you need the MCP publishing adapter or MCP result and
+resource mapping helpers.
+
 ## Migration helpers
 
 The main `intentcall_core.dart` barrel is the runtime/authoring API. The legacy
@@ -63,7 +79,8 @@ Use this import for `MigrateAgentEntriesMigrator`,
 - `intentcall_schema` — results, validation, wire args
 - `intentcall_session` — reusable runtime session state, lifecycle, and JSON
   snapshot persistence
-- `intentcall_mcp` — MCP bridge, publish adapter, resource mapper
+- `intentcall_mcp` — MCP bridge, publish adapter, resource mapper; re-exports
+  core registration value objects for compatibility
 - `intentcall_webmcp` — WebMCP `modelContext` publish adapter
 - `intentcall_gemma` — on-device Gemma function-calling adapter
 - `intentcall_apple` / `intentcall_android` — `agent_manifest.json` codegen
