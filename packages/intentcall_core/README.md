@@ -60,6 +60,18 @@ should treat `intentcall_core` as the canonical owner. Use
 `intentcall_mcp` only when you need the MCP publishing adapter or MCP result and
 resource mapping helpers.
 
+```dart
+import 'package:intentcall_core/intentcall_core.dart';
+import 'package:intentcall_schema/intentcall_schema.dart';
+
+final registration = ToolRegistration(
+  name: 'echo',
+  description: 'Echo arguments',
+  inputSchema: const <String, Object?>{'type': 'object'},
+  handler: (arguments) async => AgentResult.success(data: arguments),
+);
+```
+
 ## Migration helpers
 
 The main `intentcall_core.dart` barrel is the runtime/authoring API. The legacy
