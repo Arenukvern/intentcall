@@ -28,6 +28,21 @@ A: Each package has a distinct dependency footprint and deployment target. `inte
 **Q: Why does `intentcall_schema` own the wire types rather than `intentcall_core`?**
 A: Schema types cross transport boundaries — they must be importable by every adapter and by the testing package without pulling in registry runtime logic. Keeping them in a leaf package with minimal dependencies prevents circular imports and keeps the contract stable even as the core evolves.
 
+**Q: Where do tool and resource registration types belong?**
+A: `intentcall_core` owns the transport-neutral registration vocabulary:
+`ToolRegistration`, `ToolHandler`, `ResourceRegistration`,
+`ResourceTemplateRegistration`, and `ResourceHandler`. These value objects
+describe capability surfaces before any transport publishes them. Adapters such
+as `intentcall_mcp` may re-export the types for source compatibility, but the
+canonical import for non-MCP consumers is `package:intentcall_core/intentcall_core.dart`.
+
+**Q: Does IntentCall need a separate dynamic catalog gateway?**
+A: Not for the current public surface. `AgentRegistry.listDescriptors()` is the
+neutral catalog snapshot and `AgentRegistry.events` is the neutral change feed.
+Adapters consume that surface and project it into their transport. A named
+gateway should appear only when it owns behavior beyond listing descriptors and
+listening to registry events.
+
 **Q: Why is `intentcall_testing` a separate package?**
 A: Test helpers have `test` as a dependency, which must not bleed into production packages. Isolating them in `intentcall_testing` lets app authors add it as a `dev_dependency` without the production graph growing.
 

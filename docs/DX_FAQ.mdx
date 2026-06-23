@@ -106,9 +106,21 @@ final registry = InMemoryAgentRegistry();
 final descriptors = registry.listDescriptors();
 ```
 
+Subscribe to `registry.events` when the target transport supports hot-sync.
+That gives adapters a neutral catalog snapshot plus a neutral change feed
+without a transport-specific discovery layer.
+
 **Q: Where do wire types live?**
 
 Wire types (`AgentResult`, validation helpers, resource input schemas) live in `intentcall_schema`. Registry and authoring types (`AgentRegistry`, `AgentCallEntry`, `RegisteredAgentIntent`) live in `intentcall_core`.
+
+**Q: Where do tool/resource registration value objects live?**
+
+Use `intentcall_core` for neutral registration values:
+`ToolRegistration`, `ToolHandler`, `ResourceRegistration`,
+`ResourceTemplateRegistration`, and `ResourceHandler`. `intentcall_mcp`
+re-exports them for compatibility with existing MCP adapter imports, but MCP
+does not own the vocabulary.
 
 ---
 

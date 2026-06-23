@@ -3,7 +3,7 @@
 
 # intentcall_mcp
 
-MCP bridge: `McpPublishAdapter`, `ToolRegistration`, registry ↔ `dart_mcp` publish.
+MCP bridge: `McpPublishAdapter`, registry ↔ `dart_mcp` publish.
 
 Depends on `intentcall_core` and `intentcall_schema`. Only intentcall package that imports `dart_mcp`.
 
@@ -14,9 +14,15 @@ Depends on `intentcall_core` and `intentcall_schema`. Only intentcall package th
 - mapping `AgentResult` success/failure envelopes to MCP tool/resource results
 - hot-syncing registry events into the `dart_mcp` server surface
 
-It does not own runtime sessions, dynamic discovery inside an app, Flutter VM
-inspection, screenshots, or CLI process management. Use `intentcall_session` for
-session lifecycle and concrete hosts such as `mcp_flutter` for runtime adapters.
+It does not own the neutral registration vocabulary. `ToolRegistration`,
+`ToolHandler`, `ResourceRegistration`, `ResourceTemplateRegistration`, and
+`ResourceHandler` are owned by `intentcall_core`; this package re-exports them
+so existing MCP adapter imports remain source-compatible.
+
+It also does not own runtime sessions, dynamic discovery inside an app, Flutter
+VM inspection, screenshots, or CLI process management. Use `intentcall_session`
+for session lifecycle and concrete hosts such as `mcp_flutter` for runtime
+adapters.
 
 ## Resource behavior
 
