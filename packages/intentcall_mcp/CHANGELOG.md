@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.1](https://github.com/Arenukvern/intentcall/compare/intentcall_mcp-v0.2.0...intentcall_mcp-v0.2.1) (2026-06-23)
+
+
+### Bug Fixes
+
+* document registration import compatibility ([c9367da](https://github.com/Arenukvern/intentcall/commit/c9367da91c8f0364d673c1ce9f5aab2cc3031665))
+* document registration import compatibility ([e42bc72](https://github.com/Arenukvern/intentcall/commit/e42bc7298e4550c42a846774180cc118a85842b0))
+
 ## [0.2.0](https://github.com/Arenukvern/intentcall/compare/intentcall_mcp-v0.1.0...intentcall_mcp-v0.2.0) (2026-06-22)
 
 
