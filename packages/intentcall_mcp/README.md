@@ -19,6 +19,19 @@ It does not own the neutral registration vocabulary. `ToolRegistration`,
 `ResourceHandler` are owned by `intentcall_core`; this package re-exports them
 so existing MCP adapter imports remain source-compatible.
 
+```dart
+import 'package:intentcall_mcp/intentcall_mcp.dart';
+import 'package:intentcall_schema/intentcall_schema.dart';
+
+// Compatibility import: ToolRegistration is re-exported from intentcall_core.
+final registration = ToolRegistration(
+  name: 'echo',
+  description: 'Echo arguments',
+  inputSchema: const <String, Object?>{'type': 'object'},
+  handler: (arguments) async => AgentResult.success(data: arguments),
+);
+```
+
 It also does not own runtime sessions, dynamic discovery inside an app, Flutter
 VM inspection, screenshots, or CLI process management. Use `intentcall_session`
 for session lifecycle and concrete hosts such as `mcp_flutter` for runtime
