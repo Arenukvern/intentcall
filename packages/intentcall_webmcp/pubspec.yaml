@@ -1,6 +1,6 @@
 name: intentcall_webmcp
 description: PRE-RELEASE — WebMCP publish adapter for intentcall registry (modelContext).
-version: 0.2.0
+version: 0.2.1
 license: MIT
 repository: https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_webmcp
 issue_tracker: https://github.com/Arenukvern/intentcall/issues

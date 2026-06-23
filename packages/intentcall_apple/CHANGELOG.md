@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/Arenukvern/intentcall/compare/intentcall_apple-v0.2.0...intentcall_apple-v0.2.1) (2026-06-23)
+
+
+### Miscellaneous Chores
+
+* **intentcall_apple:** Synchronize intentcall package train versions
+
 ## [0.2.0](https://github.com/Arenukvern/intentcall/compare/intentcall_apple-v0.1.0...intentcall_apple-v0.2.0) (2026-06-22)
 
 
