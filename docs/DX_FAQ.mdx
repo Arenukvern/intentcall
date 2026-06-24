@@ -1,6 +1,25 @@
 # IntentCall — DX FAQ
 
-*How to use and extend IntentCall.* For architectural rationale, see [DESIGN_FAQ.mdx](DESIGN_FAQ.mdx).
+> Published copy for [docs.page](https://docs.page/Arenukvern/intentcall): [docs/DX_FAQ.mdx](docs/DX_FAQ.mdx)
+
+*How to use and extend IntentCall.* For architectural rationale, see [Design FAQ](/DESIGN_FAQ).
+
+---
+
+## 📚 Documentation site
+
+**Q: Where is the published documentation?**
+
+[docs.page/Arenukvern/intentcall](https://docs.page/Arenukvern/intentcall) — site config in `docs.json`, pages under `docs/`. Maintainer guide: [Enable docs.page](/contributing/enable_docs_page).
+
+**Q: How do I validate docs before a PR?**
+
+```bash
+pnpm install
+just docs-check
+```
+
+Run this when you change `docs/` or `docs.json`.
 
 ---
 
@@ -312,7 +331,7 @@ make check-intentcall-integration
 
 **Q: How do I publish?**
 
-See [PUBLISHING.md](../PUBLISHING.md) for full instructions. In short:
+See [PUBLISHING.md](https://github.com/Arenukvern/intentcall/blob/main/PUBLISHING.md) for full instructions. In short:
 
 ```bash
 # historical first-publish check: only for brand-new package names

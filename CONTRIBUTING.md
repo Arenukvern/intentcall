@@ -7,6 +7,7 @@ Thanks for your interest! IntentCall is a pre-release platform library. Contribu
 - [Dart SDK](https://dart.dev/get-dart) `^3.11.0`
 - [Flutter SDK](https://flutter.dev/docs/get-started/install) (stable) — required for `intentcall_platform`
 - [just](https://github.com/casey/just) task runner (recommended)
+- [Node.js](https://nodejs.org/) `>=18` and [pnpm](https://pnpm.io/) `>=9` — for `just docs-check` (docs.page link validation)
 
 ## Quick start
 
@@ -19,7 +20,12 @@ just analyze     # static analysis
 just publish-dry-run  # pub.dev validation (no credentials needed)
 ```
 
-All three must be green before opening a PR.
+All three must be green before opening a PR. If you changed `docs/` or `docs.json`, also run:
+
+```bash
+pnpm install   # once
+just docs-check
+```
 
 ## Conventional commits
 

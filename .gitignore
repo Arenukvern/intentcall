@@ -9,3 +9,5 @@ build/
 *.iml
 .flutter-plugins
 .flutter-plugins-dependencies
+node_modules/
+package-lock.json

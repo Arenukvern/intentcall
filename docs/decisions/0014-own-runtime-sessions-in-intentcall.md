@@ -67,5 +67,5 @@ package and compatibility re-export shims are removed.
 
 ## Links
 
-* [NORTH_STAR.md](../NORTH_STAR.mdx)
-* [DESIGN_FAQ.md](../DESIGN_FAQ.mdx)
+* [NORTH_STAR.md](/NORTH_STAR)
+* [DESIGN_FAQ.md](/DESIGN_FAQ)

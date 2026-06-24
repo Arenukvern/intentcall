@@ -79,8 +79,8 @@ Chosen option: **IntentCall** as the **public product name**.
 
 ## Links
 
-* [IntentCall North Star](../NORTH_STAR.mdx)
-* [IntentCall Design FAQ](../DESIGN_FAQ.mdx)
-* [PRE_RELEASE.md](../../PRE_RELEASE.md)
-* [PUBLISHING.md](../../PUBLISHING.md)
+* [IntentCall North Star](/NORTH_STAR)
+* [IntentCall Design FAQ](/DESIGN_FAQ)
+* [PRE_RELEASE.md](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md)
+* [PUBLISHING.md](https://github.com/Arenukvern/intentcall/blob/main/PUBLISHING.md)
 * [Skill Steward ADR 0008 — naming pattern](https://github.com/Arenukvern/skill_steward/blob/main/docs/decisions/0008-adopt-skill-steward-product-name.md)

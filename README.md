@@ -8,7 +8,7 @@
 
 Transport-agnostic agent intent platform for Dart/Flutter: define intent truth once in `AgentRegistry`, then project it into the strongest available surface: MCP/WebMCP, native semantic action systems where supported, assistant/shortcut fulfillment, and canonical deep-link fallback where native support is incomplete. Extracted from [mcp_flutter](https://github.com/Arenukvern/mcp_flutter).
 
-**Charter:** [docs/NORTH_STAR.mdx](docs/NORTH_STAR.mdx) · **Agent map:** [AGENTS.md](AGENTS.md)  
+**Charter:** [docs/NORTH_STAR.mdx](docs/NORTH_STAR.mdx) · **Agent map:** [AGENTS.md](AGENTS.md) · **Docs site:** [docs.page/Arenukvern/intentcall](https://docs.page/Arenukvern/intentcall)  
 **Why / how:** [docs/DESIGN_FAQ.mdx](docs/DESIGN_FAQ.mdx) · [docs/DX_FAQ.mdx](docs/DX_FAQ.mdx) · [Decisions](docs/decisions/) · [CONTRIBUTING.md](CONTRIBUTING.md)
 
 GitHub: [Arenukvern/intentcall](https://github.com/Arenukvern/intentcall)

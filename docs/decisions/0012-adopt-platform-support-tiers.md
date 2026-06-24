@@ -51,6 +51,6 @@ Roadmap targets include Android AppFunctions, richer Android App Actions capabil
 
 ## Links
 
-* [NORTH_STAR.md](../NORTH_STAR.mdx)
-* [DESIGN_FAQ.md](../DESIGN_FAQ.mdx)
-* [PRE_RELEASE.md](../../PRE_RELEASE.md)
+* [NORTH_STAR.md](/NORTH_STAR)
+* [DESIGN_FAQ.md](/DESIGN_FAQ)
+* [PRE_RELEASE.md](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md)

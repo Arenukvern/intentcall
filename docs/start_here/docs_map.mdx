@@ -1,16 +1,46 @@
 # IntentCall Documentation Map
 
-Welcome to IntentCall. Use this map to navigate the codebase documentation.
+Index for the IntentCall documentation site and repository.
 
-## Quick Router
+**IntentCall** lets Dart/Flutter apps define agent-callable actions once in `AgentRegistry`, then project them to MCP, WebMCP, shortcuts, and deep links. App authors start with [mcp_flutter](https://github.com/Arenukvern/mcp_flutter); this repo is for registry, adapters, and platform projection.
 
-| I want to... | Go to |
-|---|---|
-| Understand the project charter & boundaries | [docs/NORTH_STAR.mdx](../NORTH_STAR.mdx) |
-| Find why architectural decisions were made | [docs/decisions/README.md](../decisions/README.md) |
-| Understand the stewardship rule for temporary plans | [ADR 0013](../decisions/0013-delete-implemented-plans-after-durable-extraction.md) |
-| Learn how to run build/tests / release packages | [DX_FAQ.mdx](../DX_FAQ.mdx) |
-| Understand the architectural design choices | [DESIGN_FAQ.mdx](../DESIGN_FAQ.mdx) |
-| Learn how to contribute to IntentCall | [CONTRIBUTING.md](../../CONTRIBUTING.md) |
-| Understand the pre-release and publishing status | [PRE_RELEASE.md](../../PRE_RELEASE.md) and [PUBLISHING.md](../../PUBLISHING.md) |
-| See the installed agent skills | [AGENTS.md](../../AGENTS.md) |
+## Quick router
+
+| I want to… | Go to |
+|------------|--------|
+| Charter and scope | [North Star](/NORTH_STAR) |
+| Commands, test, release | [DX FAQ](/DX_FAQ) |
+| Architectural why | [Design FAQ](/DESIGN_FAQ) · [Decisions](/decisions/README) |
+| Stewardship rule for temporary plans | [ADR 0013](/decisions/0013-delete-implemented-plans-after-durable-extraction) |
+| Agent entry map | [AGENTS.md](https://github.com/Arenukvern/intentcall/blob/main/AGENTS.md) |
+| Contribute / PR checklist | [CONTRIBUTING.md](https://github.com/Arenukvern/intentcall/blob/main/CONTRIBUTING.md) |
+| Pre-release and publishing | [PRE_RELEASE.md](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md) · [PUBLISHING.md](https://github.com/Arenukvern/intentcall/blob/main/PUBLISHING.md) |
+| Installed agent skills | [.agents/skills/](https://github.com/Arenukvern/intentcall/tree/main/.agents/skills) |
+
+## Published site (`docs/`)
+
+- [Overview](/)
+- [North Star](/NORTH_STAR)
+- [Design FAQ](/DESIGN_FAQ)
+- [DX FAQ](/DX_FAQ)
+- [Decisions](/decisions/README)
+- [Enable docs.page](/contributing/enable_docs_page)
+
+## Repo root (GitHub)
+
+| File | Role |
+|------|------|
+| `README.md` | Install, packages, ecosystem |
+| `AGENTS.md` | Agent map (~60 lines) |
+| `DESIGN_FAQ.md` | Why (compressed) |
+| `DX_FAQ.md` | How — `just` tasks, releases |
+| `CONTRIBUTING.md` | PR checklist |
+| `PRE_RELEASE.md` | Pre-release status |
+| `PUBLISHING.md` | pub.dev publishing |
+
+## Verify
+
+```bash
+just test
+just docs-check    # if docs/ or docs.json changed
+```

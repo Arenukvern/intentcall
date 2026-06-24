@@ -129,10 +129,45 @@ actions:
     evidence:
       redaction: steward/redaction/v1
       summary_fields: [exit_code, duration_ms, output_digest]
+  intentcall.docs-check:
+    kind: command
+    desc: Validate docs.page config (docs.json) and internal documentation links.
+    command:
+      argv: [just, docs-check]
+      shell: false
+    cwd: .
+    effects:
+      fs_read:
+        - docs/**
+        - docs.json
+        - package.json
+        - pnpm-lock.yaml
+        - justfile
+      fs_write: []
+      git: false
+      network: false
+      secrets: false
+      destructive: false
+    safety:
+      class: bounded_local
+      default_policy: auto
+      requires_confirmation: false
+    limits:
+      timeout_ms: 60000
+      max_output_bytes: 500000
+    outputs:
+      - id: stdout
+        kind: stream
+        required: true
+        retention: summary
+        format: text
+    evidence:
+      redaction: steward/redaction/v1
+      summary_fields: [exit_code, duration_ms, output_digest]
 probes:
   quick:
     profile: quick
-    actions: [intentcall.validate, intentcall.adapter-contract-test]
+    actions: [intentcall.validate, intentcall.adapter-contract-test, intentcall.docs-check]
 diagnostics:
   cases: {}
 unknown_cases:

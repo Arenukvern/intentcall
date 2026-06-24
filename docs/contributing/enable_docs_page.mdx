@@ -1,0 +1,24 @@
+# Enable docs.page
+
+This repo publishes docs via [docs.page](https://docs.page) using [docs.json](https://github.com/Arenukvern/intentcall/blob/main/docs.json).
+
+Live site: [docs.page/Arenukvern/intentcall](https://docs.page/Arenukvern/intentcall)
+
+## Maintainer check
+
+```bash
+pnpm install
+pnpm run docs:check
+# or: just docs-check
+```
+
+## Add a page
+
+1. Add markdown or MDX under `docs/`.
+2. Register the page in `docs.json` `sidebar`.
+3. Run `just docs-check` on PRs that touch `docs/` or `docs.json`.
+
+## Link policy
+
+- **Published pages** (`docs/**`): use docs.page paths in tables, e.g. `/NORTH_STAR`, `/decisions/README`.
+- **Repo-root maintainer files** (`CONTRIBUTING.md`, `AGENTS.md`, etc.): use full GitHub blob URLs in link tables.

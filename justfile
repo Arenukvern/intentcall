@@ -66,3 +66,7 @@ list-skills:
     @echo "Available Custom Agent Skills:"
     @echo "  - register-intents: Guide to manual and codegen intent registration (skills/register-intents/SKILL.md)"
     @echo "  - write-adapter: Guide to implementing custom platform/transport adapters (skills/write-adapter/SKILL.md)"
+
+# Validate docs.page config and internal doc links
+docs-check:
+    pnpm run docs:check
