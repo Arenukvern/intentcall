@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.0](https://github.com/Arenukvern/intentcall/compare/intentcall_platform-v0.2.1...intentcall_platform-v0.3.0) (2026-06-26)
+
+
+### Features
+
+* add Dart-first native invocation surfaces ([4d5eaae](https://github.com/Arenukvern/intentcall/commit/4d5eaae19f31e2c5acba6f40280111766710c396))
+
+
+### Bug Fixes
+
+* address release review hardening ([b908e37](https://github.com/Arenukvern/intentcall/commit/b908e378bc933ad200a2732870b6c8c608f5c470))
+
 ## [0.2.1](https://github.com/Arenukvern/intentcall/compare/intentcall_platform-v0.2.0...intentcall_platform-v0.2.1) (2026-06-23)
 
 
