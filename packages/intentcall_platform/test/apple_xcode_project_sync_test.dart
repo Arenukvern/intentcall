@@ -89,6 +89,36 @@ void main() {
     );
   });
 
+  test('does not strip unrelated references containing a short custom name', () {
+    final temp = Directory.systemTemp.createTempSync('intentcall_xcode_sync_');
+    addTearDown(() => temp.deleteSync(recursive: true));
+    final projectFile = _writeProject(temp);
+    var content = projectFile.readAsStringSync();
+    content = content.replaceFirst(
+      '/* End PBXFileReference section */',
+      '\t\tAAAAAAAAAAAAAAAAAAAAAAAA /* MyA.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyA.swift; sourceTree = "<group>"; };\n'
+          '\t\tBBBBBBBBBBBBBBBBBBBBBBBB /* A.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Generated/A.swift; sourceTree = "<group>"; };\n'
+          '/* End PBXFileReference section */',
+    );
+    content = content.replaceFirst(
+      'files = (\n',
+      'files = (\n'
+          '\t\t\t\tCCCCCCCCCCCCCCCCCCCCCCCC /* MyA.swift in Sources */,\n'
+          '\t\t\t\tDDDDDDDDDDDDDDDDDDDDDD01 /* A.swift in Sources */,\n',
+    );
+    projectFile.writeAsStringSync(content);
+
+    const AppleXcodeProjectSync(
+      generatedFileName: 'A.swift',
+      staleGeneratedFileNames: <String>['A.swift'],
+    ).sync(appleRoot: temp.path);
+    final repaired = projectFile.readAsStringSync();
+
+    expect(repaired, contains('MyA.swift'));
+    expect(repaired, isNot(contains('BBBBBBBBBBBBBBBBBBBBBBBB')));
+    expect(repaired, isNot(contains('DDDDDDDDDDDDDDDDDDDDDD01')));
+  });
+
   test('dry run reports drift without modifying project', () {
     final temp = Directory.systemTemp.createTempSync('intentcall_xcode_sync_');
     addTearDown(() => temp.deleteSync(recursive: true));

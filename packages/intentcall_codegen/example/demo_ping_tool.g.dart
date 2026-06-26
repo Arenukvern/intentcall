@@ -71,3 +71,29 @@ AgentCallEntry get demoCartCallEntry => AgentCallEntry.tool(
     return await (result as Future<AgentResult>);
   },
 );
+
+const _demo_required_namedInputSchema = <String, Object?>{
+  'type': 'object',
+  'properties': <String, Object?>{
+    'mode': <String, Object?>{'type': 'string', 'description': 'Mode'},
+  },
+  'required': <String>['mode'],
+};
+
+RegisteredAgentIntent get demoRequiredNamedRegistration =>
+    demoRequiredNamedCallEntry.toRegistration();
+
+AgentCallEntry get demoRequiredNamedCallEntry => AgentCallEntry.tool(
+  namespace: 'app',
+  name: 'demo_required_named',
+  description: 'Returns a required named parameter',
+  inputSchema: _demo_required_namedInputSchema,
+  handler: (final args) async {
+    final result = Function.apply(
+      demoRequiredNamed,
+      <Object?>[],
+      <Symbol, Object?>{#mode: args['mode'] as String},
+    );
+    return await (result as Future<AgentResult>);
+  },
+);

@@ -93,8 +93,7 @@ $handlerArgs
       final paramAnnotation = _readAgentParam(param);
       final description =
           paramAnnotation?.read('description').stringValue ?? paramName;
-      final isRequired =
-          paramAnnotation?.read('required').boolValue ?? param.isRequired;
+      final isRequired = _isRequiredParameter(param, paramAnnotation);
 
       final jsonType = _jsonTypeFor(param.type);
       if (jsonType == null) {
@@ -135,7 +134,7 @@ ${properties.join('\n')}
       final cast =
           'args[${_literalString(name)}] as ${_dartTypeName(param.type)}';
       if (param.isNamed) {
-        if (param.isRequiredNamed) {
+        if (_isRequiredParameter(param, _readAgentParam(param))) {
           named.add('#$name: $cast,');
         } else {
           named.add(
@@ -166,6 +165,11 @@ ${named.map((final line) => '        $line').join('\n')}
     }
     return null;
   }
+
+  bool _isRequiredParameter(
+    final FormalParameterElement param,
+    final ConstantReader? annotation,
+  ) => annotation?.read('required').boolValue ?? param.isRequired;
 
   String? _jsonTypeFor(final DartType type) {
     if (type.isDartCoreInt) {

@@ -54,7 +54,6 @@ class MyCustomAdapter implements AgentAdapter {
               AgentRegistryEntry(
                 key: qualifiedName,
                 intent: intent,
-                descriptor: intent.descriptor,
               ),
             );
           }

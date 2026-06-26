@@ -19,8 +19,13 @@ extension IntentCallPlatformPlugin {
   public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
     switch call.method {
     case "takePendingInvocations":
-      let pending = UserDefaults.standard.array(forKey: Self.pendingKey) as? [[String: Any]] ?? []
-      UserDefaults.standard.set([], forKey: Self.pendingKey)
+      let pending: [[String: Any]]
+      objc_sync_enter(UserDefaults.standard)
+      do {
+        defer { objc_sync_exit(UserDefaults.standard) }
+        pending = UserDefaults.standard.array(forKey: Self.pendingKey) as? [[String: Any]] ?? []
+        UserDefaults.standard.set([], forKey: Self.pendingKey)
+      }
       result(pending)
     default:
       result(FlutterMethodNotImplemented)

@@ -82,10 +82,7 @@ final class AppleSwiftAppIntentsEmitter {
       ..writeln(
         '  static func enqueue(qualifiedName: String, arguments: [String: Any]) async {',
       )
-      ..writeln(
-        '    var pending = UserDefaults.standard.array(forKey: pendingKey) as? [[String: Any]] ?? []',
-      )
-      ..writeln('    pending.append([')
+      ..writeln('    let item: [String: Any] = [')
       ..writeln('      "id": UUID().uuidString,')
       ..writeln('      "qualifiedName": qualifiedName,')
       ..writeln('      "arguments": arguments,')
@@ -93,7 +90,13 @@ final class AppleSwiftAppIntentsEmitter {
       ..writeln(
         '      "createdAt": ISO8601DateFormatter().string(from: Date())',
       )
-      ..writeln('    ])')
+      ..writeln('    ]')
+      ..writeln('    objc_sync_enter(UserDefaults.standard)')
+      ..writeln('    defer { objc_sync_exit(UserDefaults.standard) }')
+      ..writeln(
+        '    var pending = UserDefaults.standard.array(forKey: pendingKey) as? [[String: Any]] ?? []',
+      )
+      ..writeln('    pending.append(item)')
       ..writeln('    UserDefaults.standard.set(pending, forKey: pendingKey)')
       ..writeln(
         '    guard let url = URL(string: "$protocolScheme://invoke/\\(qualifiedName)") else { return }',
@@ -143,9 +146,14 @@ List<_SwiftParameter> _swiftParameters(final AgentManifestEntry tool) {
     if (schema is! Map) {
       continue;
     }
-    final baseType = _swiftTypeFor('${schema['type']}');
+    final schemaType = '${schema['type']}';
+    final baseType = _swiftTypeFor(schemaType);
     if (baseType == null) {
-      continue;
+      throw UnsupportedError(
+        'Apple App Intents support only primitive string/integer/number/boolean '
+        'parameters in ${tool.qualifiedName}; "$name" has unsupported type '
+        '"$schemaType".',
+      );
     }
     final isRequired = required.contains(name);
     out.add(
@@ -197,7 +205,96 @@ String _swiftIdentifier(final String name) {
       .skip(1)
       .map((final part) => '${part[0].toUpperCase()}${part.substring(1)}');
   final candidate = first + rest.join();
-  return RegExp('^[A-Za-z_]').hasMatch(candidate)
+  final identifier = RegExp('^[A-Za-z_]').hasMatch(candidate)
       ? candidate
       : 'value$candidate';
+  return _swiftReservedWords.contains(identifier)
+      ? '`$identifier`'
+      : identifier;
 }
+
+const _swiftReservedWords = <String>{
+  'Any',
+  'Protocol',
+  'Self',
+  'Type',
+  'actor',
+  'as',
+  'associatedtype',
+  'associativity',
+  'async',
+  'await',
+  'break',
+  'case',
+  'catch',
+  'class',
+  'continue',
+  'convenience',
+  'default',
+  'defer',
+  'deinit',
+  'didSet',
+  'do',
+  'dynamic',
+  'else',
+  'enum',
+  'extension',
+  'fallthrough',
+  'false',
+  'fileprivate',
+  'final',
+  'for',
+  'func',
+  'get',
+  'guard',
+  'if',
+  'import',
+  'in',
+  'indirect',
+  'infix',
+  'init',
+  'inout',
+  'internal',
+  'is',
+  'isolated',
+  'lazy',
+  'left',
+  'let',
+  'mutating',
+  'nil',
+  'none',
+  'nonisolated',
+  'open',
+  'operator',
+  'optional',
+  'override',
+  'postfix',
+  'precedence',
+  'prefix',
+  'private',
+  'protocol',
+  'public',
+  'repeat',
+  'required',
+  'rethrows',
+  'return',
+  'right',
+  'self',
+  'set',
+  'some',
+  'static',
+  'struct',
+  'subscript',
+  'super',
+  'switch',
+  'throw',
+  'throws',
+  'true',
+  'try',
+  'unowned',
+  'var',
+  'weak',
+  'where',
+  'while',
+  'willSet',
+};

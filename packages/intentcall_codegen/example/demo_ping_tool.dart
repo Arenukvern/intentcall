@@ -28,3 +28,14 @@ Future<AgentResult> demoCart(
     data: {'currency': currency, 'includeTax': includeTax},
   );
 }
+
+@AgentTool(
+  namespace: 'app',
+  name: 'demo_required_named',
+  description: 'Returns a required named parameter',
+)
+Future<AgentResult> demoRequiredNamed({
+  @AgentParam('Mode') String mode = 'fast',
+}) async {
+  return AgentResult.success(data: {'mode': mode});
+}

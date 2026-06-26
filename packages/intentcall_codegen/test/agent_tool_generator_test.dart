@@ -65,4 +65,20 @@ void main() {
       expect(result.data['includeTax'], isTrue);
     },
   );
+
+  test('generated required named params are emitted unconditionally', () async {
+    expect(demoRequiredNamedRegistration.descriptor.inputSchema['required'], [
+      'mode',
+    ]);
+
+    final result = await demoRequiredNamedRegistration.execute(
+      AgentInvocation(
+        descriptor: demoRequiredNamedRegistration.descriptor,
+        arguments: const <String, Object?>{'mode': 'slow'},
+      ),
+    );
+
+    expect(result.ok, isTrue);
+    expect(result.data['mode'], 'slow');
+  });
 }

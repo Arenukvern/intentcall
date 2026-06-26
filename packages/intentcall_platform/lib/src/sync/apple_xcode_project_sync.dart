@@ -94,11 +94,39 @@ final class AppleXcodeProjectSync {
       generatedFileName,
       ...staleGeneratedFileNames,
     };
-    final escaped = generatedNames.map(RegExp.escape).join('|');
     return content
         .split('\n')
-        .where((final line) => !RegExp(escaped).hasMatch(line))
+        .where((final line) => !_isGeneratedReferenceLine(line, generatedNames))
         .join('\n');
+  }
+
+  bool _isGeneratedReferenceLine(final String line, final Set<String> names) {
+    for (final name in names) {
+      final escaped = RegExp.escape(name);
+      final exactComment = RegExp(
+        '/\\* $escaped(?: in Sources)? \\*/',
+      ).hasMatch(line);
+      final exactPath = RegExp(
+        'path = (?:Generated/)?$escaped;',
+      ).hasMatch(line);
+      if (exactPath && exactComment) {
+        return true;
+      }
+      final exactListEntry = RegExp(
+        '^\\s*[0-9A-F]{24} /\\* $escaped(?: in Sources)? \\*/,\\s*\$',
+      ).hasMatch(line);
+      if (exactListEntry) {
+        return true;
+      }
+      final buildFile =
+          line.contains('isa = PBXBuildFile;') &&
+          line.contains('/* $name in Sources */') &&
+          line.contains('/* $name */');
+      if (buildFile) {
+        return true;
+      }
+    }
+    return false;
   }
 
   String _insertIntoSection(
