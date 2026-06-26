@@ -13,6 +13,7 @@ final class AdapterContractProof {
   const AdapterContractProof({
     required this.adapterId,
     required this.initialToolName,
+    required this.overriddenToolName,
     required this.failureToolName,
     required this.hotSyncToolName,
     required this.successData,
@@ -23,6 +24,7 @@ final class AdapterContractProof {
 
   final String adapterId;
   final String initialToolName;
+  final String overriddenToolName;
   final String failureToolName;
   final String hotSyncToolName;
   final Map<String, Object?> successData;
@@ -45,9 +47,14 @@ Future<AdapterContractProof> verifyNativeAdapterContract({
 }) async {
   final registry = InMemoryAgentRegistry()
     ..register(_successIntent(name: 'echo'))
-    ..register(_failureIntent(name: 'fail'));
+    ..register(_failureIntent(name: 'fail'))
+    ..register(
+      _successIntent(namespace: 'descriptor', name: 'override'),
+      qualifiedNameOverride: 'custom_override',
+    );
 
   const initialToolName = 'contract_echo';
+  const overriddenToolName = 'custom_override';
   const failureToolName = 'contract_fail';
   const hotSyncToolName = 'contract_late';
   final shouldVerifyHotSync = requireHotSync ?? adapter.watchesRegistry;
@@ -65,6 +72,10 @@ Future<AdapterContractProof> verifyNativeAdapterContract({
     _require(
       isPublished(failureToolName),
       '${adapter.id} did not publish $failureToolName on attach',
+    );
+    _require(
+      isPublished(overriddenToolName),
+      '${adapter.id} did not publish overridden $overriddenToolName on attach',
     );
 
     final success = normalize(
@@ -85,6 +96,21 @@ Future<AdapterContractProof> verifyNativeAdapterContract({
     _require(
       success.data['qualifiedName'] == initialToolName,
       '${adapter.id} did not preserve success qualifiedName',
+    );
+
+    final overridden = normalize(
+      await invoke(overriddenToolName, const <String, Object?>{
+        'text': 'override',
+        'count': 4,
+      }),
+    );
+    _require(
+      overridden.ok,
+      '${adapter.id} returned failure for $overriddenToolName',
+    );
+    _require(
+      overridden.data['qualifiedName'] == 'descriptor_override',
+      '${adapter.id} did not invoke overridden registry key',
     );
 
     final failure = normalize(
@@ -142,12 +168,17 @@ Future<AdapterContractProof> verifyNativeAdapterContract({
         !isPublished(failureToolName),
         '${adapter.id} did not unpublish $failureToolName on detach',
       );
+      _require(
+        !isPublished(overriddenToolName),
+        '${adapter.id} did not unpublish $overriddenToolName on detach',
+      );
       detachCleanupProven = true;
     }
 
     return AdapterContractProof(
       adapterId: adapter.id,
       initialToolName: initialToolName,
+      overriddenToolName: overriddenToolName,
       failureToolName: failureToolName,
       hotSyncToolName: hotSyncToolName,
       successData: success.data,
@@ -205,30 +236,32 @@ AgentResult normalizeJsonTextAgentResult(final Object? result) {
   );
 }
 
-RegisteredAgentIntent _successIntent({required final String name}) =>
-    RegisteredAgentIntent(
-      descriptor: AgentIntentDescriptor(
-        namespace: 'contract',
-        name: name,
-        description: 'Adapter contract success fixture',
-        kind: AgentIntentKind.tool,
-        inputSchema: const <String, Object?>{
-          'type': 'object',
-          'properties': <String, Object?>{
-            'text': <String, Object?>{'type': 'string'},
-            'count': <String, Object?>{'type': 'integer'},
-          },
-          'required': <String>['text', 'count'],
-        },
-      ),
-      execute: (final invocation) async => AgentResult.success(
-        data: <String, Object?>{
-          'text': invocation.arguments['text'],
-          'count': invocation.arguments['count'],
-          'qualifiedName': invocation.descriptor.qualifiedName,
-        },
-      ),
-    );
+RegisteredAgentIntent _successIntent({
+  required final String name,
+  final String namespace = 'contract',
+}) => RegisteredAgentIntent(
+  descriptor: AgentIntentDescriptor(
+    namespace: namespace,
+    name: name,
+    description: 'Adapter contract success fixture',
+    kind: AgentIntentKind.tool,
+    inputSchema: const <String, Object?>{
+      'type': 'object',
+      'properties': <String, Object?>{
+        'text': <String, Object?>{'type': 'string'},
+        'count': <String, Object?>{'type': 'integer'},
+      },
+      'required': <String>['text', 'count'],
+    },
+  ),
+  execute: (final invocation) async => AgentResult.success(
+    data: <String, Object?>{
+      'text': invocation.arguments['text'],
+      'count': invocation.arguments['count'],
+      'qualifiedName': invocation.descriptor.qualifiedName,
+    },
+  ),
+);
 
 RegisteredAgentIntent _failureIntent({required final String name}) =>
     RegisteredAgentIntent(

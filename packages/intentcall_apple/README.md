@@ -1,16 +1,21 @@
-> ⚠️ **Pre-release (0.1.x)** — Highly experimental. APIs may change without notice. Not for production. [Details](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md).
+> ⚠️ **Pre-release (0.2.x train)** — Highly experimental. APIs may change without notice. Not for production. [Details](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md).
 
 
 # intentcall_apple
 
-Apple platform manifest codegen for intentcall (App Intents / Shortcuts export).
+Apple platform manifest and App Intents codegen for IntentCall.
+
+Current generated App Intents collect supported primitive parameters, enqueue a
+pending invocation envelope, and open or wake the Flutter app for Dart registry
+execution. They return dispatch status in v1; they do not run Dart business
+logic inside an App Intent extension.
 
 ## Author workflow
 
 1. **Author tools** — hand-written `AgentCallEntry` or optional `@AgentTool` codegen (`intentcall_codegen`).
 2. **Collect descriptors** — `entry.toRegistration().descriptor` or registry snapshot.
 3. **Generate manifest** — `generateAppleAgentManifest(descriptors)` → `agent_manifest.json`.
-4. **Platform snippet** — map manifest intents to Shortcuts / App Intents plist entries.
+4. **Platform wrapper** — generate Shortcuts / App Intents metadata that dispatches to Dart.
 
 ```dart
 import 'package:intentcall_apple/intentcall_apple.dart';

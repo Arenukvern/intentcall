@@ -59,13 +59,21 @@ final class InMemoryAgentRegistry implements AgentRegistry {
       _intents[qualifiedName];
 
   @override
-  Iterable<AgentIntentDescriptor> listDescriptors({final String? namespace}) {
-    final values = _intents.values.map((final e) => e.descriptor);
+  Iterable<AgentRegistryEntry> listEntries({final String? namespace}) {
+    final values = _intents.entries.map(
+      (final entry) => AgentRegistryEntry(key: entry.key, intent: entry.value),
+    );
     if (namespace == null) {
       return values;
     }
-    return values.where((final d) => d.namespace == namespace);
+    return values.where(
+      (final entry) => entry.descriptor.namespace == namespace,
+    );
   }
+
+  @override
+  Iterable<AgentIntentDescriptor> listDescriptors({final String? namespace}) =>
+      listEntries(namespace: namespace).map((final entry) => entry.descriptor);
 
   @override
   Future<AgentResult> invoke(

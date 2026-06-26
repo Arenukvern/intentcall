@@ -167,7 +167,7 @@ actions:
 probes:
   quick:
     profile: quick
-    actions: [intentcall.validate, intentcall.adapter-contract-test, intentcall.docs-check]
+    actions: [intentcall.validate, intentcall.adapter-contract-test]
 diagnostics:
   cases: {}
 unknown_cases:

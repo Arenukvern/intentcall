@@ -5,6 +5,8 @@ import 'dart:js_interop_unsafe';
 import 'package:intentcall_core/intentcall_core.dart';
 import 'package:intentcall_schema/intentcall_schema.dart';
 
+import '../invocation/intentcall_invocation.dart';
+
 @JS('JSON.parse')
 external JSAny? _jsonParse(final JSString source);
 
@@ -13,6 +15,7 @@ final _webMcpRegisteredToolNames = <String>{};
 
 /// Entries available to [__intentcallWebMcpDartExecute] when JS registered first.
 final _entriesByQualifiedName = <String, AgentCallEntry>{};
+final _bridgesByQualifiedName = <String, IntentCallNativeBridge>{};
 
 var _dartExecuteHookInstalled = false;
 
@@ -84,6 +87,51 @@ void registerFromEntries(final Set<AgentCallEntry> entries) {
   }
 }
 
+void registerFromRegistry(
+  final AgentRegistry registry, {
+  required final IntentCallAuthorizationPolicy policy,
+}) {
+  final modelContext = _readModelContext();
+  if (modelContext == null) {
+    return;
+  }
+
+  _ensureDartExecuteHook();
+  final bridge = IntentCallNativeBridge.bindRegistry(
+    registry: registry,
+    policy: policy,
+  );
+
+  for (final entry in registry.listEntries()) {
+    final descriptor = entry.descriptor;
+    if (descriptor.kind != AgentIntentKind.tool) {
+      continue;
+    }
+    final qualifiedName = entry.key;
+    _bridgesByQualifiedName[qualifiedName] = bridge;
+
+    if (_webMcpRegisteredToolNames.contains(qualifiedName)) {
+      continue;
+    }
+    final toolDefinition = _WebMcpToolDefinition(
+      name: qualifiedName.toJS,
+      description: descriptor.description.toJS,
+      inputSchema: _jsonParse(jsonEncode(descriptor.inputSchema).toJS)!,
+      execute: ((final JSAny? rawArgs) => _invokeBridge(
+        bridge,
+        qualifiedName,
+        rawArgs,
+      ).toJS).toJS,
+    );
+    try {
+      modelContext.registerTool(toolDefinition);
+      _webMcpRegisteredToolNames.add(qualifiedName);
+    } on Object {
+      // Duplicate name (JS bootstrap registered first) — JS execute uses hook.
+    }
+  }
+}
+
 void _ensureDartExecuteHook() {
   if (_dartExecuteHookInstalled) {
     return;
@@ -102,7 +150,12 @@ Future<JSAny?> _dartExecuteHook(
   final JSString nameJS,
   final JSAny? rawArgs,
 ) async {
-  final entry = _entriesByQualifiedName[nameJS.toDart];
+  final qualifiedName = nameJS.toDart;
+  final bridge = _bridgesByQualifiedName[qualifiedName];
+  if (bridge != null) {
+    return _invokeBridge(bridge, qualifiedName, rawArgs);
+  }
+  final entry = _entriesByQualifiedName[qualifiedName];
   if (entry == null) {
     return null;
   }
@@ -135,6 +188,23 @@ Future<JSAny?> _invokeEntry(
 ) async {
   final args = _decodeArgs(rawArgs);
   final result = await entry.invokeDirect(args);
+  return _encodeResult(result).jsify();
+}
+
+Future<JSAny?> _invokeBridge(
+  final IntentCallNativeBridge bridge,
+  final String qualifiedName,
+  final JSAny? rawArgs,
+) async {
+  final args = _decodeArgs(rawArgs);
+  final result = await bridge.execute(
+    IntentCallInvocationEnvelope(
+      id: 'webmcp-${DateTime.now().microsecondsSinceEpoch}',
+      qualifiedName: qualifiedName,
+      arguments: args,
+      source: IntentCallInvocationSource.webMcpDart,
+    ),
+  );
   return _encodeResult(result).jsify();
 }
 

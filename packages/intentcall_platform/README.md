@@ -1,9 +1,15 @@
-> ⚠️ **Pre-release (0.1.x)** — Highly experimental. APIs may change without notice. Not for production. [Details](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md).
+> ⚠️ **Pre-release (0.2.x train)** — Highly experimental. APIs may change without notice. Not for production. [Details](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md).
 
 
 # intentcall_platform
 
-Platform emitters, `PlatformSync`, and optional Flutter plugin for native invoke + web WebMCP artifacts.
+Platform emitters, `PlatformSync`, Dart-first WebMCP bootstrap, and optional
+Flutter plugin support for pending native invocation dispatch.
+
+Native platform code should stay thin. Generated wrappers collect supported
+parameters, enqueue an `IntentCallInvocationEnvelope`, and let Dart execute the
+registered `AgentRegistry` handler after app launch or wake. App-extension
+hosted Dart execution is experimental and not a stable support claim.
 
 ## Manifest workflow (I4)
 

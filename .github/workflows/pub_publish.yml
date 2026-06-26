@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Release tag to preflight, for example intentcall_core-v0.1.1'
+        description: 'Release tag to preflight, for example intentcall_core-v0.2.1'
         required: true
         type: string
 

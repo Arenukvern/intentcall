@@ -9,6 +9,22 @@ part 'demo_ping_tool.g.dart';
   name: 'demo_ping',
   description: 'Returns pong for a message',
 )
-Future<AgentResult> demoPing(@AgentParam('Message to echo') String message) async {
+Future<AgentResult> demoPing(
+  @AgentParam('Message to echo') String message,
+) async {
   return AgentResult.success(data: {'pong': message});
+}
+
+@AgentTool(
+  namespace: 'app',
+  name: 'demo_cart',
+  description: 'Returns a cart total',
+)
+Future<AgentResult> demoCart(
+  @AgentParam('Currency code') String currency, {
+  @AgentParam('Include tax', required: false) bool includeTax = false,
+}) async {
+  return AgentResult.success(
+    data: {'currency': currency, 'includeTax': includeTax},
+  );
 }

@@ -8,22 +8,20 @@ void main() {
     final registry = InMemoryAgentRegistry()
       ..register(
         RegisteredAgentIntent(
-        descriptor: AgentIntentDescriptor(
-          namespace: 'app',
-          name: 'hello',
-          description: 'say hello',
-          kind: AgentIntentKind.tool,
-          inputSchema: const <String, Object?>{'type': 'object'},
+          descriptor: AgentIntentDescriptor(
+            namespace: 'app',
+            name: 'hello',
+            description: 'say hello',
+            kind: AgentIntentKind.tool,
+            inputSchema: const <String, Object?>{'type': 'object'},
+          ),
+          execute: (_) async =>
+              AgentResult.success(data: const <String, Object?>{'text': 'hi'}),
         ),
-        execute: (_) async => AgentResult.success(
-          data: const <String, Object?>{'text': 'hi'},
-        ),
-      ),
-    );
+      );
 
-    final published = <String, Future<Map<String, Object?>> Function(
-      Map<String, Object?>,
-    )>{};
+    final published =
+        <String, Future<Map<String, Object?>> Function(Map<String, Object?>)>{};
     final adapter = WebMcpPublishAdapter(
       publish:
           ({
@@ -51,9 +49,11 @@ void main() {
     'WebMcpPublishAdapter hot-syncs register and unregister after attach',
     () async {
       final registry = InMemoryAgentRegistry();
-      final published = <String, Future<Map<String, Object?>> Function(
-        Map<String, Object?>,
-      )>{};
+      final published =
+          <
+            String,
+            Future<Map<String, Object?>> Function(Map<String, Object?>)
+          >{};
       final unpublished = <String>[];
       final adapter = WebMcpPublishAdapter(
         publish:
@@ -95,6 +95,55 @@ void main() {
       registry.unregister('app_late');
       await Future<void>.delayed(Duration.zero);
       expect(unpublished, contains('app_late'));
+
+      await adapter.detach();
+    },
+  );
+
+  test(
+    'WebMcpPublishAdapter publishes overridden attach-time tool keys',
+    () async {
+      final registry = InMemoryAgentRegistry()
+        ..register(
+          RegisteredAgentIntent(
+            descriptor: AgentIntentDescriptor(
+              namespace: 'app',
+              name: 'hello',
+              description: 'say hello',
+              kind: AgentIntentKind.tool,
+              inputSchema: const <String, Object?>{'type': 'object'},
+            ),
+            execute: (_) async => AgentResult.success(
+              data: const <String, Object?>{'text': 'override'},
+            ),
+          ),
+          qualifiedNameOverride: 'custom_hello',
+        );
+      final published =
+          <
+            String,
+            Future<Map<String, Object?>> Function(Map<String, Object?>)
+          >{};
+      final adapter = WebMcpPublishAdapter(
+        publish:
+            ({
+              required final name,
+              required final description,
+              required final inputSchema,
+              required final execute,
+            }) {
+              published[name] = execute;
+            },
+        unpublish: (_) {},
+      );
+
+      await adapter.attach(registry);
+
+      expect(published, contains('custom_hello'));
+      expect(published, isNot(contains('app_hello')));
+      final out = await published['custom_hello']!(const <String, Object?>{});
+      expect(out['ok'], isTrue);
+      expect(out['text'], 'override');
 
       await adapter.detach();
     },

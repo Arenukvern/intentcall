@@ -50,6 +50,7 @@ final class McpPublishAdapter implements AgentAdapter {
   final Set<String> _publishedResources = <String>{};
   final Set<String> _publishedResourceTemplates = <String>{};
   final Set<String> _publishedResourceTemplatePatterns = <String>{};
+  final Map<String, String> _resourceTemplatePatternByKey = <String, String>{};
   StreamSubscription<AgentRegistryEvent>? _events;
   AgentRegistry? _registry;
 
@@ -62,8 +63,8 @@ final class McpPublishAdapter implements AgentAdapter {
   @override
   Future<void> attach(final AgentRegistry registry) async {
     _registry = registry;
-    for (final descriptor in registry.listDescriptors()) {
-      _syncDescriptor(registry, descriptor);
+    for (final entry in registry.listEntries()) {
+      _syncDescriptor(registry, entry.descriptor, registryKey: entry.key);
     }
     _events = registry.events.listen((final event) {
       final reg = _registry;
@@ -266,6 +267,7 @@ final class McpPublishAdapter implements AgentAdapter {
     );
     _publishedResourceTemplates.add(key);
     _publishedResourceTemplatePatterns.add(uriTemplate);
+    _resourceTemplatePatternByKey[key] = uriTemplate;
   }
 
   void _publishResourceTemplateIntent({
@@ -304,6 +306,7 @@ final class McpPublishAdapter implements AgentAdapter {
     );
     _publishedResourceTemplates.add(key);
     _publishedResourceTemplatePatterns.add(uriTemplate);
+    _resourceTemplatePatternByKey[key] = uriTemplate;
   }
 
   void _unpublishTransportKey(final String key) {
@@ -314,6 +317,10 @@ final class McpPublishAdapter implements AgentAdapter {
       unpublishResource?.call(key);
     }
     if (_publishedResourceTemplates.remove(key)) {
+      final pattern = _resourceTemplatePatternByKey.remove(key);
+      if (pattern != null) {
+        _publishedResourceTemplatePatterns.remove(pattern);
+      }
       // dart_mcp has no removeResourceTemplate; registry unregister is enough.
     }
   }

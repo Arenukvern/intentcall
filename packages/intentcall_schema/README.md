@@ -1,4 +1,4 @@
-> ⚠️ **Pre-release (0.1.x)** — Highly experimental. APIs may change without notice. Not for production. [Details](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md).
+> ⚠️ **Pre-release (0.2.x train)** — Highly experimental. APIs may change without notice. Not for production. [Details](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md).
 
 
 # intentcall_schema
@@ -7,5 +7,5 @@ Wire types, `AgentResult`, validation, and `AgentArguments` for the intentcall s
 
 ```yaml
 dependencies:
-  intentcall_schema: ^0.1.0
+  intentcall_schema: ^0.2.1
 ```

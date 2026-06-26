@@ -37,11 +37,12 @@ as `intentcall_mcp` may re-export the types for source compatibility, but the
 canonical import for non-MCP consumers is `package:intentcall_core/intentcall_core.dart`.
 
 **Q: Does IntentCall need a separate dynamic catalog gateway?**
-A: Not for the current public surface. `AgentRegistry.listDescriptors()` is the
-neutral catalog snapshot and `AgentRegistry.events` is the neutral change feed.
-Adapters consume that surface and project it into their transport. A named
-gateway should appear only when it owns behavior beyond listing descriptors and
-listening to registry events.
+A: Not for the current public surface. `AgentRegistry.listEntries()` is the
+neutral catalog snapshot for adapters because it preserves stored registry keys
+and descriptors, while `AgentRegistry.events` is the neutral change feed.
+`listDescriptors()` remains compatibility sugar for display-only catalog reads.
+A named gateway should appear only when it owns behavior beyond listing entries
+and listening to registry events.
 
 **Q: Why is `intentcall_testing` a separate package?**
 A: Test helpers have `test` as a dependency, which must not bleed into production packages. Isolating them in `intentcall_testing` lets app authors add it as a `dev_dependency` without the production graph growing.
@@ -83,7 +84,7 @@ A: Snapshot persistence is session-adjacent durable state: save a JSON runtime a
 ## Transport model
 
 **Q: Why is IntentCall "transport-agnostic" rather than MCP-first?**
-A: MCP is one wire format today; WebMCP, Apple App Intents, Android AppFunctions / App Actions, Windows App Actions, and protocol handlers all expose different contracts. IntentCall keeps the registry contract central, then projects it into the strongest available surface for each platform: semantic action/tool APIs where available, assistant or shortcut fulfillment where appropriate, and deep-link fallback where native support is incomplete.
+A: MCP is one wire format today; WebMCP, Apple App Intents, Android AppFunctions / App Actions, Windows App Actions, and protocol handlers all expose different contracts. IntentCall keeps the registry contract central, then projects it into the strongest available surface for each platform: semantic action/tool APIs where available, assistant or shortcut fulfillment where appropriate, and deep-link fallback where native support is incomplete. When platform metadata exists but native execution is not proven, generated wrappers dispatch to Dart instead of duplicating business logic.
 
 **Q: Why does `intentcall_mcp` use `dart_mcp` rather than a custom implementation?**
 A: Maintaining a custom MCP wire implementation would duplicate protocol work tracked upstream in the Dart ecosystem. `dart_mcp` is the canonical Dart MCP library; IntentCall wraps it with the registry bridge, staying thin.
@@ -92,16 +93,16 @@ A: Maintaining a custom MCP wire implementation would duplicate protocol work tr
 A: WebMCP's browser-hosted tool registration model requires different lifecycle management from request/response MCP. Current WebMCP drafts use `document.modelContext`; compatibility with older `navigator.modelContext` experiments should be treated as a shim, not the primary contract.
 
 **Q: Why does IntentCall use deep links if the goal is native agent integration?**
-A: Deep links are the universal fallback, not the whole vision. Some platforms expose semantic agent/action registries; others only provide launch routing today. IntentCall preserves one invocation contract across both: native metadata where the platform supports it, and `intentcall://invoke/...` or platform protocol handlers where it does not.
+A: Deep links are the universal fallback, not the whole vision. Some platforms expose semantic agent/action registries; others only provide launch routing today. IntentCall preserves one invocation contract across both: native metadata where the platform supports it, and `intentcall://invoke/...` or platform protocol handlers where it does not. Treat plain deep links as untrusted input unless they originate from generated native wrappers or an app-provided allowlist.
 
 **Q: How should platform support be described during pre-release?**
-A: Be explicit about tiers. Apple App Intents and WebMCP are semantic surfaces; Android AppFunctions and Windows App Actions are roadmap native semantic targets; Android App Actions and shortcuts are assistant/shortcut fulfillment; Windows protocol activation and Linux `x-scheme-handler` are protocol fallback. AAIF is ecosystem alignment around agent infrastructure, not a Linux desktop intent API.
+A: Be explicit about tiers. WebMCP is a Dart-first in-page registration surface. Apple App Intents are currently generated parameter wrappers that dispatch to Dart after launch/wake; app-extension-hosted Dart is an experiment, not supported. Android AppFunctions and Windows App Actions are roadmap native semantic targets; Android App Actions and shortcuts are assistant/shortcut fulfillment; Windows protocol activation and Linux `x-scheme-handler` are protocol fallback. AAIF is ecosystem alignment around agent infrastructure, not a Linux desktop intent API.
 
 ---
 
 ## Quality & stability
 
-**Q: Why are all packages at `0.1.x` pre-release instead of `1.0.0`?**
+**Q: Why are all packages pre-1.0 on the current `0.2.x` train instead of `1.0.0`?**
 A: The wire contract in `intentcall_schema` and the registry API in `intentcall_core` are still being exercised across real adapters. Publishing a `1.0.0` would imply API stability we cannot guarantee yet. Pre-release allows breaking changes to land without a semver major while the design stabilizes.
 
 **Q: Why does CI run a publish dry-run on every PR?**

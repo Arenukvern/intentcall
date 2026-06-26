@@ -16,12 +16,12 @@ environment:
 resolution: workspace
 
 dependencies:
-  intentcall_core: ^0.2.0
-  intentcall_schema: ^0.2.0
+  intentcall_core: ^0.2.1
+  intentcall_schema: ^0.2.1
   meta: ^1.17.0
 
 dev_dependencies:
-  intentcall_testing: ^0.2.0
+  intentcall_testing: ^0.2.1
   lints: ^6.1.0
   test: ^1.31.1
   xsoulspace_lints: ^0.1.2

@@ -1,5 +1,5 @@
-import Flutter
-import UIKit
+import Cocoa
+import FlutterMacOS
 
 /// Plugin bridge for pending native intent dispatch into Dart.
 public class IntentCallPlatformPlugin: NSObject, FlutterPlugin {
@@ -8,7 +8,7 @@ public class IntentCallPlatformPlugin: NSObject, FlutterPlugin {
   public static func register(with registrar: FlutterPluginRegistrar) {
     let channel = FlutterMethodChannel(
       name: "intentcall_platform/invocations",
-      binaryMessenger: registrar.messenger()
+      binaryMessenger: registrar.messenger
     )
     let instance = IntentCallPlatformPlugin()
     registrar.addMethodCallDelegate(instance, channel: channel)

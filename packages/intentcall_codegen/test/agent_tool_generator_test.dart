@@ -31,4 +31,38 @@ void main() {
     expect(demoPingCallEntry.name, 'demo_ping');
     expect(demoPingCallEntry.toRegistration().qualifiedName, 'app_demo_ping');
   });
+
+  test(
+    'generated demoCartCallEntry omits absent optional named args',
+    () async {
+      final result = await demoCartRegistration.execute(
+        AgentInvocation(
+          descriptor: demoCartRegistration.descriptor,
+          arguments: const <String, Object?>{'currency': 'USD'},
+        ),
+      );
+
+      expect(result.ok, isTrue);
+      expect(result.data['currency'], 'USD');
+      expect(result.data['includeTax'], isFalse);
+    },
+  );
+
+  test(
+    'generated demoCartCallEntry passes present optional named args',
+    () async {
+      final result = await demoCartRegistration.execute(
+        AgentInvocation(
+          descriptor: demoCartRegistration.descriptor,
+          arguments: const <String, Object?>{
+            'currency': 'USD',
+            'includeTax': true,
+          },
+        ),
+      );
+
+      expect(result.ok, isTrue);
+      expect(result.data['includeTax'], isTrue);
+    },
+  );
 }

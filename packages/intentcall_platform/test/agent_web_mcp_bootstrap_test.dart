@@ -9,4 +9,11 @@ void main() {
       returnsNormally,
     );
   });
+
+  test('registerAgentWebMcpFromRegistry is safe on VM', () {
+    expect(
+      () => registerAgentWebMcpFromRegistry(InMemoryAgentRegistry()),
+      returnsNormally,
+    );
+  });
 }

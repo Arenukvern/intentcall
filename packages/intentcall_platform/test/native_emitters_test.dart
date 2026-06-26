@@ -12,7 +12,14 @@ void main() {
         'name': 'cart_total',
         'description': 'Return cart total',
         'kind': 'tool',
-        'inputSchema': <String, Object?>{'type': 'object'},
+        'inputSchema': <String, Object?>{
+          'type': 'object',
+          'required': <String>['currency'],
+          'properties': <String, Object?>{
+            'currency': <String, Object?>{'type': 'string'},
+            'includeTax': <String, Object?>{'type': 'boolean'},
+          },
+        },
       },
     ],
   });
@@ -35,8 +42,13 @@ void main() {
     test('emits AppIntent and AppShortcutsProvider', () {
       final swift = const AppleSwiftAppIntentsEmitter().emit(manifest);
       expect(swift, contains('struct AppCartTotalIntent: AppIntent'));
+      expect(swift, contains('@Parameter(title: "Currency")'));
+      expect(swift, contains('var currency: String'));
+      expect(swift, contains('var includeTax: Bool?'));
+      expect(swift, contains('arguments["currency"] = currency'));
       expect(swift, contains('IntentCallShortcutsProvider'));
       expect(swift, contains('IntentCallNativeBridge'));
+      expect(swift, contains('intentcall.pending_invocations'));
       expect(swift, contains('intentcall://invoke/'));
     });
 
@@ -103,8 +115,17 @@ import AppKit
 struct AppCartTotalIntent: AppIntent {
   static var title: LocalizedStringResource = "Return cart total"
 
+  @Parameter(title: "Currency")
+  var currency: String
+
+  @Parameter(title: "IncludeTax")
+  var includeTax: Bool?
+
   func perform() async throws -> some IntentResult {
-    await IntentCallNativeBridge.invoke(qualifiedName: "app_cart_total")
+    var arguments: [String: Any] = [:]
+    arguments["currency"] = currency
+    if let value = includeTax { arguments["includeTax"] = value }
+    await IntentCallNativeBridge.enqueue(qualifiedName: "app_cart_total", arguments: arguments)
     return .result()
   }
 }
@@ -119,7 +140,18 @@ struct IntentCallShortcutsProvider: AppShortcutsProvider {
 }
 
 enum IntentCallNativeBridge {
-  static func invoke(qualifiedName: String) async {
+  private static let pendingKey = "intentcall.pending_invocations"
+
+  static func enqueue(qualifiedName: String, arguments: [String: Any]) async {
+    var pending = UserDefaults.standard.array(forKey: pendingKey) as? [[String: Any]] ?? []
+    pending.append([
+      "id": UUID().uuidString,
+      "qualifiedName": qualifiedName,
+      "arguments": arguments,
+      "source": "native.generated",
+      "createdAt": ISO8601DateFormatter().string(from: Date())
+    ])
+    UserDefaults.standard.set(pending, forKey: pendingKey)
     guard let url = URL(string: "intentcall://invoke/\(qualifiedName)") else { return }
     #if canImport(UIKit)
     await UIApplication.shared.open(url)

@@ -19,7 +19,7 @@ Platform reality is not flat. Apple App Intents, Android AppFunctions, Android A
 * **Honesty** - document what is implemented now versus roadmap.
 * **Portability** - preserve one intent model and one fallback invocation contract.
 * **Platform fit** - use native semantic action/tool systems where they exist.
-* **Pre-release clarity** - keep `0.1.x` docs ambitious without implying false parity.
+* **Pre-release clarity** - keep pre-1.0 docs ambitious without implying false parity.
 
 ## Considered Options
 

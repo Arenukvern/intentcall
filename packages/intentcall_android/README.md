@@ -1,9 +1,12 @@
-> ⚠️ **Pre-release (0.1.x)** — Highly experimental. APIs may change without notice. Not for production. [Details](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md).
+> ⚠️ **Pre-release (0.2.x train)** — Highly experimental. APIs may change without notice. Not for production. [Details](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md).
 
 
 # intentcall_android
 
-Android manifest codegen for intentcall (App Actions / dynamic shortcuts export).
+Android manifest codegen for IntentCall shortcut and deep-link artifacts.
+
+Current Android support is shortcut/deep-link dispatch into Dart. Android
+AppFunctions and fuller App Actions capability generation remain roadmap work.
 
 ## Author workflow
 

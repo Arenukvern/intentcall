@@ -1,8 +1,9 @@
 # Publishing intentcall to pub.dev
 
-Status: `0.1.0` has been published to pub.dev for the `intentcall_*`
-package train. Use this runbook for future releases; keep the first-publish
-checks only as historical/diagnostic guidance.
+Status: the current published train is `0.2.x`; all publishable
+`intentcall_*` packages should move together. Use this runbook for normal
+tag-triggered releases; keep first-publish and manual execute commands only as
+historical or recovery guidance.
 
 ## Automatic release and publish flow
 
@@ -16,7 +17,7 @@ publishing:
    into one package train, including `intentcall_session`, so versions remain
    synchronized.
 4. Merging the release PR creates component tags such as
-   `intentcall_core-v0.1.1`.
+   `intentcall_core-v0.2.1`.
 5. `.github/workflows/pub_publish.yml` runs for each `intentcall_*-v*` tag and
    publishes the package named by that tag. The workflow is skip-existing safe,
    so rerunning a tag does not republish an already visible package version.
@@ -87,16 +88,16 @@ just publish-preflight
 just publish-dry-run
 
 # Validate one package tag the way automated publishing does
-just publish-tag-dry-run intentcall_session-v0.1.0
+just publish-tag-dry-run intentcall_session-v0.2.1
 
 # Diagnostic only while release-critical files are dirty; still fails archive/content errors
 just publish-dry-run-ignore-warnings
 
-# After credentials are configured
+# Recovery-only: after credentials are configured and automated publishing is unavailable
 just publish-execute
 
 # CI normally runs this from .github/workflows/pub_publish.yml on tag push
-just publish-tag-execute intentcall_session-v0.1.0
+just publish-tag-execute intentcall_session-v0.2.1
 ```
 
 For a brand-new package name, treat `just publish-preflight-first` as the release desk:
@@ -104,7 +105,7 @@ For a brand-new package name, treat `just publish-preflight-first` as the releas
 - All `intentcall_*` package names must report available on pub.dev.
 - The release-critical tree must be clean: publishable `packages/intentcall_*` files plus `tool/intentcall`, including newly added public API files such as `packages/intentcall_core/lib/intentcall_core_migration.dart`.
 - `dart pub token list` must show a configured token for pub.dev.
-- `just publish-dry-run` must pass from the same clean release commit before `just publish-execute`.
+- `just publish-dry-run` must pass from the same clean release commit before any recovery manual publish.
 
 `just publish-dry-run-ignore-warnings` is only for diagnosing archive/content issues before the release-critical tree is clean. It must not replace the strict dry-run above.
 
@@ -119,7 +120,7 @@ cd packages/intentcall_platform && flutter pub publish --dry-run
 
 ## After publish (mcp_flutter cutover)
 
-Status: the initial `0.1.0` hosted cutover is complete in `mcp_flutter`.
+Status: the initial hosted cutover is complete in `mcp_flutter`.
 For future IntentCall releases, update consumers only after the pub.dev package
 pages exist for the full publish order above.
 

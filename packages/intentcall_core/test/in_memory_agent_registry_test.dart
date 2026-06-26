@@ -128,4 +128,26 @@ void main() {
       throwsA(isA<AgentIntentCollisionError>()),
     );
   });
+
+  test('listEntries preserves qualifiedNameOverride keys', () {
+    final registry = InMemoryAgentRegistry();
+    final intent = RegisteredAgentIntent(
+      descriptor: AgentIntentDescriptor(
+        namespace: 'demo',
+        name: 'echo',
+        description: 'echo',
+        kind: AgentIntentKind.tool,
+        inputSchema: const <String, Object?>{'type': 'object'},
+      ),
+      execute: (_) async => AgentResult.success(),
+    );
+
+    registry.register(intent, qualifiedNameOverride: 'custom_transport_key');
+
+    final entry = registry.listEntries().single;
+    expect(entry.key, 'custom_transport_key');
+    expect(entry.intent, same(intent));
+    expect(entry.descriptor.qualifiedName, 'demo_echo');
+    expect(registry.listDescriptors().single.qualifiedName, 'demo_echo');
+  });
 }

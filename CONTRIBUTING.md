@@ -50,8 +50,8 @@ See [docs/DX_FAQ.mdx](docs/DX_FAQ.mdx) — "How do I add a new `intentcall_*` pa
 
 ## Publishing
 
-Publishing to pub.dev is maintainer-gated. Maintainers run `just publish-preflight-first` for the first publish, `just publish-preflight` for later releases, then `just publish-dry-run` before `just publish-execute`. See [PUBLISHING.md](PUBLISHING.md).
+Publishing to pub.dev is maintainer-gated. Maintainers normally merge the Release Please PR and let tag-triggered GitHub Actions publish through pub.dev automated publishing. `just publish-dry-run` and tag dry-runs are preflight checks; manual execute commands are recovery-only. See [PUBLISHING.md](PUBLISHING.md).
 
 ## Pre-release note
 
-All packages are `0.1.x`. APIs may change without a semver major. See [PRE_RELEASE.md](PRE_RELEASE.md).
+All packages are `0.2.x` train. APIs may change without a semver major. See [PRE_RELEASE.md](PRE_RELEASE.md).
