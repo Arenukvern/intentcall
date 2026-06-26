@@ -9,6 +9,7 @@ import '../emitters/linux_desktop_entry_emitter.dart';
 import '../emitters/web_manifest_emitter.dart';
 import '../emitters/web_mcp_js_emitter.dart';
 import '../emitters/windows_protocol_emitter.dart';
+import 'apple_xcode_project_sync.dart';
 
 /// Supported `codegen sync --platform` values.
 const kPlatformSyncTargets = <String>{
@@ -29,6 +30,8 @@ final class PlatformSyncResult {
     this.androidShortcutsPath,
     this.iosGeneratedSwiftPath,
     this.macosGeneratedSwiftPath,
+    this.iosXcodeProjectPath,
+    this.macosXcodeProjectPath,
     this.linuxDesktopPath,
     this.windowsProtocolPath,
     this.windowsMsixFragmentPath,
@@ -37,6 +40,8 @@ final class PlatformSyncResult {
     this.wroteAndroidShortcuts = false,
     this.wroteIosGenerated = false,
     this.wroteMacosGenerated = false,
+    this.wroteIosXcodeProject = false,
+    this.wroteMacosXcodeProject = false,
     this.wroteLinuxDesktop = false,
     this.wroteWindowsProtocol = false,
     this.wroteWindowsMsixFragment = false,
@@ -48,6 +53,8 @@ final class PlatformSyncResult {
   final String? androidShortcutsPath;
   final String? iosGeneratedSwiftPath;
   final String? macosGeneratedSwiftPath;
+  final String? iosXcodeProjectPath;
+  final String? macosXcodeProjectPath;
   final String? linuxDesktopPath;
   final String? windowsProtocolPath;
   final String? windowsMsixFragmentPath;
@@ -56,6 +63,8 @@ final class PlatformSyncResult {
   final bool wroteAndroidShortcuts;
   final bool wroteIosGenerated;
   final bool wroteMacosGenerated;
+  final bool wroteIosXcodeProject;
+  final bool wroteMacosXcodeProject;
   final bool wroteLinuxDesktop;
   final bool wroteWindowsProtocol;
   final bool wroteWindowsMsixFragment;
@@ -138,18 +147,15 @@ final class PlatformSync {
       manifestPath: _resolveManifestFile(projectRoot).path,
     );
     for (final platform in normalized) {
-      result = _mergeResults(
-        result,
-        switch (platform) {
-          'web' => syncWeb(projectRoot: projectRoot, dryRun: dryRun),
-          'android' => syncAndroid(projectRoot: projectRoot, dryRun: dryRun),
-          'ios' => syncIos(projectRoot: projectRoot, dryRun: dryRun),
-          'macos' => syncMacos(projectRoot: projectRoot, dryRun: dryRun),
-          'linux' => syncLinux(projectRoot: projectRoot, dryRun: dryRun),
-          'windows' => syncWindows(projectRoot: projectRoot, dryRun: dryRun),
-          _ => throw StateError('unreachable'),
-        },
-      );
+      result = _mergeResults(result, switch (platform) {
+        'web' => syncWeb(projectRoot: projectRoot, dryRun: dryRun),
+        'android' => syncAndroid(projectRoot: projectRoot, dryRun: dryRun),
+        'ios' => syncIos(projectRoot: projectRoot, dryRun: dryRun),
+        'macos' => syncMacos(projectRoot: projectRoot, dryRun: dryRun),
+        'linux' => syncLinux(projectRoot: projectRoot, dryRun: dryRun),
+        'windows' => syncWindows(projectRoot: projectRoot, dryRun: dryRun),
+        _ => throw StateError('unreachable'),
+      });
     }
     return result;
   }
@@ -356,9 +362,7 @@ final class PlatformSync {
 
   bool checkLinux(final String projectRoot) {
     final manifest = readManifest(projectRoot);
-    final file = File(
-      p.join(projectRoot, linuxDirName, linuxDesktopFileName),
-    );
+    final file = File(p.join(projectRoot, linuxDirName, linuxDesktopFileName));
     if (!file.existsSync()) {
       return false;
     }
@@ -376,8 +380,7 @@ final class PlatformSync {
     if (!reg.existsSync() || !msix.existsSync()) {
       return false;
     }
-    return reg.readAsStringSync() ==
-            windowsProtocolEmitter.emit(manifest) &&
+    return reg.readAsStringSync() == windowsProtocolEmitter.emit(manifest) &&
         msix.readAsStringSync() ==
             windowsProtocolEmitter.emitMsixFragment(manifest);
   }
@@ -393,23 +396,33 @@ final class PlatformSync {
     if (!rootDir.existsSync()) {
       throw StateError('Missing $appleRoot directory under $projectRoot');
     }
-    final generatedDir = Directory(p.join(appleRoot, 'Runner', 'Generated'))
-      ..createSync(recursive: true);
+    final generatedDir = Directory(p.join(appleRoot, 'Runner', 'Generated'));
     final outFile = File(p.join(generatedDir.path, appleGeneratedFileName));
     final next = '${appleSwiftEmitter.emit(manifest)}\n';
-    var wrote = false;
+    final generatedChanged =
+        !outFile.existsSync() || outFile.readAsStringSync() != next;
+    final projectSync = _appleXcodeProjectSync();
+    final xcodePreview = projectSync.sync(appleRoot: appleRoot, dryRun: true);
     if (!dryRun) {
-      if (!outFile.existsSync() || outFile.readAsStringSync() != next) {
+      generatedDir.createSync(recursive: true);
+      _deleteStaleAppleGeneratedFiles(generatedDir);
+      if (generatedChanged) {
         outFile.writeAsStringSync(next);
-        wrote = true;
       }
     }
+    final xcodeResult = !dryRun && xcodePreview.changed
+        ? projectSync.sync(appleRoot: appleRoot)
+        : xcodePreview;
     return PlatformSyncResult(
       manifestPath: _resolveManifestFile(projectRoot).path,
       iosGeneratedSwiftPath: isMacos ? null : outFile.path,
       macosGeneratedSwiftPath: isMacos ? outFile.path : null,
-      wroteIosGenerated: !isMacos && wrote,
-      wroteMacosGenerated: isMacos && wrote,
+      iosXcodeProjectPath: isMacos ? null : xcodeResult.projectPath,
+      macosXcodeProjectPath: isMacos ? xcodeResult.projectPath : null,
+      wroteIosGenerated: !isMacos && generatedChanged,
+      wroteMacosGenerated: isMacos && generatedChanged,
+      wroteIosXcodeProject: !isMacos && xcodeResult.changed,
+      wroteMacosXcodeProject: isMacos && xcodeResult.changed,
     );
   }
 
@@ -430,7 +443,27 @@ final class PlatformSync {
     if (!file.existsSync()) {
       return false;
     }
-    return file.readAsStringSync() == '${appleSwiftEmitter.emit(manifest)}\n';
+    return file.readAsStringSync() == '${appleSwiftEmitter.emit(manifest)}\n' &&
+        _appleXcodeProjectSync().check(p.join(projectRoot, appleRoot));
+  }
+
+  AppleXcodeProjectSync _appleXcodeProjectSync() =>
+      AppleXcodeProjectSync(generatedFileName: appleGeneratedFileName);
+
+  void _deleteStaleAppleGeneratedFiles(final Directory generatedDir) {
+    for (final name in _staleAppleGeneratedFileNames()) {
+      final file = File(p.join(generatedDir.path, name));
+      if (file.existsSync()) {
+        file.deleteSync();
+      }
+    }
+  }
+
+  Iterable<String> _staleAppleGeneratedFileNames() sync* {
+    const defaultGeneratedFileName = 'IntentCallGenerated.swift';
+    if (appleGeneratedFileName != defaultGeneratedFileName) {
+      yield defaultGeneratedFileName;
+    }
   }
 
   File _androidShortcutsFile(final String projectRoot) => File(
@@ -449,35 +482,39 @@ final class PlatformSync {
   PlatformSyncResult _mergeResults(
     final PlatformSyncResult left,
     final PlatformSyncResult right,
-  ) =>
-      PlatformSyncResult(
-        manifestPath: left.manifestPath,
-        webManifestPath: right.webManifestPath ?? left.webManifestPath,
-        webMcpJsPath: right.webMcpJsPath ?? left.webMcpJsPath,
-        androidShortcutsPath:
-            right.androidShortcutsPath ?? left.androidShortcutsPath,
-        iosGeneratedSwiftPath:
-            right.iosGeneratedSwiftPath ?? left.iosGeneratedSwiftPath,
-        macosGeneratedSwiftPath:
-            right.macosGeneratedSwiftPath ?? left.macosGeneratedSwiftPath,
-        linuxDesktopPath: right.linuxDesktopPath ?? left.linuxDesktopPath,
-        windowsProtocolPath:
-            right.windowsProtocolPath ?? left.windowsProtocolPath,
-        windowsMsixFragmentPath:
-            right.windowsMsixFragmentPath ?? left.windowsMsixFragmentPath,
-        wroteManifest: left.wroteManifest || right.wroteManifest,
-        wroteWebMcpJs: left.wroteWebMcpJs || right.wroteWebMcpJs,
-        wroteAndroidShortcuts:
-            left.wroteAndroidShortcuts || right.wroteAndroidShortcuts,
-        wroteIosGenerated: left.wroteIosGenerated || right.wroteIosGenerated,
-        wroteMacosGenerated:
-            left.wroteMacosGenerated || right.wroteMacosGenerated,
-        wroteLinuxDesktop: left.wroteLinuxDesktop || right.wroteLinuxDesktop,
-        wroteWindowsProtocol:
-            left.wroteWindowsProtocol || right.wroteWindowsProtocol,
-        wroteWindowsMsixFragment:
-            left.wroteWindowsMsixFragment || right.wroteWindowsMsixFragment,
-      );
+  ) => PlatformSyncResult(
+    manifestPath: left.manifestPath,
+    webManifestPath: right.webManifestPath ?? left.webManifestPath,
+    webMcpJsPath: right.webMcpJsPath ?? left.webMcpJsPath,
+    androidShortcutsPath:
+        right.androidShortcutsPath ?? left.androidShortcutsPath,
+    iosGeneratedSwiftPath:
+        right.iosGeneratedSwiftPath ?? left.iosGeneratedSwiftPath,
+    macosGeneratedSwiftPath:
+        right.macosGeneratedSwiftPath ?? left.macosGeneratedSwiftPath,
+    iosXcodeProjectPath: right.iosXcodeProjectPath ?? left.iosXcodeProjectPath,
+    macosXcodeProjectPath:
+        right.macosXcodeProjectPath ?? left.macosXcodeProjectPath,
+    linuxDesktopPath: right.linuxDesktopPath ?? left.linuxDesktopPath,
+    windowsProtocolPath: right.windowsProtocolPath ?? left.windowsProtocolPath,
+    windowsMsixFragmentPath:
+        right.windowsMsixFragmentPath ?? left.windowsMsixFragmentPath,
+    wroteManifest: left.wroteManifest || right.wroteManifest,
+    wroteWebMcpJs: left.wroteWebMcpJs || right.wroteWebMcpJs,
+    wroteAndroidShortcuts:
+        left.wroteAndroidShortcuts || right.wroteAndroidShortcuts,
+    wroteIosGenerated: left.wroteIosGenerated || right.wroteIosGenerated,
+    wroteMacosGenerated: left.wroteMacosGenerated || right.wroteMacosGenerated,
+    wroteIosXcodeProject:
+        left.wroteIosXcodeProject || right.wroteIosXcodeProject,
+    wroteMacosXcodeProject:
+        left.wroteMacosXcodeProject || right.wroteMacosXcodeProject,
+    wroteLinuxDesktop: left.wroteLinuxDesktop || right.wroteLinuxDesktop,
+    wroteWindowsProtocol:
+        left.wroteWindowsProtocol || right.wroteWindowsProtocol,
+    wroteWindowsMsixFragment:
+        left.wroteWindowsMsixFragment || right.wroteWindowsMsixFragment,
+  );
 
   File _resolveManifestFile(final String projectRoot) {
     final rootCandidate = File(p.join(projectRoot, manifestFileName));

@@ -19,6 +19,8 @@ tasks.named("preBuild").configure {
 ''';
 
 /// Xcode Run Script build phase — add to iOS/macOS target once.
+///
+/// The sync command writes generated Swift and maintains target membership.
 const kAppleXcodeCodegenRunScript = r'''
 # intentcall-platform: begin
 cd "${SRCROOT}/.."

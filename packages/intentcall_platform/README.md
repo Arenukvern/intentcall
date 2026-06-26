@@ -11,6 +11,11 @@ parameters, enqueue an `IntentCallInvocationEnvelope`, and let Dart execute the
 registered `AgentRegistry` handler after app launch or wake. App-extension
 hosted Dart execution is experimental and not a stable support claim.
 
+For iOS and macOS, `PlatformSync` also maintains the generated
+`Runner/Generated/IntentCallGenerated.swift` file in the main `Runner` target's
+Sources build phase so App Intents can be compiled and discovered by Apple
+system surfaces.
+
 ## Manifest workflow (I4)
 
 `web/agent_manifest.json` is **checked in** and refreshed by CLI — not generated live from `AgentRegistry` yet.

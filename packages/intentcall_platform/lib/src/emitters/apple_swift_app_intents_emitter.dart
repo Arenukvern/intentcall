@@ -61,22 +61,15 @@ final class AppleSwiftAppIntentsEmitter {
         ..writeln('}')
         ..writeln();
       shortcutLines.add(
-        '    AppShortcut(intent: $typeName(), phrases: ["$phrase"])',
+        '    AppShortcut(intent: $typeName(), phrases: ["\\(.applicationName) $phrase"])',
       );
     }
 
     buffer
       ..writeln('@available(iOS 16.0, macOS 13.0, *)')
       ..writeln('struct IntentCallShortcutsProvider: AppShortcutsProvider {')
-      ..writeln('  static var appShortcuts: [AppShortcut] {')
-      ..writeln('    [');
-    if (shortcutLines.isEmpty) {
-      buffer.writeln('    ]');
-    } else {
-      buffer
-        ..writeln('${shortcutLines.join(',\n')},')
-        ..writeln('    ]');
-    }
+      ..writeln('  static var appShortcuts: [AppShortcut] {');
+    shortcutLines.forEach(buffer.writeln);
     buffer
       ..writeln('  }')
       ..writeln('}')

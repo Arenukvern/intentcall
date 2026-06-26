@@ -133,9 +133,7 @@ struct AppCartTotalIntent: AppIntent {
 @available(iOS 16.0, macOS 13.0, *)
 struct IntentCallShortcutsProvider: AppShortcutsProvider {
   static var appShortcuts: [AppShortcut] {
-    [
-    AppShortcut(intent: AppCartTotalIntent(), phrases: ["Cart Total"]),
-    ]
+    AppShortcut(intent: AppCartTotalIntent(), phrases: ["\(.applicationName) Cart Total"])
   }
 }
 
