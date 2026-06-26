@@ -26,10 +26,10 @@ This mirrors the `mcp_flutter` release pattern: Release Please owns version and
 changelog generation, while the native repo publish script owns pub.dev
 preflight and publishing.
 
-Release PR titles must keep the release-please parseable shape generated from
-`group-pull-request-title-pattern`: `chore${scope}: release${component}
-${version}`. Do not retitle release PRs to omit the package train component or
-version; Release Please can merge such PRs but then refuse to create tags.
+Release PR titles must keep the release-please parseable grouped shape generated
+from `group-pull-request-title-pattern`: `chore${scope}: release intentcall
+package train`. Do not retitle release PRs away from that shape; Release Please
+can merge such PRs but then refuse to create tags.
 
 ## Required GitHub and pub.dev configuration
 
