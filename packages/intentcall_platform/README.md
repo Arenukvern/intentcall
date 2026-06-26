@@ -39,9 +39,9 @@ flutter-mcp-toolkit codegen sync \
   --project-dir <app>
 ```
 
-Use `--check` in CI (`make check-intentcall-integration`). `--check` reports
-whether any generated artifact or native project membership would change without
-writing files.
+Use the same command with `--check` in CI. `--check` reports whether any
+generated artifact or native project membership would change without writing
+files.
 
 ### One-time hooks
 
