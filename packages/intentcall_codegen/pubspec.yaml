@@ -1,7 +1,7 @@
 name: intentcall_codegen
 description: PRE-RELEASE — Optional @AgentTool annotations and build_runner
   codegen for intentcall.
-version: 0.2.1
+version: 0.3.0
 license: MIT
 repository: https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_codegen
 issue_tracker: https://github.com/Arenukvern/intentcall/issues
