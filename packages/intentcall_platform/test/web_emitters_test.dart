@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:intentcall_platform/intentcall_platform.dart';
 import 'package:test/test.dart';
@@ -127,6 +128,47 @@ void main() {
       expect(js, contains('return fetchInvoke(tool.name, args);'));
     });
 
+    test('default runtime unavailable does not call fetch', () async {
+      final js = const WebMcpJsEmitter().emit(_fixtureAgentManifest);
+
+      final result = await _runWebMcpJs(js);
+
+      expect(result['fetchCalled'], isFalse);
+      expect(result['toolCount'], 1);
+      expect(result['result'], isA<Map>());
+      expect((result['result']! as Map)['ok'], isFalse);
+      expect((result['result']! as Map)['code'], 'runtime_unavailable');
+    });
+
+    test(
+      'default runtime unavailable does not fetch after null Dart hook',
+      () async {
+        final js = const WebMcpJsEmitter().emit(_fixtureAgentManifest);
+
+        final result = await _runWebMcpJs(
+          js,
+          dartHook: 'async function () { return null; }',
+        );
+
+        expect(result['fetchCalled'], isFalse);
+        expect((result['result']! as Map)['code'], 'runtime_unavailable');
+      },
+    );
+
+    test('opt-in runtime fallback calls configured fetch path', () async {
+      final js = const WebMcpJsEmitter(
+        fallbackPolicy: WebMcpFallbackPolicy.enabled(
+          invokePath: '/secure-agent/invoke',
+        ),
+      ).emit(_fixtureAgentManifest);
+
+      final result = await _runWebMcpJs(js);
+
+      expect(result['fetchCalled'], isTrue);
+      expect(result['fetchUrl'], '/secure-agent/invoke?name=app_cart_total');
+      expect((result['result']! as Map)['via'], 'fetch');
+    });
+
     test('skips non-tool intents', () {
       final manifest = AgentManifest.fromJson(<String, Object?>{
         'version': 1,
@@ -170,6 +212,55 @@ void main() {
       expect(manifest.tools.first.qualifiedName, 'app_ping');
     });
   });
+}
+
+Future<Map<String, Object?>> _runWebMcpJs(
+  final String js, {
+  final String? dartHook,
+}) async {
+  final script =
+      '''
+Object.defineProperty(globalThis, 'document', {
+  value: {
+    modelContext: {
+      registerTool(tool) {
+        globalThis.__registered.push(tool);
+      }
+    }
+  },
+  configurable: true
+});
+Object.defineProperty(globalThis, 'navigator', {
+  value: {},
+  configurable: true
+});
+globalThis.__registered = [];
+globalThis.__fetchCalled = false;
+globalThis.__fetchUrl = null;
+globalThis.fetch = async function(url) {
+  globalThis.__fetchCalled = true;
+  globalThis.__fetchUrl = url;
+  return { json: async function() { return { ok: true, via: 'fetch' }; } };
+};
+${dartHook == null ? '' : 'globalThis.__intentcallWebMcpDartExecute = $dartHook;'}
+$js
+const result = await globalThis.__registered[0].execute({});
+console.log(JSON.stringify({
+  toolCount: globalThis.__registered.length,
+  result,
+  fetchCalled: globalThis.__fetchCalled,
+  fetchUrl: globalThis.__fetchUrl
+}));
+''';
+  final process = await Process.run('node', <String>[
+    '--input-type=module',
+    '-e',
+    script,
+  ]);
+  if (process.exitCode != 0) {
+    fail('node failed: ${process.stderr}\n${process.stdout}');
+  }
+  return (jsonDecode(process.stdout as String) as Map).cast<String, Object?>();
 }
 
 const _fixtureBaseWebManifest = '''

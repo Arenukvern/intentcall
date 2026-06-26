@@ -6,14 +6,25 @@ import 'agent_web_mcp_bootstrap_stub.dart'
     as impl;
 
 /// Registers WebMCP tools from [AgentCallEntry] values (Flutter web path C).
-void registerAgentWebMcpFromEntries(final Set<AgentCallEntry> entries) =>
-    impl.registerFromEntries(entries);
+///
+/// The default policy is open only while Dart assertions are enabled. In
+/// compiled profile/release builds it denies all invocations unless an app
+/// passes an explicit source/name allowlist or confirmation policy.
+void registerAgentWebMcpFromEntries(
+  final Set<AgentCallEntry> entries, {
+  final IntentCallAuthorizationPolicy policy =
+      const IntentCallAuthorizationPolicy.debugAllowAll(),
+}) => impl.registerFromEntries(entries, policy: policy);
 
 /// Registers WebMCP tools directly from [registry] and executes them in Dart.
+///
+/// The default policy is open only while Dart assertions are enabled. In
+/// compiled profile/release builds it denies all invocations unless an app
+/// passes an explicit source/name allowlist or confirmation policy.
 void registerAgentWebMcpFromRegistry(
   final AgentRegistry registry, {
   final IntentCallAuthorizationPolicy policy =
-      const IntentCallAuthorizationPolicy.allowAll(),
+      const IntentCallAuthorizationPolicy.debugAllowAll(),
 }) => impl.registerFromRegistry(registry, policy: policy);
 
 /// Whether a tool was already registered on WebMCP (web only; stub returns false).

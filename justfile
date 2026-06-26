@@ -57,9 +57,9 @@ doctor:
 validate:
     dart run tool/intentcall/bin/intentcall.dart validate
 
-# Run the shared native adapter contract tests
+# Run the shared native adapter and platform bridge contract tests
 adapter-contract-test:
-    dart test packages/intentcall_testing/test/adapter_contract_test.dart packages/intentcall_mcp/test/mcp_adapter_contract_test.dart packages/intentcall_webmcp/test/webmcp_adapter_contract_test.dart packages/intentcall_gemma/test/gemma_adapter_contract_test.dart
+    dart test packages/intentcall_testing/test/adapter_contract_test.dart packages/intentcall_mcp/test/mcp_adapter_contract_test.dart packages/intentcall_webmcp/test/webmcp_adapter_contract_test.dart packages/intentcall_gemma/test/gemma_adapter_contract_test.dart packages/intentcall_platform/test/intentcall_invocation_test.dart packages/intentcall_platform/test/web_emitters_test.dart packages/intentcall_platform/test/agent_web_mcp_bootstrap_test.dart
 
 # List custom agent skills defined in this repository
 list-skills:

@@ -52,6 +52,21 @@ void main() {
     expect(result.wroteMacosXcodeProject, isTrue);
     expect(result.wroteLinuxDesktop, isTrue);
     expect(result.wroteWindowsProtocol, isTrue);
+    expect(result.changed, isTrue);
+    expect(result.artifacts.map((final artifact) => artifact.target), [
+      'android',
+      'ios',
+      'ios',
+      'macos',
+      'macos',
+      'linux',
+      'windows',
+      'windows',
+    ]);
+    expect(
+      result.artifacts.map((final artifact) => artifact.operation),
+      contains('target-membership'),
+    );
 
     expect(
       sync.checkPlatforms(temp.path, [
@@ -106,6 +121,8 @@ void main() {
     const sync = PlatformSync();
     final result = sync.syncIos(projectRoot: temp.path, dryRun: true);
 
+    expect(result.dryRun, isTrue);
+    expect(result.changed, isTrue);
     expect(result.wroteIosGenerated, isTrue);
     expect(result.wroteIosXcodeProject, isTrue);
     expect(

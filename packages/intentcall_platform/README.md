@@ -16,9 +16,22 @@ For iOS and macOS, `PlatformSync` also maintains the generated
 Sources build phase so App Intents can be compiled and discovered by Apple
 system surfaces.
 
+## Invocation policy
+
+Native and WebMCP execution is deny-by-default in compiled profile/release
+builds. For local dogfood, `IntentCallAuthorizationPolicy.debugAllowAll()` opens
+execution only while Dart assertions are enabled; in compiled builds it behaves
+like `denyAll()`.
+
+Production apps should pass an explicit `IntentCallAuthorizationPolicy` with
+source and qualified-name allowlists, and use `confirm` for mutating or sensitive
+tools.
+
 ## Manifest workflow (I4)
 
-`web/agent_manifest.json` is **checked in** and refreshed by CLI — not generated live from `AgentRegistry` yet.
+`agent_manifest.json` is read from the project root first, then from `web/`.
+The web copy is commonly checked in and refreshed by CLI — not generated live
+from `AgentRegistry` yet.
 
 ```bash
 flutter-mcp-toolkit codegen sync \
@@ -26,7 +39,9 @@ flutter-mcp-toolkit codegen sync \
   --project-dir <app>
 ```
 
-Use `--check` in CI (`make check-intentcall-integration`).
+Use `--check` in CI (`make check-intentcall-integration`). `--check` reports
+whether any generated artifact or native project membership would change without
+writing files.
 
 ### One-time hooks
 

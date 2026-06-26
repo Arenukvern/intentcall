@@ -25,6 +25,8 @@ const kPlatformSyncTargets = <String>{
 final class PlatformSyncResult {
   const PlatformSyncResult({
     required this.manifestPath,
+    this.dryRun = false,
+    this.artifacts = const <PlatformSyncArtifact>[],
     this.webManifestPath,
     this.webMcpJsPath,
     this.androidShortcutsPath,
@@ -48,6 +50,8 @@ final class PlatformSyncResult {
   });
 
   final String manifestPath;
+  final bool dryRun;
+  final List<PlatformSyncArtifact> artifacts;
   final String? webManifestPath;
   final String? webMcpJsPath;
   final String? androidShortcutsPath;
@@ -68,6 +72,27 @@ final class PlatformSyncResult {
   final bool wroteLinuxDesktop;
   final bool wroteWindowsProtocol;
   final bool wroteWindowsMsixFragment;
+
+  bool get changed => artifacts.any((final artifact) => artifact.changed);
+}
+
+/// One generated or maintained platform artifact touched by [PlatformSync].
+final class PlatformSyncArtifact {
+  const PlatformSyncArtifact({
+    required this.target,
+    required this.kind,
+    required this.path,
+    required this.changed,
+    this.operation = 'write',
+  });
+
+  final String target;
+  final String kind;
+  final String path;
+  final bool changed;
+
+  /// Stable operation label, for example `write` or `target-membership`.
+  final String operation;
 }
 
 /// Writes platform artifacts from [agent_manifest.json].
@@ -145,6 +170,7 @@ final class PlatformSync {
 
     var result = PlatformSyncResult(
       manifestPath: _resolveManifestFile(projectRoot).path,
+      dryRun: dryRun,
     );
     for (final platform in normalized) {
       result = _mergeResults(result, switch (platform) {
@@ -181,15 +207,19 @@ final class PlatformSync {
     );
     final nextJs = webMcpJsEmitter.emit(manifest);
     final jsFile = File(p.join(webDir.path, webMcpJsFileName));
+    final manifestChanged =
+        webManifestFile.readAsStringSync() != '$nextManifest\n';
+    final jsChanged =
+        !jsFile.existsSync() || jsFile.readAsStringSync() != nextJs;
 
     var wroteManifest = false;
     var wroteJs = false;
     if (!dryRun) {
-      if (webManifestFile.readAsStringSync() != '$nextManifest\n') {
+      if (manifestChanged) {
         webManifestFile.writeAsStringSync('$nextManifest\n');
         wroteManifest = true;
       }
-      if (!jsFile.existsSync() || jsFile.readAsStringSync() != nextJs) {
+      if (jsChanged) {
         jsFile.writeAsStringSync(nextJs);
         wroteJs = true;
       }
@@ -197,6 +227,21 @@ final class PlatformSync {
 
     return PlatformSyncResult(
       manifestPath: _resolveManifestFile(projectRoot).path,
+      dryRun: dryRun,
+      artifacts: <PlatformSyncArtifact>[
+        PlatformSyncArtifact(
+          target: 'web',
+          kind: 'web-manifest',
+          path: webManifestFile.path,
+          changed: manifestChanged,
+        ),
+        PlatformSyncArtifact(
+          target: 'web',
+          kind: 'webmcp-js',
+          path: jsFile.path,
+          changed: jsChanged,
+        ),
+      ],
       webManifestPath: webManifestFile.path,
       webMcpJsPath: jsFile.path,
       wroteManifest: wroteManifest,
@@ -211,16 +256,26 @@ final class PlatformSync {
     final manifest = readManifest(projectRoot);
     final outFile = _androidShortcutsFile(projectRoot);
     final next = '${androidShortcutsEmitter.emit(manifest)}\n';
+    final changed = !outFile.existsSync() || outFile.readAsStringSync() != next;
     var wrote = false;
     if (!dryRun) {
       outFile.parent.createSync(recursive: true);
-      if (!outFile.existsSync() || outFile.readAsStringSync() != next) {
+      if (changed) {
         outFile.writeAsStringSync(next);
         wrote = true;
       }
     }
     return PlatformSyncResult(
       manifestPath: _resolveManifestFile(projectRoot).path,
+      dryRun: dryRun,
+      artifacts: <PlatformSyncArtifact>[
+        PlatformSyncArtifact(
+          target: 'android',
+          kind: 'shortcuts-xml',
+          path: outFile.path,
+          changed: changed,
+        ),
+      ],
       androidShortcutsPath: outFile.path,
       wroteAndroidShortcuts: wrote,
     );
@@ -257,15 +312,25 @@ final class PlatformSync {
     }
     final outFile = File(p.join(linuxDir.path, linuxDesktopFileName));
     final next = linuxDesktopEmitter.emit(manifest);
+    final changed = !outFile.existsSync() || outFile.readAsStringSync() != next;
     var wrote = false;
     if (!dryRun) {
-      if (!outFile.existsSync() || outFile.readAsStringSync() != next) {
+      if (changed) {
         outFile.writeAsStringSync(next);
         wrote = true;
       }
     }
     return PlatformSyncResult(
       manifestPath: _resolveManifestFile(projectRoot).path,
+      dryRun: dryRun,
+      artifacts: <PlatformSyncArtifact>[
+        PlatformSyncArtifact(
+          target: 'linux',
+          kind: 'desktop-entry',
+          path: outFile.path,
+          changed: changed,
+        ),
+      ],
       linuxDesktopPath: outFile.path,
       wroteLinuxDesktop: wrote,
     );
@@ -284,20 +349,39 @@ final class PlatformSync {
     final msixFile = File(p.join(windowsDir.path, windowsMsixFragmentFileName));
     final nextReg = windowsProtocolEmitter.emit(manifest);
     final nextMsix = windowsProtocolEmitter.emitMsixFragment(manifest);
+    final regChanged =
+        !regFile.existsSync() || regFile.readAsStringSync() != nextReg;
+    final msixChanged =
+        !msixFile.existsSync() || msixFile.readAsStringSync() != nextMsix;
     var wroteReg = false;
     var wroteMsix = false;
     if (!dryRun) {
-      if (!regFile.existsSync() || regFile.readAsStringSync() != nextReg) {
+      if (regChanged) {
         regFile.writeAsStringSync(nextReg);
         wroteReg = true;
       }
-      if (!msixFile.existsSync() || msixFile.readAsStringSync() != nextMsix) {
+      if (msixChanged) {
         msixFile.writeAsStringSync(nextMsix);
         wroteMsix = true;
       }
     }
     return PlatformSyncResult(
       manifestPath: _resolveManifestFile(projectRoot).path,
+      dryRun: dryRun,
+      artifacts: <PlatformSyncArtifact>[
+        PlatformSyncArtifact(
+          target: 'windows',
+          kind: 'protocol-registry',
+          path: regFile.path,
+          changed: regChanged,
+        ),
+        PlatformSyncArtifact(
+          target: 'windows',
+          kind: 'protocol-msix-fragment',
+          path: msixFile.path,
+          changed: msixChanged,
+        ),
+      ],
       windowsProtocolPath: regFile.path,
       windowsMsixFragmentPath: msixFile.path,
       wroteWindowsProtocol: wroteReg,
@@ -415,6 +499,22 @@ final class PlatformSync {
         : xcodePreview;
     return PlatformSyncResult(
       manifestPath: _resolveManifestFile(projectRoot).path,
+      dryRun: dryRun,
+      artifacts: <PlatformSyncArtifact>[
+        PlatformSyncArtifact(
+          target: isMacos ? 'macos' : 'ios',
+          kind: 'apple-generated-swift',
+          path: outFile.path,
+          changed: generatedChanged,
+        ),
+        PlatformSyncArtifact(
+          target: isMacos ? 'macos' : 'ios',
+          kind: 'xcode-project',
+          path: xcodeResult.projectPath,
+          changed: xcodeResult.changed,
+          operation: 'target-membership',
+        ),
+      ],
       iosGeneratedSwiftPath: isMacos ? null : outFile.path,
       macosGeneratedSwiftPath: isMacos ? outFile.path : null,
       iosXcodeProjectPath: isMacos ? null : xcodeResult.projectPath,
@@ -484,6 +584,8 @@ final class PlatformSync {
     final PlatformSyncResult right,
   ) => PlatformSyncResult(
     manifestPath: left.manifestPath,
+    dryRun: left.dryRun || right.dryRun,
+    artifacts: <PlatformSyncArtifact>[...left.artifacts, ...right.artifacts],
     webManifestPath: right.webManifestPath ?? left.webManifestPath,
     webMcpJsPath: right.webMcpJsPath ?? left.webMcpJsPath,
     androidShortcutsPath:

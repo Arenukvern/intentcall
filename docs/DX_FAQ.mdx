@@ -296,7 +296,21 @@ No. You can register `AgentCallEntry` objects manually. Codegen is a convenience
 
 **Q: How do I test an adapter against the contract?**
 
-Add `intentcall_testing` as a `dev_dependency` and use the provided `AgentCallContractTest` mixin. See the test suite in `packages/intentcall_mcp/test/` for a concrete example.
+Add `intentcall_testing` as a `dev_dependency` and call `verifyNativeAdapterContract(...)` from a package test. For example:
+
+```dart
+test('McpPublishAdapter satisfies the shared native contract', () async {
+  await verifyNativeAdapterContract(
+    attach: (registry, transport) async {
+      final adapter = McpPublishAdapter(registry: registry, transport: transport);
+      await adapter.attach();
+      return adapter.detach;
+    },
+  );
+});
+```
+
+See `packages/intentcall_mcp/test/mcp_adapter_contract_test.dart` for the current reference shape.
 
 **Q: How do I test session lifecycle without Flutter or MCP?**
 

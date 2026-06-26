@@ -6,7 +6,9 @@ import 'package:test/test.dart';
 
 void main() {
   test('PlatformSync.syncWeb writes manifest and js artifacts', () {
-    final temp = Directory.systemTemp.createTempSync('intentcall_platform_sync_');
+    final temp = Directory.systemTemp.createTempSync(
+      'intentcall_platform_sync_',
+    );
     addTearDown(() => temp.deleteSync(recursive: true));
 
     final webDir = Directory(p.join(temp.path, 'web'))..createSync();
@@ -37,6 +39,12 @@ void main() {
     final result = sync.syncWeb(projectRoot: temp.path);
     expect(result.wroteManifest, isTrue);
     expect(result.wroteWebMcpJs, isTrue);
+    expect(result.changed, isTrue);
+    expect(result.artifacts, hasLength(2));
+    expect(
+      result.artifacts.map((final artifact) => artifact.kind),
+      containsAll(<String>['web-manifest', 'webmcp-js']),
+    );
     expect(File(result.webMcpJsPath!).existsSync(), isTrue);
     expect(
       File(result.webManifestPath!).readAsStringSync(),

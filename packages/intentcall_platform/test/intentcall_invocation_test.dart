@@ -21,16 +21,14 @@ void main() {
   });
 
   test('IntentCallNativeBridge denies invocations by default', () async {
-    final bridge = IntentCallNativeBridge.bindRegistry(
-      registry: InMemoryAgentRegistry(),
-    );
+    final bridge = IntentCallNativeBridge.bindRegistry(registry: _registry());
 
     final result = await bridge.execute(
       IntentCallInvocationEnvelope(
-        id: 'deep-link-1',
+        id: 'native-1',
         qualifiedName: 'app_echo',
-        arguments: const <String, Object?>{},
-        source: IntentCallInvocationSource.deepLink,
+        arguments: const <String, Object?>{'text': 'hello'},
+        source: IntentCallInvocationSource.nativeGenerated,
       ),
     );
 
@@ -38,33 +36,36 @@ void main() {
     expect(result.code, 'invocation_denied');
   });
 
+  test('IntentCallAuthorizationPolicy constructor denies by default', () async {
+    final allowed = await const IntentCallAuthorizationPolicy().allows(
+      IntentCallInvocationEnvelope(
+        id: 'webmcp-1',
+        qualifiedName: 'app_echo',
+        arguments: const <String, Object?>{'text': 'hello'},
+        source: IntentCallInvocationSource.webMcpDart,
+      ),
+    );
+
+    expect(allowed, isFalse);
+  });
+
+  test('debugAllowAll allows while assertions are enabled', () async {
+    final allowed = await const IntentCallAuthorizationPolicy.debugAllowAll()
+        .allows(
+          IntentCallInvocationEnvelope(
+            id: 'webmcp-1',
+            qualifiedName: 'app_echo',
+            arguments: const <String, Object?>{'text': 'hello'},
+            source: IntentCallInvocationSource.webMcpDart,
+          ),
+        );
+
+    expect(allowed, isTrue);
+  });
+
   test('IntentCallNativeBridge executes allowed registry invocation', () async {
-    final registry = InMemoryAgentRegistry()
-      ..register(
-        RegisteredAgentIntent(
-          descriptor: AgentIntentDescriptor(
-            namespace: 'app',
-            name: 'echo',
-            description: 'echo',
-            kind: AgentIntentKind.tool,
-            inputSchema: const <String, Object?>{
-              'type': 'object',
-              'required': <String>['text'],
-              'properties': <String, Object?>{
-                'text': <String, Object?>{'type': 'string'},
-              },
-            },
-          ),
-          execute: (final invocation) async => AgentResult.success(
-            data: <String, Object?>{
-              'text': invocation.arguments['text'],
-              'correlationId': invocation.correlationId,
-            },
-          ),
-        ),
-      );
     final bridge = IntentCallNativeBridge.bindRegistry(
-      registry: registry,
+      registry: _registry(),
       policy: const IntentCallAuthorizationPolicy(
         allowedSources: <String>{IntentCallInvocationSource.webMcpDart},
         allowedQualifiedNames: <String>{'app_echo'},
@@ -84,4 +85,115 @@ void main() {
     expect(result.data['text'], 'hello');
     expect(result.data['correlationId'], 'webmcp-1');
   });
+
+  test('IntentCallNativeBridge rejects source mismatch', () async {
+    final bridge = IntentCallNativeBridge.bindRegistry(
+      registry: _registry(),
+      policy: const IntentCallAuthorizationPolicy(
+        allowedSources: <String>{IntentCallInvocationSource.webMcpDart},
+        allowedQualifiedNames: <String>{'app_echo'},
+      ),
+    );
+
+    final result = await bridge.execute(
+      IntentCallInvocationEnvelope(
+        id: 'native-1',
+        qualifiedName: 'app_echo',
+        arguments: const <String, Object?>{'text': 'hello'},
+        source: IntentCallInvocationSource.nativeGenerated,
+      ),
+    );
+
+    expect(result.ok, isFalse);
+    expect(result.code, 'invocation_denied');
+  });
+
+  test('IntentCallNativeBridge rejects qualified-name mismatch', () async {
+    final bridge = IntentCallNativeBridge.bindRegistry(
+      registry: _registry(),
+      policy: const IntentCallAuthorizationPolicy(
+        allowedSources: <String>{IntentCallInvocationSource.webMcpDart},
+        allowedQualifiedNames: <String>{'app_other'},
+      ),
+    );
+
+    final result = await bridge.execute(
+      IntentCallInvocationEnvelope(
+        id: 'webmcp-1',
+        qualifiedName: 'app_echo',
+        arguments: const <String, Object?>{'text': 'hello'},
+        source: IntentCallInvocationSource.webMcpDart,
+      ),
+    );
+
+    expect(result.ok, isFalse);
+    expect(result.code, 'invocation_denied');
+  });
+
+  test('IntentCallNativeBridge respects confirmation callback', () async {
+    final denied = IntentCallNativeBridge.bindRegistry(
+      registry: _registry(),
+      policy: IntentCallAuthorizationPolicy(
+        allowedSources: const <String>{IntentCallInvocationSource.webMcpDart},
+        allowedQualifiedNames: const <String>{'app_echo'},
+        confirm: (final envelope) => Future<bool>.value(false),
+      ),
+    );
+    final allowed = IntentCallNativeBridge.bindRegistry(
+      registry: _registry(),
+      policy: IntentCallAuthorizationPolicy(
+        allowedSources: const <String>{IntentCallInvocationSource.webMcpDart},
+        allowedQualifiedNames: const <String>{'app_echo'},
+        confirm: (final envelope) =>
+            Future<bool>.value(envelope.arguments['text'] == 'ok'),
+      ),
+    );
+
+    final deniedResult = await denied.execute(
+      IntentCallInvocationEnvelope(
+        id: 'webmcp-1',
+        qualifiedName: 'app_echo',
+        arguments: const <String, Object?>{'text': 'ok'},
+        source: IntentCallInvocationSource.webMcpDart,
+      ),
+    );
+    final allowedResult = await allowed.execute(
+      IntentCallInvocationEnvelope(
+        id: 'webmcp-2',
+        qualifiedName: 'app_echo',
+        arguments: const <String, Object?>{'text': 'ok'},
+        source: IntentCallInvocationSource.webMcpDart,
+      ),
+    );
+
+    expect(deniedResult.ok, isFalse);
+    expect(deniedResult.code, 'invocation_denied');
+    expect(allowedResult.ok, isTrue);
+    expect(allowedResult.data['text'], 'ok');
+  });
 }
+
+InMemoryAgentRegistry _registry() => InMemoryAgentRegistry()
+  ..register(
+    RegisteredAgentIntent(
+      descriptor: AgentIntentDescriptor(
+        namespace: 'app',
+        name: 'echo',
+        description: 'echo',
+        kind: AgentIntentKind.tool,
+        inputSchema: const <String, Object?>{
+          'type': 'object',
+          'required': <String>['text'],
+          'properties': <String, Object?>{
+            'text': <String, Object?>{'type': 'string'},
+          },
+        },
+      ),
+      execute: (final invocation) async => AgentResult.success(
+        data: <String, Object?>{
+          'text': invocation.arguments['text'],
+          'correlationId': invocation.correlationId,
+        },
+      ),
+    ),
+  );

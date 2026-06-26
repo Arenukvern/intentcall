@@ -56,37 +56,73 @@ final class IntentCallInvocationEnvelope {
 
 final class IntentCallAuthorizationPolicy {
   const IntentCallAuthorizationPolicy({
-    this.allowedSources,
-    this.allowedQualifiedNames,
+    this.allowedSources = const <String>{},
+    this.allowedQualifiedNames = const <String>{},
     this.confirm,
-  });
+  }) : allowAnySource = false,
+       allowAnyQualifiedName = false,
+       debugOnly = false;
 
   const IntentCallAuthorizationPolicy.allowAll()
-    : allowedSources = null,
-      allowedQualifiedNames = null,
-      confirm = null;
+    : allowedSources = const <String>{},
+      allowedQualifiedNames = const <String>{},
+      confirm = null,
+      allowAnySource = true,
+      allowAnyQualifiedName = true,
+      debugOnly = false;
+
+  /// Allows all invocations only while Dart assertions are enabled.
+  ///
+  /// This is intended for local development and dogfood apps. In compiled
+  /// profile/release builds, where assertions are disabled, it behaves like
+  /// [IntentCallAuthorizationPolicy.denyAll].
+  const IntentCallAuthorizationPolicy.debugAllowAll()
+    : allowedSources = const <String>{},
+      allowedQualifiedNames = const <String>{},
+      confirm = null,
+      allowAnySource = true,
+      allowAnyQualifiedName = true,
+      debugOnly = true;
 
   const IntentCallAuthorizationPolicy.denyAll()
     : allowedSources = const <String>{},
       allowedQualifiedNames = const <String>{},
-      confirm = null;
+      confirm = null,
+      allowAnySource = false,
+      allowAnyQualifiedName = false,
+      debugOnly = false;
 
-  final Set<String>? allowedSources;
-  final Set<String>? allowedQualifiedNames;
+  final Set<String> allowedSources;
+  final Set<String> allowedQualifiedNames;
   final IntentCallConfirmation? confirm;
+  final bool allowAnySource;
+  final bool allowAnyQualifiedName;
+  final bool debugOnly;
 
   Future<bool> allows(final IntentCallInvocationEnvelope envelope) async {
+    if (debugOnly && !_debugAssertionsEnabled) {
+      return false;
+    }
     final sourceAllowed =
-        allowedSources == null || allowedSources!.contains(envelope.source);
+        allowAnySource || allowedSources.contains(envelope.source);
     final nameAllowed =
-        allowedQualifiedNames == null ||
-        allowedQualifiedNames!.contains(envelope.qualifiedName);
+        allowAnyQualifiedName ||
+        allowedQualifiedNames.contains(envelope.qualifiedName);
     if (!sourceAllowed || !nameAllowed) {
       return false;
     }
     final approve = confirm;
     return approve == null || await approve(envelope);
   }
+}
+
+bool get _debugAssertionsEnabled {
+  var enabled = false;
+  assert(() {
+    enabled = true;
+    return true;
+  }(), 'Detect whether Dart assertions are enabled.');
+  return enabled;
 }
 
 final class IntentCallNativeBridge {

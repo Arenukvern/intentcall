@@ -28,12 +28,16 @@ IntentCall v1 platform projection is Dart-first:
 
 - `IntentCallInvocationEnvelope` is the shared native/WebMCP invocation unit.
 - `IntentCallAuthorizationPolicy` gates source and intent-name access before
-  dispatch.
+  dispatch. Empty/default policies deny all invocations.
 - `IntentCallNativeBridge.bindRegistry(...)` executes authorized envelopes
   through the Dart `AgentRegistry`.
 - `registerAgentWebMcpFromRegistry(...)` registers WebMCP tools from Dart and
   invokes Dart handlers in-page.
 - WebMCP network fallback is opt-in only.
+- Development builds may use `IntentCallAuthorizationPolicy.debugAllowAll()` to
+  expose local dogfood tools while Dart assertions are enabled. Compiled
+  profile/release builds must provide explicit source/name allowlists or
+  confirmation callbacks.
 - Generated Apple App Intents collect supported primitive parameters, enqueue
   an invocation envelope, open or wake the Flutter app, and return dispatch
   status. They do not claim background Dart execution or native semantic result

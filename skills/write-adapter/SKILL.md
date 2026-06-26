@@ -103,7 +103,7 @@ class MyCustomAdapter implements AgentAdapter {
 1. **Keep it thin:** The adapter should only map protocol structures to and from the `AgentRegistry`. It should never implement domain logic or custom validations that differ from the core registry validation.
 2. **Preserve registry keys:** Use `AgentRegistry.listEntries()` for adapter publication. `listDescriptors()` is compatibility sugar for display-only catalog reads and can lose override-key intent.
 3. **Listen to Events:** If `watchesRegistry` is true, ensure you handle both `IntentRegistered` and `IntentUnregistered` events in real-time to support hot-sync environments such as WebMCP.
-4. **Gate native/fallback sources:** Fallback invoke paths and native bridge wrappers should use `IntentCallAuthorizationPolicy`; plain deep links are untrusted unless generated wrappers or app allowlists mark the source as trusted.
+4. **Gate native/fallback sources:** Fallback invoke paths and native bridge wrappers should use `IntentCallAuthorizationPolicy`; plain deep links are untrusted unless generated wrappers or app allowlists mark the source as trusted. Production registrations should use explicit source/name allowlists or confirmation callbacks. `debugAllowAll()` is for local dogfood only: it opens while assertions are enabled and denies in compiled profile/release builds.
 5. **Use Stable Wire Contracts:** Depend on `intentcall_schema` rather than `intentcall_core` for sharing data envelopes (`AgentResult` / `AgentCallEntry`) between packages.
 
 ---

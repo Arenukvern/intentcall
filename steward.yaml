@@ -94,7 +94,7 @@ actions:
       summary_fields: [exit_code, duration_ms, output_digest]
   intentcall.adapter-contract-test:
     kind: command
-    desc: Run native adapter contract tests for MCP, WebMCP, and Gemma.
+    desc: Run native adapter and platform bridge contract tests.
     command:
       argv: [just, adapter-contract-test]
       shell: false
@@ -106,6 +106,7 @@ actions:
         - packages/intentcall_mcp/**
         - packages/intentcall_webmcp/**
         - packages/intentcall_gemma/**
+        - packages/intentcall_platform/**
         - pubspec.yaml
         - pubspec.lock
       fs_write: []
