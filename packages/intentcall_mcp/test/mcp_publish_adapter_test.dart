@@ -147,6 +147,64 @@ void main() {
   );
 
   test(
+    'McpPublishAdapter uses override key for resources already registered before attach',
+    () async {
+      final registry = InMemoryAgentRegistry();
+      final publishedResources =
+          <
+            String,
+            FutureOr<ReadResourceResult> Function(ReadResourceRequest)
+          >{};
+      const uri = 'visual://localhost/pre/attached';
+      registry.register(
+        RegisteredAgentIntent(
+          descriptor: AgentIntentDescriptor(
+            namespace: 'app',
+            name: 'pre_attached',
+            description: 'pre-attached resource',
+            kind: AgentIntentKind.resource,
+            inputSchema: const <String, Object?>{'type': 'object'},
+            resourceUri: uri,
+            mimeType: 'application/json',
+          ),
+          execute: (final invocation) async => AgentResult.success(
+            data: <String, Object?>{
+              'contents': [
+                <String, Object?>{
+                  'type': 'text',
+                  'text': '{"uri":"${invocation.arguments['uri']}"}',
+                  'mimeType': 'application/json',
+                },
+              ],
+            },
+          ),
+        ),
+        qualifiedNameOverride: uri,
+      );
+
+      final adapter = McpPublishAdapter(
+        publishTool: (_, final _) {},
+        unpublishTool: (_) {},
+        publishResource: (final resource, final impl) {
+          publishedResources[resource.uri] = impl;
+        },
+        unpublishResource: (_) {},
+      );
+
+      await adapter.attach(registry);
+      expect(publishedResources, contains(uri));
+
+      final read = await publishedResources[uri]!(
+        ReadResourceRequest(uri: uri),
+      );
+      final text = (read.contents.first as TextResourceContents).text;
+      expect(text, '{"uri":"$uri"}');
+
+      await adapter.detach();
+    },
+  );
+
+  test(
     'McpPublishAdapter de-duplicates resource templates by URI pattern',
     () async {
       final registry = InMemoryAgentRegistry();
@@ -243,4 +301,42 @@ void main() {
     expect(unpublished, contains('app_hello'));
     expect(registry.get('app_hello'), isNotNull);
   });
+
+  test(
+    'McpPublishAdapter clears resource template patterns on detach and reattach',
+    () async {
+      final registry = InMemoryAgentRegistry();
+      const template = 'intentcall://resource/app/{id}';
+      registry.register(
+        RegisteredAgentIntent(
+          descriptor: AgentIntentDescriptor(
+            namespace: 'app',
+            name: 'template',
+            description: 'template',
+            kind: AgentIntentKind.resource,
+            inputSchema: const <String, Object?>{'type': 'object'},
+            resourceUri: template,
+            mimeType: 'application/json',
+          ),
+          execute: (_) async => AgentResult.success(),
+        ),
+        qualifiedNameOverride: template,
+      );
+      final publishedTemplates = <String>[];
+      final adapter = McpPublishAdapter(
+        publishTool: (_, final _) {},
+        unpublishTool: (_) {},
+        publishResourceTemplate: (final resourceTemplate, final impl) {
+          publishedTemplates.add(resourceTemplate.uriTemplate);
+        },
+      );
+
+      await adapter.attach(registry);
+      await adapter.detach();
+      await adapter.attach(registry);
+      await adapter.detach();
+
+      expect(publishedTemplates, [template, template]);
+    },
+  );
 }

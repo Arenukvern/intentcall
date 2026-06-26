@@ -1,0 +1,36 @@
+# IntentCall
+
+**IntentCall** lets Dart/Flutter apps define agent-callable actions once in `AgentRegistry`, then project them to MCP, WebMCP, shortcuts, and deep links — without rewriting per transport.
+
+**Building a Flutter app?** Start with [mcp_flutter](https://github.com/Arenukvern/mcp_flutter). **Building adapters or platform projection?** You're in the right repo.
+
+*Register intents. Call them everywhere.*
+
+## Quick links
+
+| I want to… | Go to |
+|------------|--------|
+| Charter and boundaries | [North Star](/NORTH_STAR) |
+| Commands, test, release | [DX FAQ](/DX_FAQ) |
+| Architectural why | [Design FAQ](/DESIGN_FAQ) · [Decisions](/decisions/README) |
+| Agent map + skills | [AGENTS.md](https://github.com/Arenukvern/intentcall/blob/main/AGENTS.md) |
+| Full doc index | [Docs map](/start_here/docs_map) |
+| Contribute | [CONTRIBUTING.md](https://github.com/Arenukvern/intentcall/blob/main/CONTRIBUTING.md) |
+
+## Get started
+
+```bash
+git clone https://github.com/Arenukvern/intentcall.git
+cd intentcall
+dart pub get
+just test
+just analyze
+```
+
+**Agents:** install meta-skills, then probe the repo contract:
+
+```bash
+npx skills add arenukvern/skill_steward
+steward doctor --json
+steward probe --json --profile quick
+```

@@ -18,7 +18,7 @@ extension AgentResultEnvelope on AgentResult {
       'tool_name': kind,
       'snapshot': snapshot,
       'snapshot_json': jsonEncode(snapshot),
-      if (extra != null) ...extra,
+      ...?extra,
     },
   );
 

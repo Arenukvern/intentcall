@@ -5,6 +5,8 @@ import 'dart:js_interop_unsafe';
 import 'package:intentcall_core/intentcall_core.dart';
 import 'package:intentcall_schema/intentcall_schema.dart';
 
+import '../invocation/intentcall_invocation.dart';
+
 @JS('JSON.parse')
 external JSAny? _jsonParse(final JSString source);
 
@@ -13,6 +15,8 @@ final _webMcpRegisteredToolNames = <String>{};
 
 /// Entries available to [__intentcallWebMcpDartExecute] when JS registered first.
 final _entriesByQualifiedName = <String, AgentCallEntry>{};
+final _entryPoliciesByQualifiedName = <String, IntentCallAuthorizationPolicy>{};
+final _bridgesByQualifiedName = <String, IntentCallNativeBridge>{};
 
 var _dartExecuteHookInstalled = false;
 
@@ -45,8 +49,12 @@ extension type _WebMcpToolDefinition._(JSObject _) implements JSObject {
 /// loads. Those handlers run JS `validateInput`, then delegate to
 /// [globalContext]'s `__intentcallWebMcpDartExecute` when this bootstrap installs
 /// it (full [AgentCallEntry.invokeDirect] validation). If no Dart entry exists,
-/// execute falls back to `fetch('/agent/invoke')` per ADR 0008.
-void registerFromEntries(final Set<AgentCallEntry> entries) {
+/// generated JS returns `runtime_unavailable` unless network fallback was
+/// explicitly enabled.
+void registerFromEntries(
+  final Set<AgentCallEntry> entries, {
+  required final IntentCallAuthorizationPolicy policy,
+}) {
   final modelContext = _readModelContext();
   if (modelContext == null) {
     return;
@@ -62,6 +70,7 @@ void registerFromEntries(final Set<AgentCallEntry> entries) {
 
     final qualifiedName = descriptor.qualifiedName;
     _entriesByQualifiedName[qualifiedName] = entry;
+    _entryPoliciesByQualifiedName[qualifiedName] = policy;
 
     if (_webMcpRegisteredToolNames.contains(qualifiedName)) {
       continue;
@@ -72,6 +81,52 @@ void registerFromEntries(final Set<AgentCallEntry> entries) {
       inputSchema: _jsonParse(jsonEncode(descriptor.inputSchema).toJS)!,
       execute: ((final JSAny? rawArgs) => _invokeEntry(
         entry,
+        qualifiedName,
+        rawArgs,
+      ).toJS).toJS,
+    );
+    try {
+      modelContext.registerTool(toolDefinition);
+      _webMcpRegisteredToolNames.add(qualifiedName);
+    } on Object {
+      // Duplicate name (JS bootstrap registered first) — JS execute uses hook.
+    }
+  }
+}
+
+void registerFromRegistry(
+  final AgentRegistry registry, {
+  required final IntentCallAuthorizationPolicy policy,
+}) {
+  final modelContext = _readModelContext();
+  if (modelContext == null) {
+    return;
+  }
+
+  _ensureDartExecuteHook();
+  final bridge = IntentCallNativeBridge.bindRegistry(
+    registry: registry,
+    policy: policy,
+  );
+
+  for (final entry in registry.listEntries()) {
+    final descriptor = entry.descriptor;
+    if (descriptor.kind != AgentIntentKind.tool) {
+      continue;
+    }
+    final qualifiedName = entry.key;
+    _bridgesByQualifiedName[qualifiedName] = bridge;
+
+    if (_webMcpRegisteredToolNames.contains(qualifiedName)) {
+      continue;
+    }
+    final toolDefinition = _WebMcpToolDefinition(
+      name: qualifiedName.toJS,
+      description: descriptor.description.toJS,
+      inputSchema: _jsonParse(jsonEncode(descriptor.inputSchema).toJS)!,
+      execute: ((final JSAny? rawArgs) => _invokeBridge(
+        bridge,
+        qualifiedName,
         rawArgs,
       ).toJS).toJS,
     );
@@ -102,11 +157,16 @@ Future<JSAny?> _dartExecuteHook(
   final JSString nameJS,
   final JSAny? rawArgs,
 ) async {
-  final entry = _entriesByQualifiedName[nameJS.toDart];
+  final qualifiedName = nameJS.toDart;
+  final bridge = _bridgesByQualifiedName[qualifiedName];
+  if (bridge != null) {
+    return _invokeBridge(bridge, qualifiedName, rawArgs);
+  }
+  final entry = _entriesByQualifiedName[qualifiedName];
   if (entry == null) {
     return null;
   }
-  return _invokeEntry(entry, rawArgs);
+  return _invokeEntry(entry, qualifiedName, rawArgs);
 }
 
 _ModelContext? _readModelContext() =>
@@ -131,10 +191,46 @@ _ModelContext? _readModelContextFromGlobalObject(final String name) {
 
 Future<JSAny?> _invokeEntry(
   final AgentCallEntry entry,
+  final String qualifiedName,
   final JSAny? rawArgs,
 ) async {
   final args = _decodeArgs(rawArgs);
+  final envelope = IntentCallInvocationEnvelope(
+    id: 'webmcp-${DateTime.now().microsecondsSinceEpoch}',
+    qualifiedName: qualifiedName,
+    arguments: args,
+    source: IntentCallInvocationSource.webMcpDart,
+  );
+  final policy =
+      _entryPoliciesByQualifiedName[qualifiedName] ??
+      const IntentCallAuthorizationPolicy.denyAll();
+  if (!await policy.allows(envelope)) {
+    return _encodeResult(
+      AgentResult.failure(
+        code: 'invocation_denied',
+        message: 'Invocation denied for $qualifiedName.',
+        details: <String, Object?>{'source': envelope.source},
+      ),
+    ).jsify();
+  }
   final result = await entry.invokeDirect(args);
+  return _encodeResult(result).jsify();
+}
+
+Future<JSAny?> _invokeBridge(
+  final IntentCallNativeBridge bridge,
+  final String qualifiedName,
+  final JSAny? rawArgs,
+) async {
+  final args = _decodeArgs(rawArgs);
+  final result = await bridge.execute(
+    IntentCallInvocationEnvelope(
+      id: 'webmcp-${DateTime.now().microsecondsSinceEpoch}',
+      qualifiedName: qualifiedName,
+      arguments: args,
+      source: IntentCallInvocationSource.webMcpDart,
+    ),
+  );
   return _encodeResult(result).jsify();
 }
 

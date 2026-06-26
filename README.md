@@ -2,13 +2,13 @@
 
 [![maintained with Skill Steward](https://raw.githubusercontent.com/Arenukvern/skill_steward/main/docs/brand/assets/svg/badge-solid.svg)](https://github.com/Arenukvern/skill_steward)
 
-> **Pre-release (`0.1.x`)** — Highly experimental. APIs may change without notice. **Not for production.** See [PRE_RELEASE.md](PRE_RELEASE.md).
+> **Pre-release (`0.2.x` train)** — Highly experimental. APIs may change without notice. **Not for production.** See [PRE_RELEASE.md](PRE_RELEASE.md).
 
 *Register intents. Call them everywhere.*
 
-Transport-agnostic agent intent platform for Dart/Flutter: define intent truth once in `AgentRegistry`, then project it into the strongest available surface: MCP/WebMCP, native semantic action systems where supported, assistant/shortcut fulfillment, and canonical deep-link fallback where native support is incomplete. Extracted from [mcp_flutter](https://github.com/Arenukvern/mcp_flutter).
+Transport-agnostic agent intent platform for Dart/Flutter: define intent truth once in `AgentRegistry`, then project it into the strongest available surface: MCP/WebMCP, native action metadata where supported, assistant/shortcut fulfillment, and canonical deep-link fallback where native support is incomplete. Extracted from [mcp_flutter](https://github.com/Arenukvern/mcp_flutter).
 
-**Charter:** [docs/NORTH_STAR.mdx](docs/NORTH_STAR.mdx) · **Agent map:** [AGENTS.md](AGENTS.md)  
+**Charter:** [docs/NORTH_STAR.mdx](docs/NORTH_STAR.mdx) · **Agent map:** [AGENTS.md](AGENTS.md) · **Docs site:** [docs.page/Arenukvern/intentcall](https://docs.page/Arenukvern/intentcall)  
 **Why / how:** [docs/DESIGN_FAQ.mdx](docs/DESIGN_FAQ.mdx) · [docs/DX_FAQ.mdx](docs/DX_FAQ.mdx) · [Decisions](docs/decisions/) · [CONTRIBUTING.md](CONTRIBUTING.md)
 
 GitHub: [Arenukvern/intentcall](https://github.com/Arenukvern/intentcall)
@@ -35,7 +35,7 @@ GitHub: [Arenukvern/intentcall](https://github.com/Arenukvern/intentcall)
 | `intentcall_testing` | Contract / invoke test helpers |
 | `intentcall_gemma` / `intentcall_apple` / `intentcall_android` | Optional experimental surface adapters |
 
-Platform support is tiered during `0.1.x`: current emitters cover web/PWA, Apple App Intents artifacts, Android shortcuts/deep links, Windows protocol activation, and Linux `x-scheme-handler`; Android AppFunctions, Android App Actions capabilities, Windows App Actions / Agent Launchers, and AAIF ecosystem alignment are roadmap targets unless documented otherwise.
+Platform support is tiered during the `0.2.x` train: current code covers MCP, Dart-first WebMCP registration, Apple App Intents dispatch wrappers, Android shortcuts/deep links, Windows protocol activation, and Linux `x-scheme-handler`. Apple App Intents currently launch/wake the app and dispatch an invocation envelope for Dart execution; they do not claim app-extension-hosted Dart execution or native background business logic. Android AppFunctions, Android App Actions capabilities, Windows App Actions / Agent Launchers, and AAIF ecosystem alignment are roadmap targets unless documented otherwise.
 
 ## Agent Skills
 
@@ -57,7 +57,7 @@ just analyze
 just publish-dry-run   # pub.dev dry-run (all packages)
 ```
 
-Release maintainers additionally run `just publish-preflight-first` for the initial `0.1.0` publish, or `just publish-preflight` for later releases.
+Release maintainers use Release Please. Merging the release PR creates package tags; tag-triggered GitHub Actions publishes through pub.dev automated publishing.
 
 See [docs/DX_FAQ.mdx](docs/DX_FAQ.mdx) for detailed workflows.
 
@@ -75,4 +75,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). All PRs must pass `just test && just ana
 
 ## Publishing
 
-See [PUBLISHING.md](PUBLISHING.md). Execute publish only from a clean release commit with pub.dev credentials: `just publish-execute`.
+See [PUBLISHING.md](PUBLISHING.md). The normal path is Release Please merge -> tag-triggered GitHub Actions publish; manual publish commands are recovery-only.

@@ -12,7 +12,14 @@ void main() {
         'name': 'cart_total',
         'description': 'Return cart total',
         'kind': 'tool',
-        'inputSchema': <String, Object?>{'type': 'object'},
+        'inputSchema': <String, Object?>{
+          'type': 'object',
+          'required': <String>['currency'],
+          'properties': <String, Object?>{
+            'currency': <String, Object?>{'type': 'string'},
+            'includeTax': <String, Object?>{'type': 'boolean'},
+          },
+        },
       },
     ],
   });
@@ -35,14 +42,82 @@ void main() {
     test('emits AppIntent and AppShortcutsProvider', () {
       final swift = const AppleSwiftAppIntentsEmitter().emit(manifest);
       expect(swift, contains('struct AppCartTotalIntent: AppIntent'));
+      expect(swift, contains('@Parameter(title: "Currency")'));
+      expect(swift, contains('var currency: String'));
+      expect(swift, contains('var includeTax: Bool?'));
+      expect(swift, contains('arguments["currency"] = currency'));
       expect(swift, contains('IntentCallShortcutsProvider'));
       expect(swift, contains('IntentCallNativeBridge'));
+      expect(swift, contains('intentcall.pending_invocations'));
+      expect(swift, contains('objc_sync_enter(UserDefaults.standard)'));
       expect(swift, contains('intentcall://invoke/'));
     });
 
     test('matches golden swift', () {
       final swift = const AppleSwiftAppIntentsEmitter().emit(manifest);
       expect(swift.trim(), _goldenAppleSwift.trim());
+    });
+
+    test('escapes Swift reserved parameter names', () {
+      final swift = const AppleSwiftAppIntentsEmitter().emit(
+        AgentManifest.fromJson(<String, Object?>{
+          'version': 1,
+          'platform': 'apple',
+          'tools': [
+            <String, Object?>{
+              'qualifiedName': 'app_reserved',
+              'namespace': 'app',
+              'name': 'reserved',
+              'description': 'Reserved',
+              'kind': 'tool',
+              'inputSchema': <String, Object?>{
+                'type': 'object',
+                'required': <String>['class'],
+                'properties': <String, Object?>{
+                  'class': <String, Object?>{'type': 'string'},
+                },
+              },
+            },
+          ],
+        }),
+      );
+
+      expect(swift, contains('var `class`: String'));
+      expect(swift, contains('arguments["class"] = `class`'));
+    });
+
+    test('rejects unsupported object and array parameters', () {
+      final unsupported = AgentManifest.fromJson(<String, Object?>{
+        'version': 1,
+        'platform': 'apple',
+        'tools': [
+          <String, Object?>{
+            'qualifiedName': 'app_object',
+            'namespace': 'app',
+            'name': 'object',
+            'description': 'Object',
+            'kind': 'tool',
+            'inputSchema': <String, Object?>{
+              'type': 'object',
+              'required': <String>['payload'],
+              'properties': <String, Object?>{
+                'payload': <String, Object?>{'type': 'object'},
+              },
+            },
+          },
+        ],
+      });
+
+      expect(
+        () => const AppleSwiftAppIntentsEmitter().emit(unsupported),
+        throwsA(
+          isA<UnsupportedError>().having(
+            (final error) => error.message,
+            'message',
+            contains('app_object'),
+          ),
+        ),
+      );
     });
   });
 
@@ -103,8 +178,17 @@ import AppKit
 struct AppCartTotalIntent: AppIntent {
   static var title: LocalizedStringResource = "Return cart total"
 
+  @Parameter(title: "Currency")
+  var currency: String
+
+  @Parameter(title: "IncludeTax")
+  var includeTax: Bool?
+
   func perform() async throws -> some IntentResult {
-    await IntentCallNativeBridge.invoke(qualifiedName: "app_cart_total")
+    var arguments: [String: Any] = [:]
+    arguments["currency"] = currency
+    if let value = includeTax { arguments["includeTax"] = value }
+    await IntentCallNativeBridge.enqueue(qualifiedName: "app_cart_total", arguments: arguments)
     return .result()
   }
 }
@@ -112,14 +196,26 @@ struct AppCartTotalIntent: AppIntent {
 @available(iOS 16.0, macOS 13.0, *)
 struct IntentCallShortcutsProvider: AppShortcutsProvider {
   static var appShortcuts: [AppShortcut] {
-    [
-    AppShortcut(intent: AppCartTotalIntent(), phrases: ["Cart Total"]),
-    ]
+    AppShortcut(intent: AppCartTotalIntent(), phrases: ["\(.applicationName) Cart Total"])
   }
 }
 
 enum IntentCallNativeBridge {
-  static func invoke(qualifiedName: String) async {
+  private static let pendingKey = "intentcall.pending_invocations"
+
+  static func enqueue(qualifiedName: String, arguments: [String: Any]) async {
+    let item: [String: Any] = [
+      "id": UUID().uuidString,
+      "qualifiedName": qualifiedName,
+      "arguments": arguments,
+      "source": "native.generated",
+      "createdAt": ISO8601DateFormatter().string(from: Date())
+    ]
+    objc_sync_enter(UserDefaults.standard)
+    defer { objc_sync_exit(UserDefaults.standard) }
+    var pending = UserDefaults.standard.array(forKey: pendingKey) as? [[String: Any]] ?? []
+    pending.append(item)
+    UserDefaults.standard.set(pending, forKey: pendingKey)
     guard let url = URL(string: "intentcall://invoke/\(qualifiedName)") else { return }
     #if canImport(UIKit)
     await UIApplication.shared.open(url)

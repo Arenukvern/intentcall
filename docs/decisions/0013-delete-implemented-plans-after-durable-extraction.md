@@ -49,6 +49,6 @@ Archiving implemented plans is not the default. If a public durable pointer is n
 
 ## Links
 
-* [NORTH_STAR.md](../NORTH_STAR.mdx)
-* [DESIGN_FAQ.md](../DESIGN_FAQ.mdx)
-* [DX_FAQ.md](../DX_FAQ.mdx)
+* [NORTH_STAR.md](/NORTH_STAR)
+* [DESIGN_FAQ.md](/DESIGN_FAQ)
+* [DX_FAQ.md](/DX_FAQ)

@@ -19,7 +19,7 @@ Platform reality is not flat. Apple App Intents, Android AppFunctions, Android A
 * **Honesty** - document what is implemented now versus roadmap.
 * **Portability** - preserve one intent model and one fallback invocation contract.
 * **Platform fit** - use native semantic action/tool systems where they exist.
-* **Pre-release clarity** - keep `0.1.x` docs ambitious without implying false parity.
+* **Pre-release clarity** - keep pre-1.0 docs ambitious without implying false parity.
 
 ## Considered Options
 
@@ -51,6 +51,6 @@ Roadmap targets include Android AppFunctions, richer Android App Actions capabil
 
 ## Links
 
-* [NORTH_STAR.md](../NORTH_STAR.mdx)
-* [DESIGN_FAQ.md](../DESIGN_FAQ.mdx)
-* [PRE_RELEASE.md](../../PRE_RELEASE.md)
+* [NORTH_STAR.md](/NORTH_STAR)
+* [DESIGN_FAQ.md](/DESIGN_FAQ)
+* [PRE_RELEASE.md](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md)

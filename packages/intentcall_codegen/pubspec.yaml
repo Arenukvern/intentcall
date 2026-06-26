@@ -18,8 +18,8 @@ resolution: workspace
 dependencies:
   analyzer: ^8.0.0
   build: ^4.0.0
-  intentcall_core: ^0.2.0
-  intentcall_schema: ^0.2.0
+  intentcall_core: ^0.2.1
+  intentcall_schema: ^0.2.1
   meta: ^1.17.0
   source_gen: ^4.0.0
 

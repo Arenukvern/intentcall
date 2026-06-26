@@ -3,7 +3,7 @@
 Architecture Decision Records (ADRs) for IntentCall.
 Format: [MADR](https://adr.github.io/madr/) — see any existing ADR for the template.
 
-Next ADR number: **0015**
+Next ADR number: **0016**
 
 ---
 
@@ -16,6 +16,7 @@ Next ADR number: **0015**
 | [0012](0012-adopt-platform-support-tiers.md) | accepted | Adopt platform support tiers for IntentCall | 2026-06-10 |
 | [0013](0013-delete-implemented-plans-after-durable-extraction.md) | accepted | Delete implemented plans after durable extraction | 2026-06-10 |
 | [0014](0014-own-runtime-sessions-in-intentcall.md) | accepted | Own runtime sessions in IntentCall | 2026-06-22 |
+| [0015](0015-dart-first-native-bridge.md) | accepted | Dart-first Native Bridge for Platform Surfaces | 2026-06-26 |
 
 ---
 

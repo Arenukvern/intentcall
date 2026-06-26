@@ -1,0 +1,106 @@
+{
+  "$schema": "https://docs.page/schema.json",
+  "name": "IntentCall",
+  "description": "Register intents. Call them everywhere.",
+  "github": "https://github.com/Arenukvern/intentcall",
+  "theme": {
+    "defaultTheme": "system"
+  },
+  "header": {
+    "showName": true,
+    "showThemeToggle": true,
+    "showGitHubCard": true,
+    "links": [
+      {
+        "title": "GitHub",
+        "href": "https://github.com/Arenukvern/intentcall"
+      },
+      {
+        "title": "mcp_flutter",
+        "href": "https://github.com/Arenukvern/mcp_flutter"
+      }
+    ]
+  },
+  "content": {
+    "headerDepth": 3,
+    "automaticallyInferNextPrevious": true,
+    "showPageTitle": true
+  },
+  "sidebar": [
+    {
+      "group": "Start Here",
+      "pages": [
+        { "title": "Overview", "href": "/" },
+        { "title": "North Star", "href": "/NORTH_STAR" },
+        { "title": "Docs map", "href": "/start_here/docs_map" }
+      ]
+    },
+    {
+      "group": "FAQs",
+      "pages": [
+        { "title": "Design FAQ", "href": "/DESIGN_FAQ" },
+        { "title": "DX FAQ", "href": "/DX_FAQ" }
+      ]
+    },
+    {
+      "group": "Decisions",
+      "pages": [
+        { "title": "Index", "href": "/decisions/README" },
+        {
+          "title": "0010 — IntentCall product name",
+          "href": "/decisions/0010-adopt-intentcall-product-name"
+        },
+        {
+          "title": "0011 — Agent skills discoverability",
+          "href": "/decisions/0011-agent-skills-discoverability-for-intentcall"
+        },
+        {
+          "title": "0012 — Platform support tiers",
+          "href": "/decisions/0012-adopt-platform-support-tiers"
+        },
+        {
+          "title": "0013 — Plan hygiene",
+          "href": "/decisions/0013-delete-implemented-plans-after-durable-extraction"
+        },
+        {
+          "title": "0014 — Runtime sessions",
+          "href": "/decisions/0014-own-runtime-sessions-in-intentcall"
+        }
+      ]
+    },
+    {
+      "group": "Contributing",
+      "pages": [
+        {
+          "title": "Enable docs.page",
+          "href": "/contributing/enable_docs_page"
+        }
+      ]
+    },
+    {
+      "group": "Repo root (GitHub)",
+      "pages": [
+        {
+          "title": "README",
+          "href": "https://github.com/Arenukvern/intentcall/blob/main/README.md"
+        },
+        {
+          "title": "AGENTS.md",
+          "href": "https://github.com/Arenukvern/intentcall/blob/main/AGENTS.md"
+        },
+        {
+          "title": "CONTRIBUTING",
+          "href": "https://github.com/Arenukvern/intentcall/blob/main/CONTRIBUTING.md"
+        },
+        {
+          "title": "PRE_RELEASE",
+          "href": "https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md"
+        },
+        {
+          "title": "PUBLISHING",
+          "href": "https://github.com/Arenukvern/intentcall/blob/main/PUBLISHING.md"
+        }
+      ]
+    }
+  ]
+}

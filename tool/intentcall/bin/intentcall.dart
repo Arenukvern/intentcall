@@ -66,7 +66,7 @@ void main(List<String> arguments) async {
         ..addOption(
           'tag',
           help:
-              'Release tag in the form <package>-v<version>, for example intentcall_core-v0.1.1.',
+              'Release tag in the form <package>-v<version>, for example intentcall_core-v0.2.1.',
         )
         ..addFlag(
           'execute',
@@ -121,7 +121,7 @@ void main(List<String> arguments) async {
     case 'print-hosted-deps':
       final cmdResults = results.command!;
       final envVersion = Platform.environment['INTENTCALL_VERSION'];
-      final version = cmdResults['version'] as String? ?? envVersion ?? '0.1.0';
+      final version = cmdResults['version'] as String? ?? envVersion ?? '0.2.1';
       runPrintHostedDeps(version);
       exit(0);
 
@@ -317,7 +317,16 @@ Future<int> runValidate(Directory repoRoot) async {
 
   print('OK: All packages are synchronized at version $commonVersion.');
 
-  // 3. Run plan hygiene check
+  // 3. Check internal hosted dependency floors
+  final dependencyFloorCode = await runInternalDependencyFloorCheck(
+    repoRoot,
+    version: commonVersion!,
+  );
+  if (dependencyFloorCode != 0) {
+    return dependencyFloorCode;
+  }
+
+  // 4. Run plan hygiene check
   print('\nChecking plan hygiene (active plan files)...');
   final activePlans = <String>[];
   final taskFile = File(p.join(repoRoot.path, 'task.md'));
@@ -352,6 +361,64 @@ Future<int> runValidate(Directory repoRoot) async {
 
   print('OK: No active plan files found.');
   return 0;
+}
+
+Future<int> runInternalDependencyFloorCheck(
+  Directory repoRoot, {
+  required String version,
+}) async {
+  print('\nChecking internal dependency floors...');
+  final mismatches = <String>[];
+  for (final pkg in publishOrder) {
+    final pubspecFile = File(
+      p.join(repoRoot.path, 'packages', pkg, 'pubspec.yaml'),
+    );
+    final content = await pubspecFile.readAsString();
+    for (final mismatch in internalDependencyFloorMismatches(
+      content,
+      version,
+      packageName: pkg,
+    )) {
+      mismatches.add(mismatch);
+    }
+  }
+  if (mismatches.isNotEmpty) {
+    stderr.writeln('FAIL: Internal intentcall dependency floors are stale.');
+    for (final mismatch in mismatches) {
+      stderr.writeln('  - $mismatch');
+    }
+    return 1;
+  }
+  print('OK: internal dependencies use ^$version.');
+  return 0;
+}
+
+List<String> internalDependencyFloorMismatches(
+  String pubspecContent,
+  String version, {
+  required String packageName,
+}) {
+  final mismatches = <String>[];
+  for (final pkg in publishOrder) {
+    if (pkg == packageName) {
+      continue;
+    }
+    final pattern = RegExp(
+      '^\\s{2}${RegExp.escape(pkg)}:\\s*\\^([^\\s#]+)',
+      multiLine: true,
+    );
+    final match = pattern.firstMatch(pubspecContent);
+    if (match == null) {
+      continue;
+    }
+    final actual = match.group(1);
+    if (actual != version) {
+      mismatches.add(
+        '$packageName depends on $pkg ^$actual, expected ^$version',
+      );
+    }
+  }
+  return mismatches;
 }
 
 Future<int> runCheckPathDeps(Directory repoRoot) async {
@@ -623,7 +690,7 @@ Future<int> runPublishTag(
   final exec = isPlatform ? 'flutter' : 'dart';
 
   if (dryRun) {
-    final args = ['pub', 'publish', '--dry-run', '--skip-validation'];
+    final args = ['pub', 'publish', '--dry-run'];
     final code = await runCommand(exec, args, packageDir);
     if (code != 0) {
       stderr.writeln(

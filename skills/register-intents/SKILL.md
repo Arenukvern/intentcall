@@ -55,10 +55,10 @@ Add `intentcall_codegen` to your `dev_dependencies` in `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  intentcall_core: ^0.1.0
+  intentcall_core: ^0.2.1
 
 dev_dependencies:
-  intentcall_codegen: ^0.1.0
+  intentcall_codegen: ^0.2.1
   build_runner: ^2.4.0
 ```
 
@@ -101,6 +101,10 @@ void main() {
   final registry = InMemoryAgentRegistry()..register(pingToolRegistration);
 }
 ```
+
+Transport adapters, WebMCP, and native bridge wrappers should execute this Dart
+registry entry rather than copying the business logic into JS, Swift, Kotlin, or
+another host language.
 
 ---
 

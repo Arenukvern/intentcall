@@ -4,9 +4,9 @@
 
 IntentCall is a **transport-agnostic agent intent platform** for Dart/Flutter. It provides a central registry (`AgentRegistry`), a typed invocation model (`AgentCallEntry` / `RegisteredAgentIntent`), and adapters that publish intents to MCP, WebMCP, and platform artifacts.
 
-The north star is **define intent truth once, then project it into the strongest available platform surface**. That means native semantic agent/tool registries where platforms provide them, assistant or shortcut declarations where those are the available user-facing surface, and a canonical protocol/deep-link fallback where native support is absent or still immature.
+The north star is **define intent truth once, then project it into the strongest available platform surface**. Dart remains the preferred home for application business logic. Platform projections should publish native metadata, collect supported parameters, wake or route into the app when needed, and dispatch an invocation envelope back to the Dart `AgentRegistry` unless a platform has separately proven native execution support.
 
-Today, the repository implements the registry/runtime foundation, MCP/WebMCP adapters, and platform artifact emitters for `web`, `android`, `ios`, `macos`, `linux`, and `windows`. Full registry-backed generation remains a target state: some platform artifacts, including `agent_manifest.json`, are currently checked in and refreshed by sync tooling rather than generated live from `AgentRegistry`.
+Today, the repository implements the registry/runtime foundation, MCP/WebMCP adapters, Dart-first invocation primitives, and platform artifact emitters for `web`, `android`, `ios`, `macos`, `linux`, and `windows`. Full registry-backed generation remains a target state: some platform artifacts, including `agent_manifest.json`, are currently checked in and refreshed by sync tooling rather than generated live from `AgentRegistry`.
 
 IntentCall is also the canonical home for IntentCall philosophy, platform projection semantics, agentic experience (AX), developer experience (DX), and IntentPack direction. Consumer repositories such as `mcp_flutter` prove and document integration, but do not define IntentCall's architecture or platform contract.
 
@@ -16,12 +16,12 @@ IntentCall is also the canonical home for IntentCall philosophy, platform projec
 
 | Tier | Meaning | Current / target surfaces |
 |---|---|---|
-| Native semantic | Platform-recognized tool/action models that preserve intent metadata and structured invocation semantics. | Current: Apple App Intents emitter, MCP adapter, WebMCP adapter. Target: Android AppFunctions, Windows App Actions / Agent Launchers, WebMCP `document.modelContext` compatibility. |
+| Native semantic | Platform-recognized tool/action models that preserve intent metadata and structured invocation semantics. | Current: MCP adapter, Dart-first WebMCP adapter, Apple App Intents dispatch wrappers. Target: Android AppFunctions, Windows App Actions / Agent Launchers. |
 | Assistant / shortcut fulfillment | Assistant, shortcut, or launcher declarations that can route user-visible actions into app intent handling. | Current: Apple shortcuts artifacts, Android shortcut/deep-link artifacts, web/PWA artifacts. Target: richer Android App Actions capability generation. |
 | Protocol fallback | Stable URI/protocol invocation when no native semantic surface is available or implemented yet. | Current: `intentcall://invoke/...`, web protocol handlers, Windows protocol activation artifacts, Linux `x-scheme-handler/intentcall` artifacts. |
 | Ecosystem alignment | Compatibility with agent ecosystem conventions without claiming an OS-level integration contract. | Current: MCP conventions. Target: AAIF-hosted ecosystem alignment where relevant. |
 
-Support tiers are explicit on purpose. Linux is currently protocol-fallback first. Windows currently has protocol activation artifacts, while native Windows App Actions / Agent Launcher support remains roadmap. Android currently has shortcut/deep-link artifacts, while AppFunctions and fuller App Actions capability generation remain roadmap.
+Support tiers are explicit on purpose. Apple App Intents are currently parameterized native wrappers that enqueue an invocation envelope and open/wake the app for Dart execution; app-extension-hosted Dart is experimental only. Linux is currently protocol-fallback first. Windows currently has protocol activation artifacts, while native Windows App Actions / Agent Launcher support remains roadmap. Android currently has shortcut/deep-link artifacts, while AppFunctions and fuller App Actions capability generation remain roadmap.
 
 ---
 
@@ -48,7 +48,7 @@ Support tiers are explicit on purpose. Linux is currently protocol-fallback firs
 1. A Flutter app can register intent truth once and expose it over MCP, WebMCP, and platform artifacts without per-transport boilerplate where support exists.
 2. The `intentcall_schema` wire contract is stable enough that adapters can evolve independently without breaking consumers.
 3. Platform support is documented by tier: native semantic, assistant / shortcut fulfillment, protocol fallback, or roadmap.
-4. `intentcall://invoke/...` remains the canonical fallback invocation contract across platforms that lack implemented native semantic support.
+4. `intentcall://invoke/...` remains the canonical fallback invocation contract across platforms that lack implemented native semantic support; fallback routes are untrusted unless a generated wrapper or app allowlist marks the source as trusted.
 5. `just test && just analyze && just publish-dry-run` stays green on every PR.
 6. A new adapter author can read `intentcall_core` + one existing adapter and ship a working adapter in a single session.
 
@@ -88,13 +88,13 @@ IntentCall is **pre-release platform infrastructure**, not a consumer product. T
 
 ## Pre-release status
 
-All packages are **0.1.x** — experimental. APIs may change without a major semver bump. See [PRE_RELEASE.md](../PRE_RELEASE.md).
+All packages are on the **pre-1.0 / current `0.2.x` train** — experimental. APIs may change without a major semver bump. See [PRE_RELEASE.md](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md).
 
 ## Key docs
 
-- [AGENTS.md](../AGENTS.md) — agent map and navigation pointers
-- [DESIGN_FAQ.mdx](DESIGN_FAQ.mdx) — why IntentCall is built this way
-- [DX_FAQ.mdx](DX_FAQ.mdx) — how to use and extend IntentCall
-- [docs/decisions/](decisions/) — architecture decision records
-- [CONTRIBUTING.md](../CONTRIBUTING.md) — how to contribute
-- [PUBLISHING.md](../PUBLISHING.md) — pub.dev publishing guide
+- [AGENTS.md](https://github.com/Arenukvern/intentcall/blob/main/AGENTS.md) — agent map and navigation pointers
+- [DESIGN_FAQ.mdx](/DESIGN_FAQ) — why IntentCall is built this way
+- [DX_FAQ.mdx](/DX_FAQ) — how to use and extend IntentCall
+- [docs/decisions/](/decisions/README) — architecture decision records
+- [CONTRIBUTING.md](https://github.com/Arenukvern/intentcall/blob/main/CONTRIBUTING.md) — how to contribute
+- [PUBLISHING.md](https://github.com/Arenukvern/intentcall/blob/main/PUBLISHING.md) — pub.dev publishing guide

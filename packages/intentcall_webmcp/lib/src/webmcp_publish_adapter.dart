@@ -41,9 +41,9 @@ final class WebMcpPublishAdapter implements AgentAdapter {
   @override
   Future<void> attach(final AgentRegistry registry) async {
     _registry = registry;
-    for (final descriptor in registry.listDescriptors()) {
-      if (descriptor.kind == AgentIntentKind.tool) {
-        _publishTool(registry, descriptor);
+    for (final entry in registry.listEntries()) {
+      if (entry.descriptor.kind == AgentIntentKind.tool) {
+        _publishTool(registry, key: entry.key, descriptor: entry.descriptor);
       }
     }
     _events = registry.events.listen((final event) {
@@ -54,7 +54,11 @@ final class WebMcpPublishAdapter implements AgentAdapter {
           final intent = reg.get(qualifiedName);
           if (intent != null &&
               intent.descriptor.kind == AgentIntentKind.tool) {
-            _publishTool(reg, intent.descriptor);
+            _publishTool(
+              reg,
+              key: qualifiedName,
+              descriptor: intent.descriptor,
+            );
           }
         case IntentUnregistered(:final qualifiedName):
           _unpublish(qualifiedName);
@@ -71,10 +75,11 @@ final class WebMcpPublishAdapter implements AgentAdapter {
   }
 
   void _publishTool(
-    final AgentRegistry registry,
-    final AgentIntentDescriptor descriptor,
-  ) {
-    final name = descriptor.qualifiedName;
+    final AgentRegistry registry, {
+    required final String key,
+    required final AgentIntentDescriptor descriptor,
+  }) {
+    final name = key;
     if (_published.contains(name)) return;
     publish(
       name: name,

@@ -1,4 +1,5 @@
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:build/build.dart';
 import 'package:source_gen/source_gen.dart';
@@ -54,7 +55,9 @@ AgentCallEntry get $entryGetter => AgentCallEntry.tool(
   name: ${_literalString(name)},
   description: ${_literalString(description)},
   inputSchema: $schemaName,
-  handler: (final args) async => ${element.name}($handlerArgs),
+  handler: (final args) async {
+$handlerArgs
+  },
 );
 ''';
   }
@@ -76,18 +79,29 @@ AgentCallEntry get $entryGetter => AgentCallEntry.tool(
     final required = <String>[];
 
     for (final param in element.formalParameters) {
+      if (param.isOptionalPositional) {
+        throw InvalidGenerationSourceError(
+          '@AgentTool does not support optional positional parameters. Use optional named parameters instead.',
+          element: param,
+        );
+      }
       final paramName = param.name;
       if (paramName == null) {
         continue;
       }
 
       final paramAnnotation = _readAgentParam(param);
-      final description = paramAnnotation?.read('description').stringValue ??
-          paramName;
-      final isRequired =
-          paramAnnotation?.read('required').boolValue ?? param.isRequired;
+      final description =
+          paramAnnotation?.read('description').stringValue ?? paramName;
+      final isRequired = _isRequiredParameter(param, paramAnnotation);
 
       final jsonType = _jsonTypeFor(param.type);
+      if (jsonType == null) {
+        throw InvalidGenerationSourceError(
+          'Unsupported @AgentTool parameter type ${param.type.getDisplayString()} for "$paramName". Supported types: String, int, bool, double.',
+          element: param,
+        );
+      }
       properties.add('''
     ${_literalString(paramName)}: <String, Object?>{
       'type': ${_literalString(jsonType)},
@@ -109,13 +123,38 @@ ${properties.join('\n')}
 }''';
   }
 
-  String _buildHandlerArgs(final TopLevelFunctionElement element) => element.formalParameters.map((final param) {
+  String _buildHandlerArgs(final TopLevelFunctionElement element) {
+    final positional = <String>[];
+    final named = <String>[];
+    for (final param in element.formalParameters) {
       final name = param.name;
       if (name == null) {
-        return '';
+        continue;
       }
-      return 'args[${_literalString(name)}] as ${_dartTypeName(param.type)}';
-    }).join(', ');
+      final cast =
+          'args[${_literalString(name)}] as ${_dartTypeName(param.type)}';
+      if (param.isNamed) {
+        if (_isRequiredParameter(param, _readAgentParam(param))) {
+          named.add('#$name: $cast,');
+        } else {
+          named.add(
+            'if (args.containsKey(${_literalString(name)})) #$name: $cast,',
+          );
+        }
+      } else {
+        positional.add(cast);
+      }
+    }
+    return '''
+    final result = Function.apply(
+      ${element.name},
+      <Object?>[${positional.join(', ')}],
+      <Symbol, Object?>{
+${named.map((final line) => '        $line').join('\n')}
+      },
+    );
+    return await (result as Future<AgentResult>);''';
+  }
 
   ConstantReader? _readAgentParam(final FormalParameterElement param) {
     for (final meta in param.metadata.annotations) {
@@ -127,7 +166,12 @@ ${properties.join('\n')}
     return null;
   }
 
-  String _jsonTypeFor(final DartType type) {
+  bool _isRequiredParameter(
+    final FormalParameterElement param,
+    final ConstantReader? annotation,
+  ) => annotation?.read('required').boolValue ?? param.isRequired;
+
+  String? _jsonTypeFor(final DartType type) {
     if (type.isDartCoreInt) {
       return 'integer';
     }
@@ -137,20 +181,29 @@ ${properties.join('\n')}
     if (type.isDartCoreDouble) {
       return 'number';
     }
-    return 'string';
+    if (type.isDartCoreString) {
+      return 'string';
+    }
+    return null;
   }
 
   String _dartTypeName(final DartType type) {
+    final suffix = type.nullabilitySuffix == NullabilitySuffix.question
+        ? '?'
+        : '';
     if (type.isDartCoreInt) {
-      return 'int';
+      return 'int$suffix';
     }
     if (type.isDartCoreBool) {
-      return 'bool';
+      return 'bool$suffix';
     }
     if (type.isDartCoreDouble) {
-      return 'double';
+      return 'double$suffix';
     }
-    return 'String';
+    if (type.isDartCoreString) {
+      return 'String$suffix';
+    }
+    throw StateError('Unsupported Dart type ${type.getDisplayString()}');
   }
 
   String _literalString(final String value) =>

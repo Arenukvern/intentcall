@@ -1,6 +1,9 @@
 # IntentCall — Agent Map
 
-IntentCall is a **transport-agnostic agent intent platform** for Dart/Flutter.
+**IntentCall** lets Dart/Flutter apps define agent-callable actions once in `AgentRegistry`, then project them to MCP, WebMCP, shortcuts, and deep links — without rewriting per transport. **Building a Flutter app?** Start with [mcp_flutter](https://github.com/Arenukvern/mcp_flutter). **Building adapters or platform projection?** You're in the right repo.
+
+Published docs: [docs.page/Arenukvern/intentcall](https://docs.page/Arenukvern/intentcall) · Full router: [docs/start_here/docs_map.mdx](docs/start_here/docs_map.mdx)
+
 Install Skill Steward meta-skills for this repo:
 
 ```bash

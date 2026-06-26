@@ -41,5 +41,20 @@ artifacts:
     path: packages/intentcall_gemma/test/gemma_adapter_contract_test.dart
     required: true
     durability: behavior
+  - id: platform_invocation_policy_test
+    kind: dart
+    path: packages/intentcall_platform/test/intentcall_invocation_test.dart
+    required: true
+    durability: behavior
+  - id: platform_webmcp_emitter_test
+    kind: dart
+    path: packages/intentcall_platform/test/web_emitters_test.dart
+    required: true
+    durability: behavior
+  - id: platform_webmcp_bootstrap_test
+    kind: dart
+    path: packages/intentcall_platform/test/agent_web_mcp_bootstrap_test.dart
+    required: true
+    durability: behavior
 blocked_by: null
 owner: intentcall

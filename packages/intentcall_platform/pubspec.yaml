@@ -20,8 +20,8 @@ dependencies:
   app_links: ^6.4.0
   flutter:
     sdk: flutter
-  intentcall_core: ^0.2.0
-  intentcall_schema: ^0.2.0
+  intentcall_core: ^0.2.1
+  intentcall_schema: ^0.2.1
   meta: ^1.17.0
   path: ^1.9.1
   web: ^1.1.1
@@ -33,6 +33,8 @@ flutter:
         package: dev.intentcall.intentcall_platform
         pluginClass: IntentCallPlatformPlugin
       ios:
+        pluginClass: IntentCallPlatformPlugin
+      macos:
         pluginClass: IntentCallPlatformPlugin
 
 dev_dependencies:

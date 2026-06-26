@@ -7,6 +7,7 @@ Thanks for your interest! IntentCall is a pre-release platform library. Contribu
 - [Dart SDK](https://dart.dev/get-dart) `^3.11.0`
 - [Flutter SDK](https://flutter.dev/docs/get-started/install) (stable) — required for `intentcall_platform`
 - [just](https://github.com/casey/just) task runner (recommended)
+- [Node.js](https://nodejs.org/) `>=18` and [pnpm](https://pnpm.io/) `>=9` — for `just docs-check` (docs.page link validation)
 
 ## Quick start
 
@@ -19,7 +20,12 @@ just analyze     # static analysis
 just publish-dry-run  # pub.dev validation (no credentials needed)
 ```
 
-All three must be green before opening a PR.
+All three must be green before opening a PR. If you changed `docs/` or `docs.json`, also run:
+
+```bash
+pnpm install   # once
+just docs-check
+```
 
 ## Conventional commits
 
@@ -44,8 +50,8 @@ See [docs/DX_FAQ.mdx](docs/DX_FAQ.mdx) — "How do I add a new `intentcall_*` pa
 
 ## Publishing
 
-Publishing to pub.dev is maintainer-gated. Maintainers run `just publish-preflight-first` for the first publish, `just publish-preflight` for later releases, then `just publish-dry-run` before `just publish-execute`. See [PUBLISHING.md](PUBLISHING.md).
+Publishing to pub.dev is maintainer-gated. Maintainers normally merge the Release Please PR and let tag-triggered GitHub Actions publish through pub.dev automated publishing. `just publish-dry-run` and tag dry-runs are preflight checks; manual execute commands are recovery-only. See [PUBLISHING.md](PUBLISHING.md).
 
 ## Pre-release note
 
-All packages are `0.1.x`. APIs may change without a semver major. See [PRE_RELEASE.md](PRE_RELEASE.md).
+All packages are `0.2.x` train. APIs may change without a semver major. See [PRE_RELEASE.md](PRE_RELEASE.md).

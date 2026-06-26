@@ -75,6 +75,25 @@ dev_dependencies:
 
       expect(dependencies, ['intentcall_core', 'intentcall_testing']);
     });
+
+    test('detects stale internal dependency floors', () {
+      final mismatches = intentcall_cli.internalDependencyFloorMismatches(
+        '''
+dependencies:
+  intentcall_core: ^0.2.0
+  intentcall_schema: ^0.2.1
+dev_dependencies:
+  intentcall_testing: ^0.2.0
+''',
+        '0.2.1',
+        packageName: 'intentcall_mcp',
+      );
+
+      expect(mismatches, [
+        'intentcall_mcp depends on intentcall_core ^0.2.0, expected ^0.2.1',
+        'intentcall_mcp depends on intentcall_testing ^0.2.0, expected ^0.2.1',
+      ]);
+    });
   });
 
   group('runReleaseGitCleanCheck', () {

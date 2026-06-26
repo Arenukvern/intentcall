@@ -8,5 +8,29 @@ void main() {
       () => registerAgentWebMcpFromEntries(<AgentCallEntry>{}),
       returnsNormally,
     );
+    expect(
+      () => registerAgentWebMcpFromEntries(
+        <AgentCallEntry>{},
+        policy: const IntentCallAuthorizationPolicy.denyAll(),
+      ),
+      returnsNormally,
+    );
+  });
+
+  test('registerAgentWebMcpFromRegistry is safe on VM', () {
+    expect(
+      () => registerAgentWebMcpFromRegistry(InMemoryAgentRegistry()),
+      returnsNormally,
+    );
+    expect(
+      () => registerAgentWebMcpFromRegistry(
+        InMemoryAgentRegistry(),
+        policy: const IntentCallAuthorizationPolicy(
+          allowedSources: <String>{IntentCallInvocationSource.webMcpDart},
+          allowedQualifiedNames: <String>{'app_echo'},
+        ),
+      ),
+      returnsNormally,
+    );
   });
 }

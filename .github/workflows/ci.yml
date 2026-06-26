@@ -15,9 +15,20 @@ jobs:
     timeout-minutes: 25
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
 
-      - uses: subosito/flutter-action@v2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "20"
+
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa
+        with:
+          version: 9.15.4
+
+      - name: pnpm install (docs.page CLI)
+        run: pnpm install --frozen-lockfile
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
         with:
           channel: stable
           cache: true
@@ -36,3 +47,6 @@ jobs:
 
       - name: pub.dev dry-run (all packages)
         run: dart run tool/intentcall/bin/intentcall.dart publish-all
+
+      - name: docs.page check
+        run: pnpm run docs:check

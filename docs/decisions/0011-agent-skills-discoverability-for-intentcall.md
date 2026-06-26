@@ -64,5 +64,5 @@ Chosen option: **Option 2**. We will introduce IntentCall-specific developer ski
 
 ## Links
 
-* [Skill Steward — plugin-marketplace-setup](../../.agents/skills/plugin-marketplace-setup/SKILL.md)
-* [Skill Steward — create-skill](../../.agents/skills/create-skill/SKILL.md)
+* [Skill Steward — plugin-marketplace-setup](https://github.com/Arenukvern/skill_steward/blob/main/skills/plugin-marketplace-setup/SKILL.md)
+* [Skill Steward — create-skill](https://github.com/Arenukvern/skill_steward/blob/main/skills/create-skill/SKILL.md)

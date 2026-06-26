@@ -41,9 +41,9 @@ final class GemmaPublishAdapter implements AgentAdapter {
 
   @override
   Future<void> attach(final AgentRegistry registry) async {
-    for (final descriptor in registry.listDescriptors()) {
-      if (descriptor.kind == AgentIntentKind.tool) {
-        _registerTool(registry, descriptor);
+    for (final entry in registry.listEntries()) {
+      if (entry.descriptor.kind == AgentIntentKind.tool) {
+        _registerTool(registry, key: entry.key, descriptor: entry.descriptor);
       }
     }
   }
@@ -55,10 +55,11 @@ final class GemmaPublishAdapter implements AgentAdapter {
   }
 
   void _registerTool(
-    final AgentRegistry registry,
-    final AgentIntentDescriptor descriptor,
-  ) {
-    final name = descriptor.qualifiedName;
+    final AgentRegistry registry, {
+    required final String key,
+    required final AgentIntentDescriptor descriptor,
+  }) {
+    final name = key;
     register(
       GemmaToolDefinition(
         name: name,

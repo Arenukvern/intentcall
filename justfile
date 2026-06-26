@@ -57,12 +57,16 @@ doctor:
 validate:
     dart run tool/intentcall/bin/intentcall.dart validate
 
-# Run the shared native adapter contract tests
+# Run the shared native adapter and platform bridge contract tests
 adapter-contract-test:
-    dart test packages/intentcall_testing/test/adapter_contract_test.dart packages/intentcall_mcp/test/mcp_adapter_contract_test.dart packages/intentcall_webmcp/test/webmcp_adapter_contract_test.dart packages/intentcall_gemma/test/gemma_adapter_contract_test.dart
+    dart test packages/intentcall_testing/test/adapter_contract_test.dart packages/intentcall_mcp/test/mcp_adapter_contract_test.dart packages/intentcall_webmcp/test/webmcp_adapter_contract_test.dart packages/intentcall_gemma/test/gemma_adapter_contract_test.dart packages/intentcall_platform/test/intentcall_invocation_test.dart packages/intentcall_platform/test/web_emitters_test.dart packages/intentcall_platform/test/agent_web_mcp_bootstrap_test.dart
 
 # List custom agent skills defined in this repository
 list-skills:
     @echo "Available Custom Agent Skills:"
     @echo "  - register-intents: Guide to manual and codegen intent registration (skills/register-intents/SKILL.md)"
     @echo "  - write-adapter: Guide to implementing custom platform/transport adapters (skills/write-adapter/SKILL.md)"
+
+# Validate docs.page config and internal doc links
+docs-check:
+    pnpm run docs:check

@@ -6,9 +6,7 @@ import 'emitter_utils.dart';
 /// Logic mirrors [generateAppleAgentManifest] in `intentcall_apple`; this emitter
 /// turns manifest rows into compile-time Swift for `Runner/Generated/`.
 final class AppleSwiftAppIntentsEmitter {
-  const AppleSwiftAppIntentsEmitter({
-    this.protocolScheme = 'intentcall',
-  });
+  const AppleSwiftAppIntentsEmitter({this.protocolScheme = 'intentcall'});
 
   final String protocolScheme;
 
@@ -33,42 +31,73 @@ final class AppleSwiftAppIntentsEmitter {
             : tool.description,
       );
       final phrase = escapeSwiftString(humanizeAgentName(tool.name));
+      final parameters = _swiftParameters(tool);
+      final argumentLines = _swiftArgumentLines(parameters);
       buffer
         ..writeln('@available(iOS 16.0, macOS 13.0, *)')
         ..writeln('struct $typeName: AppIntent {')
         ..writeln('  static var title: LocalizedStringResource = "$title"')
-        ..writeln()
+        ..writeln();
+      for (final parameter in parameters) {
+        buffer
+          ..writeln(
+            '  @Parameter(title: "${escapeSwiftString(parameter.title)}")',
+          )
+          ..writeln('  var ${parameter.variableName}: ${parameter.swiftType}')
+          ..writeln();
+      }
+      buffer
         ..writeln('  func perform() async throws -> some IntentResult {')
+        ..writeln('    var arguments: [String: Any] = [:]');
+      for (final line in argumentLines) {
+        buffer.writeln('    $line');
+      }
+      buffer
         ..writeln(
-          '    await IntentCallNativeBridge.invoke(qualifiedName: "${escapeSwiftString(tool.qualifiedName)}")',
+          '    await IntentCallNativeBridge.enqueue(qualifiedName: "${escapeSwiftString(tool.qualifiedName)}", arguments: arguments)',
         )
         ..writeln('    return .result()')
         ..writeln('  }')
         ..writeln('}')
         ..writeln();
       shortcutLines.add(
-        '    AppShortcut(intent: $typeName(), phrases: ["$phrase"])',
+        '    AppShortcut(intent: $typeName(), phrases: ["\\(.applicationName) $phrase"])',
       );
     }
 
     buffer
       ..writeln('@available(iOS 16.0, macOS 13.0, *)')
       ..writeln('struct IntentCallShortcutsProvider: AppShortcutsProvider {')
-      ..writeln('  static var appShortcuts: [AppShortcut] {')
-      ..writeln('    [');
-    if (shortcutLines.isEmpty) {
-      buffer.writeln('    ]');
-    } else {
-      buffer
-        ..writeln('${shortcutLines.join(',\n')},')
-        ..writeln('    ]');
-    }
+      ..writeln('  static var appShortcuts: [AppShortcut] {');
+    shortcutLines.forEach(buffer.writeln);
     buffer
       ..writeln('  }')
       ..writeln('}')
       ..writeln()
       ..writeln('enum IntentCallNativeBridge {')
-      ..writeln('  static func invoke(qualifiedName: String) async {')
+      ..writeln(
+        '  private static let pendingKey = "intentcall.pending_invocations"',
+      )
+      ..writeln()
+      ..writeln(
+        '  static func enqueue(qualifiedName: String, arguments: [String: Any]) async {',
+      )
+      ..writeln('    let item: [String: Any] = [')
+      ..writeln('      "id": UUID().uuidString,')
+      ..writeln('      "qualifiedName": qualifiedName,')
+      ..writeln('      "arguments": arguments,')
+      ..writeln('      "source": "native.generated",')
+      ..writeln(
+        '      "createdAt": ISO8601DateFormatter().string(from: Date())',
+      )
+      ..writeln('    ]')
+      ..writeln('    objc_sync_enter(UserDefaults.standard)')
+      ..writeln('    defer { objc_sync_exit(UserDefaults.standard) }')
+      ..writeln(
+        '    var pending = UserDefaults.standard.array(forKey: pendingKey) as? [[String: Any]] ?? []',
+      )
+      ..writeln('    pending.append(item)')
+      ..writeln('    UserDefaults.standard.set(pending, forKey: pendingKey)')
       ..writeln(
         '    guard let url = URL(string: "$protocolScheme://invoke/\\(qualifiedName)") else { return }',
       )
@@ -83,3 +112,189 @@ final class AppleSwiftAppIntentsEmitter {
     return buffer.toString();
   }
 }
+
+final class _SwiftParameter {
+  const _SwiftParameter({
+    required this.name,
+    required this.variableName,
+    required this.title,
+    required this.swiftType,
+    required this.required,
+  });
+
+  final String name;
+  final String variableName;
+  final String title;
+  final String swiftType;
+  final bool required;
+}
+
+List<_SwiftParameter> _swiftParameters(final AgentManifestEntry tool) {
+  final properties = tool.inputSchema['properties'];
+  if (properties is! Map) {
+    return const <_SwiftParameter>[];
+  }
+  final rawRequired = tool.inputSchema['required'];
+  final required = <String>{
+    ...(rawRequired is List ? rawRequired : const <Object?>[])
+        .whereType<String>(),
+  };
+  final out = <_SwiftParameter>[];
+  for (final entry in properties.entries) {
+    final name = '${entry.key}';
+    final schema = entry.value;
+    if (schema is! Map) {
+      continue;
+    }
+    final schemaType = '${schema['type']}';
+    final baseType = _swiftTypeFor(schemaType);
+    if (baseType == null) {
+      throw UnsupportedError(
+        'Apple App Intents support only primitive string/integer/number/boolean '
+        'parameters in ${tool.qualifiedName}; "$name" has unsupported type '
+        '"$schemaType".',
+      );
+    }
+    final isRequired = required.contains(name);
+    out.add(
+      _SwiftParameter(
+        name: name,
+        variableName: _swiftIdentifier(name),
+        title: humanizeAgentName(name),
+        swiftType: isRequired ? baseType : '$baseType?',
+        required: isRequired,
+      ),
+    );
+  }
+  return out;
+}
+
+List<String> _swiftArgumentLines(final List<_SwiftParameter> parameters) {
+  final out = <String>[];
+  for (final parameter in parameters) {
+    if (parameter.required) {
+      out.add(
+        'arguments["${escapeSwiftString(parameter.name)}"] = ${parameter.variableName}',
+      );
+    } else {
+      out.add(
+        'if let value = ${parameter.variableName} { arguments["${escapeSwiftString(parameter.name)}"] = value }',
+      );
+    }
+  }
+  return out;
+}
+
+String? _swiftTypeFor(final String type) => switch (type) {
+  'string' => 'String',
+  'integer' => 'Int',
+  'number' => 'Double',
+  'boolean' => 'Bool',
+  _ => null,
+};
+
+String _swiftIdentifier(final String name) {
+  final parts = name
+      .split(RegExp('[^A-Za-z0-9]+'))
+      .where((final p) => p.isNotEmpty);
+  if (parts.isEmpty) {
+    return 'value';
+  }
+  final first = parts.first;
+  final rest = parts
+      .skip(1)
+      .map((final part) => '${part[0].toUpperCase()}${part.substring(1)}');
+  final candidate = first + rest.join();
+  final identifier = RegExp('^[A-Za-z_]').hasMatch(candidate)
+      ? candidate
+      : 'value$candidate';
+  return _swiftReservedWords.contains(identifier)
+      ? '`$identifier`'
+      : identifier;
+}
+
+const _swiftReservedWords = <String>{
+  'Any',
+  'Protocol',
+  'Self',
+  'Type',
+  'actor',
+  'as',
+  'associatedtype',
+  'associativity',
+  'async',
+  'await',
+  'break',
+  'case',
+  'catch',
+  'class',
+  'continue',
+  'convenience',
+  'default',
+  'defer',
+  'deinit',
+  'didSet',
+  'do',
+  'dynamic',
+  'else',
+  'enum',
+  'extension',
+  'fallthrough',
+  'false',
+  'fileprivate',
+  'final',
+  'for',
+  'func',
+  'get',
+  'guard',
+  'if',
+  'import',
+  'in',
+  'indirect',
+  'infix',
+  'init',
+  'inout',
+  'internal',
+  'is',
+  'isolated',
+  'lazy',
+  'left',
+  'let',
+  'mutating',
+  'nil',
+  'none',
+  'nonisolated',
+  'open',
+  'operator',
+  'optional',
+  'override',
+  'postfix',
+  'precedence',
+  'prefix',
+  'private',
+  'protocol',
+  'public',
+  'repeat',
+  'required',
+  'rethrows',
+  'return',
+  'right',
+  'self',
+  'set',
+  'some',
+  'static',
+  'struct',
+  'subscript',
+  'super',
+  'switch',
+  'throw',
+  'throws',
+  'true',
+  'try',
+  'unowned',
+  'var',
+  'weak',
+  'where',
+  'while',
+  'willSet',
+};
