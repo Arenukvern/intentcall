@@ -1,7 +1,7 @@
 name: intentcall_platform
 description: PRE-RELEASE — Platform emitters and sync for intentcall (web
   manifest, WebMCP JS, bootstrap).
-version: 0.3.0
+version: 0.3.1
 license: MIT
 repository: https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_platform
 issue_tracker: https://github.com/Arenukvern/intentcall/issues
