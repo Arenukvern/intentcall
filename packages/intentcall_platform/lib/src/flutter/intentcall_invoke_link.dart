@@ -3,20 +3,28 @@ import 'dart:async';
 import 'package:app_links/app_links.dart';
 import 'package:flutter/foundation.dart';
 
-/// Listens for `intentcall://invoke/<qualified_name>` and dispatches to [onQualifiedName].
+/// Listens for `<app-scheme>://invoke/<qualified_name>` and dispatches to
+/// [onQualifiedName].
 ///
 /// Dogfood in `flutter_test_app` only; not published to pub.dev.
 final class IntentCallInvokeLinkListener {
-  IntentCallInvokeLinkListener({required this.onQualifiedName});
+  IntentCallInvokeLinkListener({
+    required this.protocolScheme,
+    required this.onQualifiedName,
+  });
 
+  final String protocolScheme;
   final void Function(String qualifiedName) onQualifiedName;
 
   final AppLinks _appLinks = AppLinks();
   StreamSubscription<Uri>? _subscription;
 
-  /// Parses [uri] when scheme is `intentcall` and host is `invoke`.
-  static String? qualifiedNameFromUri(final Uri uri) {
-    if (uri.scheme != 'intentcall') {
+  /// Parses [uri] when scheme is [protocolScheme] and host is `invoke`.
+  static String? qualifiedNameFromUri(
+    final Uri uri, {
+    required final String protocolScheme,
+  }) {
+    if (uri.scheme != protocolScheme) {
       return null;
     }
     if (uri.host != 'invoke') {
@@ -44,7 +52,7 @@ final class IntentCallInvokeLinkListener {
   }
 
   void _handle(final Uri uri) {
-    final name = qualifiedNameFromUri(uri);
+    final name = qualifiedNameFromUri(uri, protocolScheme: protocolScheme);
     if (name != null) {
       onQualifiedName(name);
     }

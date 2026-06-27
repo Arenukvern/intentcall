@@ -6,13 +6,15 @@ import 'emitter_utils.dart';
 /// Same XML applies to stock Android, Xiaomi HyperOS, and Huawei APK builds;
 /// OEM-specific behavior is documented separately.
 final class AndroidShortcutsXmlEmitter {
-  const AndroidShortcutsXmlEmitter({
-    this.protocolScheme = 'intentcall',
-  });
+  const AndroidShortcutsXmlEmitter({this.protocolScheme});
 
-  final String protocolScheme;
+  final String? protocolScheme;
 
   String emit(final AgentManifest manifest) {
+    final scheme = requireProtocolScheme(
+      protocolScheme ?? manifest.protocolScheme,
+      artifact: 'Android shortcuts',
+    );
     final buffer = StringBuffer()
       ..writeln('<?xml version="1.0" encoding="utf-8"?>')
       ..writeln(
@@ -27,7 +29,9 @@ final class AndroidShortcutsXmlEmitter {
       final longLabel = escapeXml(
         tool.description.isEmpty ? shortLabel : tool.description,
       );
-      final data = escapeXml('$protocolScheme://invoke/${tool.qualifiedName}');
+      final data = escapeXml(
+        invokeUri(protocolScheme: scheme, qualifiedName: tool.qualifiedName),
+      );
       buffer
         ..writeln('  <shortcut')
         ..writeln('      android:shortcutId="${escapeXml(tool.qualifiedName)}"')

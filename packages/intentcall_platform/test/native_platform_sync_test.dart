@@ -9,6 +9,7 @@ void main() {
 {
   "version": 1,
   "platform": "android",
+  "protocolScheme": "demoapp",
   "shortcuts": [
     {
       "qualifiedName": "app_cart_total",

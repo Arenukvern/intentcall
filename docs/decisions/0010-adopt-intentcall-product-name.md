@@ -49,7 +49,7 @@ Chosen option: **IntentCall** as the **public product name**.
 | Before | After |
 |--------|--------|
 | `agentkit_*` packages | `intentcall_*` |
-| `agentkit://invoke/...` | `intentcall://invoke/...` |
+| `agentkit://invoke/...` | `<app-scheme>://invoke/...` |
 | `tool/agentkit/` | `tool/intentcall/` |
 | `make check-agentkit-integration` | `make check-intentcall-integration` |
 | `init agentkit-platform` (CLI) | `init intentcall-platform` |

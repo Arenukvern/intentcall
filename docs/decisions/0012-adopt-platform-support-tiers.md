@@ -38,14 +38,14 @@ IntentCall will describe platform support in tiers:
 | Protocol fallback | Stable URI/protocol invocation when native semantic support is unavailable or not implemented. |
 | Ecosystem alignment | Compatibility with agent ecosystem conventions without claiming an OS-level integration contract. |
 
-Current implementation includes MCP/WebMCP adapters, Apple App Intents artifacts, Android shortcut/deep-link artifacts, web/PWA artifacts, Windows protocol activation artifacts, and Linux `x-scheme-handler/intentcall` artifacts.
+Current implementation includes MCP/WebMCP adapters, Apple App Intents artifacts, Android shortcut/deep-link artifacts, web/PWA artifacts, Windows protocol activation artifacts, and Linux `x-scheme-handler/<app-scheme>` artifacts.
 
 Roadmap targets include Android AppFunctions, richer Android App Actions capability generation, Windows App Actions / Agent Launchers, WebMCP `document.modelContext` compatibility, and AAIF ecosystem alignment where relevant.
 
 ### Consequences
 
 * Good, because docs can say what exists without shrinking the long-term vision.
-* Good, because app authors get a predictable fallback contract: `intentcall://invoke/...`.
+* Good, because app authors get a predictable fallback contract shape: `<app-scheme>://invoke/...`.
 * Neutral, because every new platform adapter must declare its support tier.
 * Bad, if tier labels drift from implementation; mitigated by keeping `docs/NORTH_STAR.mdx`, `docs/DESIGN_FAQ.mdx`, and platform package READMEs aligned.
 

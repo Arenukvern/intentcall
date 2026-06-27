@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'intentcall_platform'
-  s.version          = '0.2.1'
+  s.version          = '0.3.0'
   s.summary          = 'Platform bridge for IntentCall pending native invocations.'
   s.description      = <<-DESC
 Platform bridge for dispatching generated native invocation envelopes into Dart.
