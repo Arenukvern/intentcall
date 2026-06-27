@@ -51,15 +51,11 @@ void main() {
 We can automate registration using the code generator package `intentcall_codegen`.
 
 ### Step 1: Add dependencies
-Add `intentcall_codegen` to your `dev_dependencies` in `pubspec.yaml`:
+Add IntentCall packages from the current hosted train:
 
-```yaml
-dependencies:
-  intentcall_core: ^0.2.1
-
-dev_dependencies:
-  intentcall_codegen: ^0.2.1
-  build_runner: ^2.4.0
+```bash
+dart pub add intentcall_core intentcall_schema
+dart pub add --dev intentcall_codegen build_runner
 ```
 
 ### Step 2: Annotate your tool
@@ -105,6 +101,24 @@ void main() {
 Transport adapters, WebMCP, and native bridge wrappers should execute this Dart
 registry entry rather than copying the business logic into JS, Swift, Kotlin, or
 another host language.
+
+---
+
+## 3. After Changing Registrations
+
+Run the package tests that cover the registered handler. When changing this
+repository rather than only a downstream app, also run:
+
+```bash
+steward probe --json --profile quick
+```
+
+If the registration is consumed by a new or changed adapter, add or update the
+adapter contract test and run:
+
+```bash
+steward benchmark --scenario intentcall.adapter-contract --json
+```
 
 ---
 

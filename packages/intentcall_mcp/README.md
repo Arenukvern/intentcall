@@ -1,4 +1,4 @@
-> ⚠️ **Pre-release (0.2.x train)** — Highly experimental. APIs may change without notice. Not for production. [Details](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md).
+> ⚠️ **Pre-release train** — Highly experimental. APIs may change without notice. Not for production. [Details](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md).
 
 
 # intentcall_mcp
@@ -36,6 +36,20 @@ It also does not own runtime sessions, dynamic discovery inside an app, Flutter
 VM inspection, screenshots, or CLI process management. Use `intentcall_session`
 for session lifecycle and concrete hosts such as `mcp_flutter` for runtime
 adapters.
+
+## Adapter lifecycle
+
+`McpPublishAdapter` is the contract-tested reference shape:
+
+1. Attach to the registry.
+2. Publish every current `registry.listEntries()` entry by registry key.
+3. Listen for registry events and hot-sync registrations.
+4. Route incoming MCP calls back to `registry.invoke(...)`.
+5. Detach cleanly.
+
+New adapters should add a `verifyNativeAdapterContract(...)` test through
+`intentcall_testing` and run
+`steward benchmark --scenario intentcall.adapter-contract --json`.
 
 ## Resource behavior
 

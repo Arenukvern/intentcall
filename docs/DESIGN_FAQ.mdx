@@ -102,7 +102,7 @@ A: Be explicit about tiers. WebMCP is a Dart-first in-page registration surface.
 
 ## Quality & stability
 
-**Q: Why are all packages pre-1.0 on the current `0.2.x` train instead of `1.0.0`?**
+**Q: Why are all packages pre-1.0 instead of `1.0.0`?**
 A: The wire contract in `intentcall_schema` and the registry API in `intentcall_core` are still being exercised across real adapters. Publishing a `1.0.0` would imply API stability we cannot guarantee yet. Pre-release allows breaking changes to land without a semver major while the design stabilizes.
 
 **Q: Why does CI run a publish dry-run on every PR?**

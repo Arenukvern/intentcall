@@ -45,9 +45,17 @@ publish-tag-execute tag:
 check-path-deps:
     dart run tool/intentcall/bin/intentcall.dart check-path-deps
 
+# Print hosted dependencies block for the synchronized package train
+print-hosted-deps:
+    dart run tool/intentcall/bin/intentcall.dart print-hosted-deps
+
 # Print hosted dependencies block for a specific version
-print-hosted-deps version="0.1.0":
+print-hosted-deps-version version:
     dart run tool/intentcall/bin/intentcall.dart print-hosted-deps --version {{version}}
+
+# Check docs and skills for hardcoded IntentCall train versions
+check-doc-versions:
+    dart run tool/intentcall/bin/intentcall.dart check-doc-versions
 
 # Check developer environment health
 doctor:

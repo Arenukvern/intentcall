@@ -2,13 +2,19 @@
 
 [![maintained with Skill Steward](https://raw.githubusercontent.com/Arenukvern/skill_steward/main/docs/brand/assets/svg/badge-solid.svg)](https://github.com/Arenukvern/skill_steward)
 
-> **Pre-release (`0.2.x` train)** — Highly experimental. APIs may change without notice. **Not for production.** See [PRE_RELEASE.md](PRE_RELEASE.md).
+> **Pre-release train** — Contract-tested pre-1.0 platform infrastructure. APIs may change without notice. **Not for production claims without app/runtime proof.** See [PRE_RELEASE.md](PRE_RELEASE.md).
 
 *Register intents. Call them everywhere.*
 
 Transport-agnostic agent intent platform for Dart/Flutter: define intent truth once in `AgentRegistry`, then project it into the strongest available surface: MCP/WebMCP, native action metadata where supported, assistant/shortcut fulfillment, and canonical deep-link fallback where native support is incomplete. Extracted from [mcp_flutter](https://github.com/Arenukvern/mcp_flutter).
 
-**Charter:** [docs/NORTH_STAR.mdx](docs/NORTH_STAR.mdx) · **Agent map:** [AGENTS.md](AGENTS.md) · **Docs site:** [docs.page/Arenukvern/intentcall](https://docs.page/Arenukvern/intentcall)  
+![Watercolor comic explainer showing IntentCall as four steps: write one intent, register it once, project it to Web agents desktop OS shortcuts and deep links, then people and agents use it.](docs/assets/intentcall-watercolor-explainer-v2.png)
+
+Conceptual map: write one Dart intent, register it once, project it to useful surfaces, then people and agents use it.
+
+**Start here:** [How it works](docs/start_here/how_it_works.mdx) · [Choose your path](docs/start_here/choose_your_path.mdx) · [Platform support](docs/start_here/platform_support.mdx) · [Roadmap](docs/start_here/roadmap.mdx)
+
+**Charter:** [docs/NORTH_STAR.mdx](docs/NORTH_STAR.mdx) · **Agent map:** [AGENTS.md](AGENTS.md) · **Docs site:** [docs.page/Arenukvern/intentcall](https://docs.page/Arenukvern/intentcall)
 **Why / how:** [docs/DESIGN_FAQ.mdx](docs/DESIGN_FAQ.mdx) · [docs/DX_FAQ.mdx](docs/DX_FAQ.mdx) · [Decisions](docs/decisions/) · [CONTRIBUTING.md](CONTRIBUTING.md)
 
 GitHub: [Arenukvern/intentcall](https://github.com/Arenukvern/intentcall)
@@ -35,7 +41,7 @@ GitHub: [Arenukvern/intentcall](https://github.com/Arenukvern/intentcall)
 | `intentcall_testing` | Contract / invoke test helpers |
 | `intentcall_gemma` / `intentcall_apple` / `intentcall_android` | Optional experimental surface adapters |
 
-Platform support is tiered during the `0.2.x` train: current code covers MCP, Dart-first WebMCP registration, Apple App Intents dispatch wrappers, Android shortcuts/deep links, Windows protocol activation, and Linux `x-scheme-handler`. Apple App Intents currently launch/wake the app and dispatch an invocation envelope for Dart execution; they do not claim app-extension-hosted Dart execution or native background business logic. Android AppFunctions, Android App Actions capabilities, Windows App Actions / Agent Launchers, and AAIF ecosystem alignment are roadmap targets unless documented otherwise.
+Platform support is tiered during the current pre-1.0 train: current code covers contract-tested MCP adapters, Dart-first WebMCP emitter/bootstrap helpers, Apple App Intents dispatch wrappers, Android shortcut/deep-link artifacts, Windows protocol activation artifacts, and Linux `x-scheme-handler` artifacts. Apple App Intents currently launch/wake the app and dispatch an invocation envelope for Dart execution; they do not claim app-extension-hosted Dart execution or native background business logic. Android AppFunctions, richer Android App Actions capability generation, Windows App Actions / Agent Launchers, and AAIF ecosystem alignment are roadmap targets unless documented otherwise. See [Platform support](docs/start_here/platform_support.mdx) for evidence levels and non-claims.
 
 ## Agent Skills
 
@@ -50,11 +56,23 @@ Repository management is guided by [Skill Steward](https://github.com/Arenukvern
 
 ## Development
 
+Human local setup:
+
 ```bash
 dart pub get
 just test
 just analyze
 just publish-dry-run   # pub.dev dry-run (all packages)
+```
+
+Agent/operator first run:
+
+```bash
+steward doctor --json
+steward actions list --json
+steward action inspect intentcall.validate --json
+steward probe --json --profile quick
+steward benchmark --scenario intentcall.adapter-contract --json
 ```
 
 Release maintainers use Release Please. Merging the release PR creates package tags; tag-triggered GitHub Actions publishes through pub.dev automated publishing.

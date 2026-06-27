@@ -60,7 +60,7 @@ validators:
 actions:
   intentcall.validate:
     kind: command
-    desc: Validate path dependencies, version consistency, and active-plan hygiene.
+    desc: Validate path dependencies, version consistency, docs version drift, and active-plan hygiene.
     command:
       argv: [dart, run, tool/intentcall/bin/intentcall.dart, validate]
       shell: false
@@ -69,6 +69,11 @@ actions:
       fs_read:
         - tool/intentcall/**
         - packages/**
+        - skills/**
+        - docs/**
+        - README.md
+        - PRE_RELEASE.md
+        - AGENTS.md
         - pubspec.yaml
         - pubspec.lock
       fs_write: []

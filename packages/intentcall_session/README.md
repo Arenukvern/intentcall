@@ -1,4 +1,4 @@
-> WARNING: Pre-release (0.2.x train) — Highly experimental. APIs may change without notice. Not for production. See the root PRE_RELEASE.md.
+> WARNING: Pre-release train — Highly experimental. APIs may change without notice. Not for production. See the root PRE_RELEASE.md.
 
 # intentcall_session
 

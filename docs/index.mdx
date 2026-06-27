@@ -10,6 +10,10 @@
 
 | I want to… | Go to |
 |------------|--------|
+| Understand the moving parts | [How it works](/start_here/how_it_works) |
+| Pick the right package path | [Choose your path](/start_here/choose_your_path) |
+| Check platform evidence and non-claims | [Platform support](/start_here/platform_support) |
+| See current direction | [Roadmap](/start_here/roadmap) |
 | Charter and boundaries | [North Star](/NORTH_STAR) |
 | Commands, test, release | [DX FAQ](/DX_FAQ) |
 | Architectural why | [Design FAQ](/DESIGN_FAQ) · [Decisions](/decisions/README) |
@@ -32,5 +36,8 @@ just analyze
 ```bash
 npx skills add arenukvern/skill_steward
 steward doctor --json
+steward actions list --json
+steward action inspect intentcall.validate --json
 steward probe --json --profile quick
+steward benchmark --scenario intentcall.adapter-contract --json
 ```

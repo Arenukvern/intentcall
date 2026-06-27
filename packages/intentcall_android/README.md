@@ -1,4 +1,4 @@
-> ⚠️ **Pre-release (0.2.x train)** — Highly experimental. APIs may change without notice. Not for production. [Details](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md).
+> ⚠️ **Pre-release train** — Highly experimental. APIs may change without notice. Not for production. [Details](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md).
 
 
 # intentcall_android
@@ -13,7 +13,7 @@ AppFunctions and fuller App Actions capability generation remain roadmap work.
 1. **Author tools** — hand-written `AgentCallEntry` or optional `@AgentTool` codegen (`intentcall_codegen`).
 2. **Collect descriptors** — `entry.toRegistration().descriptor` or registry snapshot.
 3. **Generate manifest** — `generateAndroidAgentManifest(descriptors)` → `agent_manifest.json`.
-4. **Platform snippet** — map manifest shortcuts to `shortcuts.xml` / App Actions.
+4. **Platform snippet** — map manifest shortcuts to `shortcuts.xml` / deep-link routing.
 
 ```dart
 import 'package:intentcall_android/intentcall_android.dart';
@@ -33,6 +33,7 @@ Example XML-oriented snippet derived from manifest:
 ```
 
 Input: `agent_manifest.json` (`platform: android`, `shortcuts[]`).  
-Output: JSON manifest + documented XML mapping for App Actions.
+Output: JSON manifest + documented shortcuts XML / deep-link mapping. Android
+AppFunctions and fuller App Actions capability generation remain roadmap work.
 
 See `test/agent_manifest_generator_test.dart`.

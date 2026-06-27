@@ -107,7 +107,28 @@ class MyCustomAdapter implements AgentAdapter {
 
 ---
 
+## 3. After Changing an Adapter
+
+Add or extend a contract test using `verifyNativeAdapterContract(...)` from
+`intentcall_testing`. The canonical package entrypoint is
+`packages/intentcall_testing/README.md`.
+
+Then run:
+
+```bash
+steward benchmark --scenario intentcall.adapter-contract --json
+```
+
+For smaller local checks, start with:
+
+```bash
+steward probe --json --profile quick
+```
+
+---
+
 ## Related Documents
 
 - [DESIGN_FAQ.mdx](../../docs/DESIGN_FAQ.mdx) — Adapter modularity details.
 - [DX_FAQ.mdx](../../docs/DX_FAQ.mdx) — Sibling overrides and testing custom adapters.
+- [intentcall_testing README](../../packages/intentcall_testing/README.md) — Contract-test entrypoint.
