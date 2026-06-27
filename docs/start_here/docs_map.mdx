@@ -8,6 +8,10 @@ Index for the IntentCall documentation site and repository.
 
 | I want to… | Go to |
 |------------|--------|
+| Understand the moving parts | [How it works](/start_here/how_it_works) |
+| Pick the right package path | [Choose your path](/start_here/choose_your_path) |
+| Check platform evidence and non-claims | [Platform support](/start_here/platform_support) |
+| See current direction | [Roadmap](/start_here/roadmap) |
 | Charter and scope | [North Star](/NORTH_STAR) |
 | Commands, test, release | [DX FAQ](/DX_FAQ) |
 | Architectural why | [Design FAQ](/DESIGN_FAQ) · [Decisions](/decisions/README) |
@@ -20,6 +24,10 @@ Index for the IntentCall documentation site and repository.
 ## Published site (`docs/`)
 
 - [Overview](/)
+- [How it works](/start_here/how_it_works)
+- [Choose your path](/start_here/choose_your_path)
+- [Platform support](/start_here/platform_support)
+- [Roadmap](/start_here/roadmap)
 - [North Star](/NORTH_STAR)
 - [Design FAQ](/DESIGN_FAQ)
 - [DX FAQ](/DX_FAQ)
@@ -41,6 +49,11 @@ Index for the IntentCall documentation site and repository.
 ## Verify
 
 ```bash
+steward doctor --json
+steward actions list --json
+steward action inspect intentcall.validate --json
+steward probe --json --profile quick
+steward benchmark --scenario intentcall.adapter-contract --json
 just test
 just docs-check    # if docs/ or docs.json changed
 ```

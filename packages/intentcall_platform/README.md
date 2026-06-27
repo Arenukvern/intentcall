@@ -1,4 +1,4 @@
-> ⚠️ **Pre-release (0.2.x train)** — Highly experimental. APIs may change without notice. Not for production. [Details](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md).
+> ⚠️ **Pre-release train** — Highly experimental. APIs may change without notice. Not for production. [Details](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md).
 
 
 # intentcall_platform
@@ -13,8 +13,9 @@ hosted Dart execution is experimental and not a stable support claim.
 
 For iOS and macOS, `PlatformSync` also maintains the generated
 `Runner/Generated/IntentCallGenerated.swift` file in the main `Runner` target's
-Sources build phase so App Intents can be compiled and discovered by Apple
-system surfaces.
+Sources build phase. That is an artifact/project-sync claim: successful Xcode
+builds, installation, Apple system discovery, and live invocation need proof in
+the consuming app.
 
 ## Invocation policy
 

@@ -22,6 +22,7 @@ void main(List<String> arguments) async {
     ..addCommand('doctor')
     ..addCommand('validate')
     ..addCommand('check-path-deps')
+    ..addCommand('check-doc-versions')
     ..addCommand(
       'publish-preflight',
       ArgParser()..addFlag(
@@ -65,8 +66,7 @@ void main(List<String> arguments) async {
       ArgParser()
         ..addOption(
           'tag',
-          help:
-              'Release tag in the form <package>-v<version>, for example intentcall_core-v0.2.1.',
+          help: 'Release tag in the form <package>-v<version>.',
         )
         ..addFlag(
           'execute',
@@ -109,6 +109,14 @@ void main(List<String> arguments) async {
       final code = await runCheckPathDeps(repoRoot);
       exit(code);
 
+    case 'check-doc-versions':
+      final version = await readSynchronizedPackageVersion(repoRoot);
+      final code = await runDocVersionReferenceCheck(
+        repoRoot,
+        version: version,
+      );
+      exit(code);
+
     case 'publish-preflight':
       final cmdResults = results.command!;
       final firstPublish = cmdResults['first-publish'] as bool? ?? false;
@@ -121,7 +129,10 @@ void main(List<String> arguments) async {
     case 'print-hosted-deps':
       final cmdResults = results.command!;
       final envVersion = Platform.environment['INTENTCALL_VERSION'];
-      final version = cmdResults['version'] as String? ?? envVersion ?? '0.2.1';
+      final version =
+          cmdResults['version'] as String? ??
+          envVersion ??
+          await readSynchronizedPackageVersion(repoRoot);
       runPrintHostedDeps(version);
       exit(0);
 
@@ -184,6 +195,9 @@ void printUsage(ArgParser parser) {
   );
   print(
     '  check-path-deps       Scan workspace for invalid path dependencies.',
+  );
+  print(
+    '  check-doc-versions    Scan docs and skills for hardcoded package train versions.',
   );
   print(
     '  publish-preflight     Check release cleanliness and pub.dev credentials.',
@@ -326,7 +340,16 @@ Future<int> runValidate(Directory repoRoot) async {
     return dependencyFloorCode;
   }
 
-  // 4. Run plan hygiene check
+  // 4. Check public docs and skills do not hardcode the package train
+  final docVersionCode = await runDocVersionReferenceCheck(
+    repoRoot,
+    version: commonVersion!,
+  );
+  if (docVersionCode != 0) {
+    return docVersionCode;
+  }
+
+  // 5. Run plan hygiene check
   print('\nChecking plan hygiene (active plan files)...');
   final activePlans = <String>[];
   final taskFile = File(p.join(repoRoot.path, 'task.md'));
@@ -361,6 +384,150 @@ Future<int> runValidate(Directory repoRoot) async {
 
   print('OK: No active plan files found.');
   return 0;
+}
+
+Future<String> readSynchronizedPackageVersion(Directory repoRoot) async {
+  String? commonVersion;
+  for (final pkg in publishOrder) {
+    final pubspecFile = File(
+      p.join(repoRoot.path, 'packages', pkg, 'pubspec.yaml'),
+    );
+    if (!pubspecFile.existsSync()) {
+      throw StateError('pubspec.yaml not found for package: $pkg');
+    }
+    final content = await pubspecFile.readAsString();
+    final versionMatch = RegExp(
+      r'^version:\s*([^\s]+)',
+      multiLine: true,
+    ).firstMatch(content);
+    if (versionMatch == null) {
+      throw StateError('Could not find version in pubspec.yaml for $pkg');
+    }
+    final version = versionMatch.group(1)!;
+    commonVersion ??= version;
+    if (commonVersion != version) {
+      throw StateError(
+        'Version mismatch for package $pkg ($version). Expected $commonVersion.',
+      );
+    }
+  }
+  return commonVersion!;
+}
+
+Future<int> runDocVersionReferenceCheck(
+  Directory repoRoot, {
+  required String version,
+}) async {
+  print('\nChecking docs for hardcoded IntentCall train versions...');
+  final trainVersion = majorMinorTrain(version);
+  final mismatches = <String>[];
+  for (final relativePath in docVersionCheckPaths(repoRoot)) {
+    final file = File(p.join(repoRoot.path, relativePath));
+    if (!file.existsSync()) {
+      continue;
+    }
+    final content = await file.readAsString();
+    final findings = hardcodedDocVersionFindings(
+      content,
+      version: version,
+      trainVersion: trainVersion,
+    );
+    for (final finding in findings) {
+      mismatches.add('$relativePath: $finding');
+    }
+  }
+
+  if (mismatches.isNotEmpty) {
+    stderr.writeln(
+      'FAIL: Docs or skills hardcode IntentCall package versions.',
+    );
+    stderr.writeln(
+      'Use version-neutral wording, `dart pub add`, or `just print-hosted-deps`.',
+    );
+    for (final mismatch in mismatches) {
+      stderr.writeln('  - $mismatch');
+    }
+    return 1;
+  }
+  print('OK: docs avoid hardcoded IntentCall train versions.');
+  return 0;
+}
+
+String majorMinorTrain(String version) {
+  final parts = version.split('.');
+  if (parts.length < 2) {
+    return version;
+  }
+  return '${parts[0]}.${parts[1]}.x';
+}
+
+List<String> docVersionCheckPaths(Directory repoRoot) {
+  final paths = <String>[
+    'README.md',
+    'PRE_RELEASE.md',
+    'AGENTS.md',
+    p.join('docs', 'DESIGN_FAQ.mdx'),
+    p.join('docs', 'DX_FAQ.mdx'),
+    p.join('docs', 'NORTH_STAR.mdx'),
+    p.join('docs', 'index.mdx'),
+    p.join('docs', 'start_here', 'docs_map.mdx'),
+    p.join('docs', 'start_here', 'how_it_works.mdx'),
+    p.join('docs', 'start_here', 'choose_your_path.mdx'),
+    p.join('docs', 'start_here', 'platform_support.mdx'),
+    p.join('docs', 'start_here', 'roadmap.mdx'),
+  ];
+
+  final packagesDir = Directory(p.join(repoRoot.path, 'packages'));
+  if (packagesDir.existsSync()) {
+    for (final entity in packagesDir.listSync()) {
+      if (entity is Directory) {
+        paths.add(p.join('packages', p.basename(entity.path), 'README.md'));
+      }
+    }
+  }
+
+  final skillsDir = Directory(p.join(repoRoot.path, 'skills'));
+  if (skillsDir.existsSync()) {
+    for (final entity in skillsDir.listSync()) {
+      if (entity is Directory) {
+        paths.add(p.join('skills', p.basename(entity.path), 'SKILL.md'));
+      }
+    }
+  }
+
+  paths.sort();
+  return paths;
+}
+
+List<String> hardcodedDocVersionFindings(
+  String content, {
+  required String version,
+  required String trainVersion,
+}) {
+  final findings = <String>[];
+  final checks = <String, RegExp>{
+    'current exact package version `$version`': RegExp(
+      '\\b${RegExp.escape(version)}\\b',
+    ),
+    'current train version `$trainVersion`': RegExp(
+      '\\b${RegExp.escape(trainVersion)}\\b',
+    ),
+    'hosted dependency floor `^$version`': RegExp(
+      '\\^${RegExp.escape(version)}\\b',
+    ),
+    'IntentCall pre-1.0 train literal': RegExp(r'\b0\.\d+\.x\b'),
+    'IntentCall hosted dependency literal': RegExp(r'\^0\.\d+\.\d+\b'),
+    'IntentCall release tag example with literal version': RegExp(
+      r'intentcall_[a-z_]+-v0\.\d+\.\d+\b',
+    ),
+  };
+
+  for (final entry in checks.entries) {
+    if (entry.value.hasMatch(content)) {
+      findings.add(entry.key);
+    }
+  }
+  return findings;
 }
 
 Future<int> runInternalDependencyFloorCheck(

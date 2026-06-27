@@ -94,6 +94,48 @@ dev_dependencies:
         'intentcall_mcp depends on intentcall_testing ^0.2.0, expected ^0.2.1',
       ]);
     });
+
+    test('derives major/minor train from package version', () {
+      expect(intentcall_cli.majorMinorTrain('0.3.0'), '0.3.x');
+      expect(intentcall_cli.majorMinorTrain('1.2.3'), '1.2.x');
+    });
+
+    test('detects hardcoded docs package versions', () {
+      final findings = intentcall_cli.hardcodedDocVersionFindings(
+        '''
+Pre-release `0.3.x` train.
+dependencies:
+  intentcall_core: ^0.3.0
+Release tag: intentcall_core-v0.3.0
+''',
+        version: '0.3.0',
+        trainVersion: '0.3.x',
+      );
+
+      expect(findings, contains('current exact package version `0.3.0`'));
+      expect(findings, contains('current train version `0.3.x`'));
+      expect(findings, contains('hosted dependency floor `^0.3.0`'));
+      expect(findings, contains('IntentCall pre-1.0 train literal'));
+      expect(findings, contains('IntentCall hosted dependency literal'));
+      expect(
+        findings,
+        contains('IntentCall release tag example with literal version'),
+      );
+    });
+
+    test('allows version-neutral docs guidance', () {
+      final findings = intentcall_cli.hardcodedDocVersionFindings(
+        '''
+Pre-release train.
+Run dart pub add intentcall_core intentcall_schema.
+Use intentcall_core-v<version> for release tag examples.
+''',
+        version: '0.3.0',
+        trainVersion: '0.3.x',
+      );
+
+      expect(findings, isEmpty);
+    });
   });
 
   group('runReleaseGitCleanCheck', () {

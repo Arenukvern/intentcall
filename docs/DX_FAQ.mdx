@@ -35,6 +35,27 @@ just test
 just analyze
 ```
 
+**Q: What should a coding agent or operator run first?**
+
+Start from the declared Steward contract before choosing ad hoc commands:
+
+```bash
+steward doctor --json
+steward actions list --json
+steward action inspect intentcall.validate --json
+steward probe --json --profile quick
+```
+
+For adapter, platform bridge, or registry contract work, also run:
+
+```bash
+steward benchmark --scenario intentcall.adapter-contract --json
+```
+
+The quick probe validates package synchronization, internal dependency floors,
+path dependency hygiene, active-plan hygiene, and the adapter/platform contract
+lane selected by `steward.yaml`.
+
 **Q: How do I run only the tests for one package?**
 
 ```bash
@@ -60,15 +81,15 @@ just publish-dry-run
 Release Please opens a release PR from `release-please-config.json` and
 `.release-please-manifest.json`. The packages are linked as one synchronized
 `intentcall_*` train, so merging the release PR creates component tags such as
-`intentcall_core-v0.2.1`. Each tag triggers `.github/workflows/pub_publish.yml`,
+`intentcall_core-v<version>`. Each tag triggers `.github/workflows/pub_publish.yml`,
 which publishes the package named by the tag through pub.dev automated
 publishing.
 
 **Q: How do I dry-run the package selected by a release tag?**
 
 ```bash
-just publish-tag-dry-run intentcall_session-v0.2.1
-# equivalent to: dart run tool/intentcall/bin/intentcall.dart publish-tag --tag intentcall_session-v0.2.1 --skip-existing
+just publish-tag-dry-run intentcall_session-v<version>
+# equivalent to: dart run tool/intentcall/bin/intentcall.dart publish-tag --tag intentcall_session-v<version> --skip-existing
 ```
 
 Pub.dev automated publishing must be enabled for every package with tag pattern
@@ -83,6 +104,16 @@ tags without triggering the downstream publish workflow.
 **Q: How do I add a dependency to a package?**
 
 Edit the target package's `pubspec.yaml`, then run `dart pub get` from the workspace root. Workspace resolution propagates automatically.
+
+**Q: How do I print hosted dependency blocks without hardcoding versions?**
+
+```bash
+just print-hosted-deps
+```
+
+The command derives the synchronized package train from package `pubspec.yaml`
+files. Use it for migration notes or local override cleanup instead of copying
+literal IntentCall package versions into durable docs.
 
 **Q: How do I add a path dependency on a sibling package within this monorepo?**
 
@@ -114,7 +145,21 @@ The workspace resolver handles this; no extra steps needed.
 
 **Q: What is the minimal interface a new adapter must implement?**
 
-An adapter imports `intentcall_core`, reads entries from `AgentRegistry`, and bridges them to the target transport. Look at `intentcall_mcp` as the reference implementation — it is the simplest production adapter.
+An adapter imports `intentcall_core`, reads entries from `AgentRegistry`, and bridges them to the target transport. Look at `intentcall_mcp` as the contract-tested reference adapter.
+
+**Q: What is the adapter lifecycle checklist?**
+
+1. Attach to an `AgentRegistry`.
+2. Publish every current `registry.listEntries()` entry by `AgentRegistryEntry.key`.
+3. Subscribe to `registry.events` when the target transport supports hot-sync.
+4. On registration events, publish the stored registry key and descriptor.
+5. On unregistration events, remove the target transport surface.
+6. On invocation, translate target arguments and call `registry.invoke(entry.key, arguments)`.
+7. Detach by cancelling subscriptions and removing any transport resources the adapter owns.
+8. Add or extend a `verifyNativeAdapterContract(...)` test.
+
+Run `steward benchmark --scenario intentcall.adapter-contract --json` before
+claiming the adapter satisfies the shared contract.
 
 **Q: How does an adapter discover registered intents?**
 
@@ -244,6 +289,35 @@ await snapshots.saveSnapshot(
 
 final diff = await snapshots.diffSnapshots(fromId: 'before', toId: 'after');
 ```
+
+---
+
+## 🧰 Using IntentCall without Flutter MCP Toolkit
+
+**Q: Can I use IntentCall in a CLI, server, or non-Flutter host?**
+
+Yes. Use `intentcall_core` + `intentcall_schema` for a pure Dart registry and
+wire contract. Add `intentcall_mcp`, `intentcall_webmcp`, `intentcall_session`,
+or platform packages only when you need those projection or lifecycle surfaces.
+Keep host-specific discovery, process management, permissions, and UI policy in
+your product.
+
+**Q: What is the smallest non-Flutter path?**
+
+```dart
+final registry = InMemoryAgentRegistry();
+registry.register(myEntry.toRegistration());
+final result = await registry.invoke('namespace.name', arguments);
+```
+
+Custom adapters should stay thin: publish registry metadata, translate incoming
+calls, then route execution back through `AgentRegistry.invoke(...)`.
+
+**Q: When should I still choose mcp_flutter?**
+
+Choose `mcp_flutter` / `mcp_toolkit` when you are building a Flutter app and
+want the product harness: CLI workflows, runtime discovery, Flutter VM
+integration, app-side bootstrap, screenshots, or inspector-oriented tooling.
 
 ---
 

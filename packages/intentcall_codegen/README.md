@@ -1,4 +1,4 @@
-> ⚠️ **Pre-release (0.2.x train)** — Highly experimental. APIs may change without notice. Not for production. [Details](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md).
+> ⚠️ **Pre-release train** — Highly experimental. APIs may change without notice. Not for production. [Details](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md).
 
 
 # intentcall_codegen
@@ -9,16 +9,11 @@ Hand-written `AgentCallEntry` remains first-class; codegen is opt-in for stable 
 
 ## Pilot usage
 
-1. Add dependency:
+1. Add dependencies from the current hosted train:
 
-```yaml
-dependencies:
-  intentcall_codegen: ^0.2.1
-  intentcall_core: ^0.2.1
-  intentcall_schema: ^0.2.1
-
-dev_dependencies:
-  build_runner: ^2.4.15
+```bash
+dart pub add intentcall_core intentcall_schema intentcall_codegen
+dart pub add --dev build_runner
 ```
 
 2. Annotate a top-level function:

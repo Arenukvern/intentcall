@@ -6,13 +6,25 @@ IntentCall is a **transport-agnostic agent intent platform** for Dart/Flutter. I
 
 The north star is **define intent truth once, then project it into the strongest available platform surface**. Dart remains the preferred home for application business logic. Platform projections should publish native metadata, collect supported parameters, wake or route into the app when needed, and dispatch an invocation envelope back to the Dart `AgentRegistry` unless a platform has separately proven native execution support.
 
-Today, the repository implements the registry/runtime foundation, MCP/WebMCP adapters, Dart-first invocation primitives, and platform artifact emitters for `web`, `android`, `ios`, `macos`, `linux`, and `windows`. Full registry-backed generation remains a target state: some platform artifacts, including `agent_manifest.json`, are currently checked in and refreshed by sync tooling rather than generated live from `AgentRegistry`.
+Today, the repository implements the registry/runtime foundation, contract-tested MCP/WebMCP adapters, Dart-first invocation primitives, and platform artifact emitters for `web`, `android`, `ios`, `macos`, `linux`, and `windows`. Artifact emitters and sync helpers are not the same as live OS/runtime proof. Full registry-backed generation remains a target state: some platform artifacts, including `agent_manifest.json`, are currently checked in and refreshed by sync tooling rather than generated live from `AgentRegistry`.
 
 IntentCall is also the canonical home for IntentCall philosophy, platform projection semantics, agentic experience (AX), developer experience (DX), and IntentPack direction. Consumer repositories such as `mcp_flutter` prove and document integration, but do not define IntentCall's architecture or platform contract.
 
 ---
 
 ## Platform support model
+
+```mermaid
+flowchart TB
+  registry["AgentRegistry truth"] --> native["Native semantic"]
+  registry --> assistant["Assistant / shortcut fulfillment"]
+  registry --> fallback["Protocol fallback"]
+  registry --> ecosystem["Ecosystem alignment"]
+  native --> nativeNow["Current: MCP, Dart-first WebMCP,\nApple dispatch wrappers"]
+  native --> nativeLater["Roadmap: Android AppFunctions,\nWindows App Actions / Agent Launchers"]
+  assistant --> assistantNow["Current: shortcuts and web/PWA artifacts"]
+  fallback --> fallbackNow["Current: intentcall://invoke,\nprotocol handler artifacts"]
+```
 
 | Tier | Meaning | Current / target surfaces |
 |---|---|---|
@@ -88,11 +100,15 @@ IntentCall is **pre-release platform infrastructure**, not a consumer product. T
 
 ## Pre-release status
 
-All packages are on the **pre-1.0 / current `0.2.x` train** — experimental. APIs may change without a major semver bump. See [PRE_RELEASE.md](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md).
+All packages are on the **pre-1.0 train** — experimental. APIs may change without a major semver bump. See [PRE_RELEASE.md](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md).
 
 ## Key docs
 
 - [AGENTS.md](https://github.com/Arenukvern/intentcall/blob/main/AGENTS.md) — agent map and navigation pointers
+- [How it works](/start_here/how_it_works) — registry, adapters, invocation flow, and neighboring systems
+- [Choose your path](/start_here/choose_your_path) — package choices by task
+- [Platform support](/start_here/platform_support) — evidence levels, trust model, and roadmap non-claims
+- [Roadmap](/start_here/roadmap) — current shipped model and direction
 - [DESIGN_FAQ.mdx](/DESIGN_FAQ) — why IntentCall is built this way
 - [DX_FAQ.mdx](/DX_FAQ) — how to use and extend IntentCall
 - [docs/decisions/](/decisions/README) — architecture decision records
