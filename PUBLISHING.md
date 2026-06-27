@@ -1,7 +1,7 @@
 # Publishing intentcall to pub.dev
 
-Status: the current published train is `0.2.x`; all publishable
-`intentcall_*` packages should move together. Use this runbook for normal
+Status: all publishable `intentcall_*` packages should move together on the
+current pre-1.0 train. Use this runbook for normal
 tag-triggered releases; keep first-publish and manual execute commands only as
 historical or recovery guidance.
 

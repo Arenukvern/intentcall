@@ -25,5 +25,24 @@ String escapeXml(final String value) => value
 String escapeSwiftString(final String value) =>
     value.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
 
-String intentcallInvokeUri(final String qualifiedName) =>
-    'intentcall://invoke/$qualifiedName';
+String requireProtocolScheme(
+  final String? protocolScheme, {
+  required final String artifact,
+}) {
+  final scheme = protocolScheme?.trim() ?? '';
+  if (scheme.isEmpty) {
+    throw StateError(
+      '$artifact needs an app-owned protocolScheme. Set "protocolScheme" in '
+      'agent_manifest.json or pass one to the emitter/sync API.',
+    );
+  }
+  if (!RegExp(r'^[A-Za-z][A-Za-z0-9+.-]*$').hasMatch(scheme)) {
+    throw FormatException('Invalid protocol scheme "$scheme" for $artifact.');
+  }
+  return scheme;
+}
+
+String invokeUri({
+  required final String protocolScheme,
+  required final String qualifiedName,
+}) => '$protocolScheme://invoke/$qualifiedName';

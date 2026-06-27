@@ -136,6 +136,58 @@ Use intentcall_core-v<version> for release tag examples.
 
       expect(findings, isEmpty);
     });
+
+    test('reads CocoaPods podspec versions', () {
+      expect(
+        intentcall_cli.podspecVersion(
+          "Pod::Spec.new do |s|\n  s.version          = '0.3.0'\nend\n",
+        ),
+        '0.3.0',
+      );
+    });
+
+    test('validates Swift Package Manager plugin layout', () async {
+      final packageRoot = await Directory.systemTemp.createTemp(
+        'intentcall_platform_spm_',
+      );
+      addTearDown(() => packageRoot.deleteSync(recursive: true));
+
+      await _writeSwiftPackageFixture(
+        packageRoot,
+        packageDir: 'ios',
+        platform: '.iOS("13.0")',
+        importLine: 'import Flutter',
+      );
+      await _writeSwiftPackageFixture(
+        packageRoot,
+        packageDir: 'macos',
+        platform: '.macOS("10.14")',
+        importLine: 'import FlutterMacOS',
+      );
+
+      expect(
+        await intentcall_cli.swiftPackageManagerFindings(packageRoot),
+        isEmpty,
+      );
+
+      File(
+        p.join(
+          packageRoot.path,
+          'macos',
+          'intentcall_platform',
+          'Sources',
+          'intentcall_platform',
+          'IntentCallPlatformPlugin.swift',
+        ),
+      ).deleteSync();
+
+      expect(
+        await intentcall_cli.swiftPackageManagerFindings(packageRoot),
+        contains(
+          'macos/intentcall_platform/Sources/intentcall_platform/IntentCallPlatformPlugin.swift is missing',
+        ),
+      );
+    });
   });
 
   group('runReleaseGitCleanCheck', () {
@@ -233,4 +285,64 @@ Future<void> _runGit(Directory repo, List<String> args) async {
   if (result.exitCode != 0) {
     throw StateError('git ${args.join(' ')} failed: ${result.stderr}');
   }
+}
+
+Future<void> _writeSwiftPackageFixture(
+  Directory packageRoot, {
+  required String packageDir,
+  required String platform,
+  required String importLine,
+}) async {
+  final spmRoot = Directory(
+    p.join(packageRoot.path, packageDir, 'intentcall_platform'),
+  );
+  final sourceDir = Directory(
+    p.join(spmRoot.path, 'Sources', 'intentcall_platform'),
+  )..createSync(recursive: true);
+
+  File(p.join(spmRoot.path, 'Package.swift')).writeAsStringSync('''
+// swift-tools-version: 5.9
+import PackageDescription
+
+let package = Package(
+    name: "intentcall_platform",
+    platforms: [
+        $platform
+    ],
+    products: [
+        .library(name: "intentcall-platform", targets: ["intentcall_platform"])
+    ],
+    dependencies: [
+        .package(name: "FlutterFramework", path: "../FlutterFramework")
+    ],
+    targets: [
+        .target(
+            name: "intentcall_platform",
+            dependencies: [
+                .product(name: "FlutterFramework", package: "FlutterFramework")
+            ]
+        )
+    ]
+)
+''');
+
+  File(
+    p.join(sourceDir.path, 'IntentCallPlatformPlugin.swift'),
+  ).writeAsStringSync('''
+$importLine
+
+public class IntentCallPlatformPlugin: NSObject, FlutterPlugin {
+  public static func register(with registrar: FlutterPluginRegistrar) {}
+
+  public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+    let channel = "intentcall_platform/invocations"
+    result(channel)
+  }
+}
+''');
+
+  File(p.join(sourceDir.path, 'PrivacyInfo.xcprivacy')).writeAsStringSync('''
+<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0"><dict/></plist>
+''');
 }

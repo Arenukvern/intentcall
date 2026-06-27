@@ -1,18 +1,23 @@
 import '../agent_manifest.dart';
+import 'emitter_utils.dart';
 
-/// Emits a `.desktop` file registering `x-scheme-handler/intentcall`.
+/// Emits a `.desktop` file registering an app-owned protocol handler.
 final class LinuxDesktopEntryEmitter {
   const LinuxDesktopEntryEmitter({
-    this.protocolScheme = 'intentcall',
+    this.protocolScheme,
     this.appName = 'Flutter App',
     this.execPlaceholder = '@EXEC@',
   });
 
-  final String protocolScheme;
+  final String? protocolScheme;
   final String appName;
   final String execPlaceholder;
 
   String emit(final AgentManifest manifest) {
+    final scheme = requireProtocolScheme(
+      protocolScheme ?? manifest.protocolScheme,
+      artifact: 'Linux desktop entry',
+    );
     final toolsComment = manifest.tools
         .map((final t) => '# tool: ${t.qualifiedName}')
         .join('\n');
@@ -24,16 +29,17 @@ Type=Application
 Name=$appName (IntentCall)
 Comment=IntentCall deep-link handler
 Exec=$execPlaceholder %u
-MimeType=x-scheme-handler/$protocolScheme;
+MimeType=x-scheme-handler/$scheme;
 NoDisplay=true
 Terminal=false
 ''';
   }
 }
 
-/// Shell snippet to register the desktop entry with `xdg-mime` (run once).
-const kLinuxXdgRegisterSnippet = '''
+/// Shell snippet template to register the desktop entry with `xdg-mime`.
+String linuxXdgRegisterSnippet(final String protocolScheme) =>
+    '''
 # intentcall-platform: begin
-# xdg-mime default intentcall_protocol.desktop x-scheme-handler/intentcall
+xdg-mime default intentcall_protocol.desktop x-scheme-handler/$protocolScheme
 # intentcall-platform: end
 ''';

@@ -5,6 +5,7 @@ void main() {
   final manifest = AgentManifest.fromJson(<String, Object?>{
     'version': 1,
     'platform': 'android',
+    'protocolScheme': 'demoapp',
     'shortcuts': [
       <String, Object?>{
         'qualifiedName': 'app_cart_total',
@@ -25,16 +26,38 @@ void main() {
   });
 
   group('AndroidShortcutsXmlEmitter', () {
-    test('emits shortcut with intentcall deep link', () {
+    test('emits shortcut with app-owned deep link', () {
       final xml = const AndroidShortcutsXmlEmitter().emit(manifest);
       expect(xml, contains('android:shortcutId="app_cart_total"'));
-      expect(xml, contains('intentcall://invoke/app_cart_total'));
+      expect(xml, contains('demoapp://invoke/app_cart_total'));
       expect(xml, contains('Cart Total'));
     });
 
     test('matches golden xml', () {
       final xml = const AndroidShortcutsXmlEmitter().emit(manifest);
       expect(xml.trim(), _goldenAndroidShortcutsXml.trim());
+    });
+
+    test('requires an app-owned scheme', () {
+      final noScheme = AgentManifest.fromJson(<String, Object?>{
+        'version': 1,
+        'platform': 'android',
+        'tools': [
+          <String, Object?>{
+            'qualifiedName': 'app_ping',
+            'namespace': 'app',
+            'name': 'ping',
+            'description': 'Ping',
+            'kind': 'tool',
+            'inputSchema': <String, Object?>{'type': 'object'},
+          },
+        ],
+      });
+
+      expect(
+        () => const AndroidShortcutsXmlEmitter().emit(noScheme),
+        throwsStateError,
+      );
     });
   });
 
@@ -50,7 +73,39 @@ void main() {
       expect(swift, contains('IntentCallNativeBridge'));
       expect(swift, contains('intentcall.pending_invocations'));
       expect(swift, contains('objc_sync_enter(UserDefaults.standard)'));
-      expect(swift, contains('intentcall://invoke/'));
+      expect(swift, contains('static var openAppWhenRun: Bool = true'));
+      expect(swift, contains('IntentDialog("Queued invocation'));
+      expect(
+        swift,
+        contains('private static let fallbackScheme: String? = "demoapp"'),
+      );
+      expect(swift, contains('demoapp'));
+    });
+
+    test('can omit URL fallback when no app scheme is declared', () {
+      final swift = const AppleSwiftAppIntentsEmitter().emit(
+        AgentManifest.fromJson(<String, Object?>{
+          'version': 1,
+          'platform': 'apple',
+          'tools': [
+            <String, Object?>{
+              'qualifiedName': 'app_ping',
+              'namespace': 'app',
+              'name': 'ping',
+              'description': 'Ping',
+              'kind': 'tool',
+              'inputSchema': <String, Object?>{'type': 'object'},
+            },
+          ],
+        }),
+      );
+
+      expect(swift, contains('static var openAppWhenRun: Bool = true'));
+      expect(
+        swift,
+        contains('private static let fallbackScheme: String? = nil'),
+      );
+      expect(swift, isNot(contains('demoapp://invoke/')));
     });
 
     test('matches golden swift', () {
@@ -124,7 +179,7 @@ void main() {
   group('LinuxDesktopEntryEmitter', () {
     test('registers x-scheme-handler', () {
       final desktop = const LinuxDesktopEntryEmitter().emit(manifest);
-      expect(desktop, contains('x-scheme-handler/intentcall'));
+      expect(desktop, contains('x-scheme-handler/demoapp'));
       expect(desktop, contains('tool: app_cart_total'));
     });
 
@@ -137,14 +192,14 @@ void main() {
   group('WindowsProtocolEmitter', () {
     test('emits registry script', () {
       final reg = const WindowsProtocolEmitter().emit(manifest);
-      expect(reg, contains(r'[HKEY_CURRENT_USER\Software\Classes\intentcall]'));
+      expect(reg, contains(r'[HKEY_CURRENT_USER\Software\Classes\demoapp]'));
       expect(reg, contains('; tool: app_cart_total'));
     });
 
     test('emits msix fragment', () {
       final msix = const WindowsProtocolEmitter().emitMsixFragment(manifest);
       expect(msix, contains('windows.protocol'));
-      expect(msix, contains('Name="intentcall"'));
+      expect(msix, contains('Name="demoapp"'));
     });
   });
 }
@@ -160,7 +215,7 @@ const _goldenAndroidShortcutsXml = '''
       android:shortcutLongLabel="Return cart total">
     <intent
         android:action="android.intent.action.VIEW"
-        android:data="intentcall://invoke/app_cart_total" />
+        android:data="demoapp://invoke/app_cart_total" />
   </shortcut>
 </shortcuts>''';
 
@@ -177,6 +232,7 @@ import AppKit
 @available(iOS 16.0, macOS 13.0, *)
 struct AppCartTotalIntent: AppIntent {
   static var title: LocalizedStringResource = "Return cart total"
+  static var openAppWhenRun: Bool = true
 
   @Parameter(title: "Currency")
   var currency: String
@@ -188,8 +244,8 @@ struct AppCartTotalIntent: AppIntent {
     var arguments: [String: Any] = [:]
     arguments["currency"] = currency
     if let value = includeTax { arguments["includeTax"] = value }
-    await IntentCallNativeBridge.enqueue(qualifiedName: "app_cart_total", arguments: arguments)
-    return .result()
+    let invocationId = await IntentCallNativeBridge.enqueue(qualifiedName: "app_cart_total", arguments: arguments)
+    return .result(dialog: IntentDialog("Queued invocation \(invocationId) for app dispatch."))
   }
 }
 
@@ -202,10 +258,12 @@ struct IntentCallShortcutsProvider: AppShortcutsProvider {
 
 enum IntentCallNativeBridge {
   private static let pendingKey = "intentcall.pending_invocations"
+  private static let fallbackScheme: String? = "demoapp"
 
-  static func enqueue(qualifiedName: String, arguments: [String: Any]) async {
+  static func enqueue(qualifiedName: String, arguments: [String: Any]) async -> String {
+    let invocationId = UUID().uuidString
     let item: [String: Any] = [
-      "id": UUID().uuidString,
+      "id": invocationId,
       "qualifiedName": qualifiedName,
       "arguments": arguments,
       "source": "native.generated",
@@ -216,12 +274,13 @@ enum IntentCallNativeBridge {
     var pending = UserDefaults.standard.array(forKey: pendingKey) as? [[String: Any]] ?? []
     pending.append(item)
     UserDefaults.standard.set(pending, forKey: pendingKey)
-    guard let url = URL(string: "intentcall://invoke/\(qualifiedName)") else { return }
+    guard let scheme = fallbackScheme, let url = URL(string: "\(scheme)://invoke/\(qualifiedName)") else { return invocationId }
     #if canImport(UIKit)
     await UIApplication.shared.open(url)
     #elseif canImport(AppKit)
     NSWorkspace.shared.open(url)
     #endif
+    return invocationId
   }
 }''';
 
@@ -233,6 +292,6 @@ Type=Application
 Name=Flutter App (IntentCall)
 Comment=IntentCall deep-link handler
 Exec=@EXEC@ %u
-MimeType=x-scheme-handler/intentcall;
+MimeType=x-scheme-handler/demoapp;
 NoDisplay=true
 Terminal=false''';

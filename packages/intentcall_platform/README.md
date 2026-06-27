@@ -17,6 +17,12 @@ Sources build phase. That is an artifact/project-sync claim: successful Xcode
 builds, installation, Apple system discovery, and live invocation need proof in
 the consuming app.
 
+Swift Package Manager support is declared for the iOS/macOS Flutter plugin under
+`ios/intentcall_platform/Package.swift` and
+`macos/intentcall_platform/Package.swift`. CocoaPods remains supported through
+the existing podspecs so current Flutter projects can use either native package
+integration path.
+
 ## Invocation policy
 
 Native and WebMCP execution is deny-by-default in compiled profile/release
@@ -28,11 +34,22 @@ Production apps should pass an explicit `IntentCallAuthorizationPolicy` with
 source and qualified-name allowlists, and use `confirm` for mutating or sensitive
 tools.
 
+`IntentCallFlutterHost.bindRegistry(...)` is the high-level Flutter app entry
+point. It binds an `AgentRegistry`, optionally registers Dart-first WebMCP,
+drains pending native envelopes, and can listen for app-owned deep-link wakeups.
+Plain deep links are not trusted by default; they should normally wake the app so
+the pending native queue can be drained through the same authorization policy.
+
 ## Manifest workflow (I4)
 
 `agent_manifest.json` is read from the project root first, then from `web/`.
 The web copy is commonly checked in and refreshed by CLI — not generated live
 from `AgentRegistry` yet.
+
+Apps that generate protocol fallback artifacts must declare their own URI scheme
+with a top-level `"protocolScheme"` in `agent_manifest.json`, or pass an explicit
+scheme to the sync/emitter API. IntentCall does not reserve a global
+`intentcall://` scheme because each app owns its platform URL declarations.
 
 ```bash
 flutter-mcp-toolkit codegen sync \

@@ -20,10 +20,9 @@ final class AgentManifestEntry {
   factory AgentManifestEntry.fromJson(final Map<String, Object?> json) {
     final namespace = '${json['namespace'] ?? ''}'.trim();
     final name = '${json['name'] ?? ''}'.trim();
-    final qualifiedName =
-        '${json['qualifiedName'] ?? ''}'.trim().isNotEmpty
-            ? '${json['qualifiedName']}'.trim()
-            : qualifyName(namespace: namespace, name: name);
+    final qualifiedName = '${json['qualifiedName'] ?? ''}'.trim().isNotEmpty
+        ? '${json['qualifiedName']}'.trim()
+        : qualifyName(namespace: namespace, name: name);
     final kindName = '${json['kind'] ?? 'tool'}'.trim();
     return AgentManifestEntry(
       qualifiedName: qualifiedName,
@@ -70,6 +69,7 @@ final class AgentManifest {
     required this.version,
     required this.platform,
     required this.entries,
+    this.protocolScheme,
   });
 
   factory AgentManifest.fromJson(final Map<String, Object?> json) {
@@ -90,6 +90,7 @@ final class AgentManifest {
       version: version.toInt(),
       platform: '${json['platform'] ?? 'unknown'}',
       entries: entries,
+      protocolScheme: _readOptionalProtocolScheme(json['protocolScheme']),
     );
   }
 
@@ -99,12 +100,15 @@ final class AgentManifest {
   final int version;
   final String platform;
   final List<AgentManifestEntry> entries;
+  final String? protocolScheme;
 
   Iterable<AgentManifestEntry> get tools =>
       entries.where((final entry) => entry.kind == AgentIntentKind.tool);
 }
 
-Iterable<Map<String, Object?>> _entryRows(final Map<String, Object?> json) sync* {
+Iterable<Map<String, Object?>> _entryRows(
+  final Map<String, Object?> json,
+) sync* {
   for (final key in <String>['tools', 'shortcuts', 'intents']) {
     final value = json[key];
     if (value is! List) {
@@ -130,4 +134,12 @@ Map<String, Object?> _readInputSchema(final Object? value) {
     return value.cast<String, Object?>();
   }
   return const <String, Object?>{'type': 'object'};
+}
+
+String? _readOptionalProtocolScheme(final Object? value) {
+  final scheme = '${value ?? ''}'.trim();
+  if (scheme.isEmpty) {
+    return null;
+  }
+  return scheme;
 }

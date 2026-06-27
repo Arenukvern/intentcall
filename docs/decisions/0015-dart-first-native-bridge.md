@@ -39,9 +39,11 @@ IntentCall v1 platform projection is Dart-first:
   profile/release builds must provide explicit source/name allowlists or
   confirmation callbacks.
 - Generated Apple App Intents collect supported primitive parameters, enqueue
-  an invocation envelope, open or wake the Flutter app, and return dispatch
-  status. They do not claim background Dart execution or native semantic result
-  execution in this pass.
+  an invocation envelope, ask the system to open or wake the Flutter app, and
+  return dispatch status. App-owned URL fallback may be generated when a host app
+  declares its own scheme; no package-wide `intentcall://` scheme is assumed.
+  They do not claim background Dart execution or native semantic result execution
+  in this pass.
 
 ## Consequences
 
@@ -57,6 +59,8 @@ Tradeoffs:
 
 - Apple App Intents return dispatch status in v1, not the Dart handler result.
 - Apps must drain pending native invocations after launch or wake.
+- Protocol fallback artifacts require an app-owned scheme; package defaults must
+  not pretend every app can share one global URL scheme.
 - App-extension-hosted Dart remains an experiment until it has separate runtime
   proof and compatibility documentation.
 
