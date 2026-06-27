@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/Arenukvern/intentcall/compare/intentcall_android-v0.3.0...intentcall_android-v0.3.1) (2026-06-27)
+
+
+### Miscellaneous Chores
+
+* **intentcall_android:** Synchronize intentcall package train versions
+
 ## [0.3.0](https://github.com/Arenukvern/intentcall/compare/intentcall_android-v0.2.1...intentcall_android-v0.3.0) (2026-06-26)
 
 
