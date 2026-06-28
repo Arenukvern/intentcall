@@ -5,6 +5,9 @@ import 'package:intentcall_core/intentcall_core.dart';
 /// Supported [agent_manifest.json] schema version.
 const kAgentManifestSchemaVersion = 1;
 
+/// Manifest-local native dispatch behavior.
+enum AgentManifestDispatchMode { inlineRuntime, openApp, queueOnly }
+
 /// One tool/intent row from [agent_manifest.json].
 final class AgentManifestEntry {
   const AgentManifestEntry({
@@ -14,6 +17,8 @@ final class AgentManifestEntry {
     required this.description,
     required this.kind,
     required this.inputSchema,
+    this.dispatchMode = AgentManifestDispatchMode.openApp,
+    this.includeInShortcuts = false,
     this.resourceUri,
   });
 
@@ -23,6 +28,7 @@ final class AgentManifestEntry {
     final qualifiedName = '${json['qualifiedName'] ?? ''}'.trim().isNotEmpty
         ? '${json['qualifiedName']}'.trim()
         : qualifyName(namespace: namespace, name: name);
+    _validateQualifiedName(qualifiedName);
     final kindName = '${json['kind'] ?? 'tool'}'.trim();
     return AgentManifestEntry(
       qualifiedName: qualifiedName,
@@ -31,6 +37,8 @@ final class AgentManifestEntry {
       description: '${json['description'] ?? ''}'.trim(),
       kind: AgentIntentKind.values.byName(kindName),
       inputSchema: _readInputSchema(json['inputSchema']),
+      dispatchMode: _readDispatchMode(json['dispatchMode']),
+      includeInShortcuts: _readIncludeInShortcuts(json['includeInShortcuts']),
       resourceUri: json['resourceUri'] as String?,
     );
   }
@@ -41,6 +49,8 @@ final class AgentManifestEntry {
   final String description;
   final AgentIntentKind kind;
   final Map<String, Object?> inputSchema;
+  final AgentManifestDispatchMode dispatchMode;
+  final bool includeInShortcuts;
   final String? resourceUri;
 
   Map<String, Object?> toJson() => <String, Object?>{
@@ -49,6 +59,8 @@ final class AgentManifestEntry {
     'name': name,
     'description': description,
     'kind': kind.name,
+    'dispatchMode': dispatchMode.name,
+    'includeInShortcuts': includeInShortcuts,
     if (resourceUri != null) 'resourceUri': resourceUri,
     'inputSchema': inputSchema,
   };
@@ -134,6 +146,41 @@ Map<String, Object?> _readInputSchema(final Object? value) {
     return value.cast<String, Object?>();
   }
   return const <String, Object?>{'type': 'object'};
+}
+
+AgentManifestDispatchMode _readDispatchMode(final Object? value) {
+  final name = '${value ?? ''}'.trim();
+  if (name.isEmpty) {
+    return AgentManifestDispatchMode.openApp;
+  }
+  for (final mode in AgentManifestDispatchMode.values) {
+    if (mode.name == name) {
+      return mode;
+    }
+  }
+  throw FormatException(
+    'Invalid dispatchMode "$name"; expected one of '
+    '${AgentManifestDispatchMode.values.map((final mode) => mode.name).join(', ')}.',
+  );
+}
+
+bool _readIncludeInShortcuts(final Object? value) {
+  if (value == null) {
+    return false;
+  }
+  if (value is bool) {
+    return value;
+  }
+  throw const FormatException('includeInShortcuts must be a boolean.');
+}
+
+void _validateQualifiedName(final String qualifiedName) {
+  if (!RegExp(r'^[a-z][a-z0-9_]*_[a-z][a-z0-9_]*$').hasMatch(qualifiedName)) {
+    throw FormatException(
+      'Invalid qualifiedName "$qualifiedName"; expected lowercase '
+      'namespace_name identifier.',
+    );
+  }
 }
 
 String? _readOptionalProtocolScheme(final Object? value) {

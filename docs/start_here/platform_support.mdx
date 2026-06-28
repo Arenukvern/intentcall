@@ -27,6 +27,22 @@ flowchart TB
 | Linux `x-scheme-handler` | Desktop protocol handler artifacts for the app-owned scheme. | App route dispatches to Dart when wired by host. | Artifact-level support. | Fallback routes are untrusted by default. | No Linux OS-level native intent API claim. |
 | Native/WebMCP bridge | `IntentCallInvocationEnvelope` and authorization policy. | Dart registry through `IntentCallNativeBridge.bindRegistry(...)`. | Platform bridge tests. | Deny-by-default in compiled builds; `debugAllowAll()` is local dogfood only. | Host apps own product-specific permissions and UX. |
 
+## Dispatch Mode Claims
+
+`dispatchMode` describes how a generated platform surface hands work to a
+runtime. It does not replace support tiers.
+
+| Mode | Current support claim | Non-claim |
+|---|---|---|
+| `inlineRuntime` | Dart-first WebMCP can execute in the current page runtime when bound. | Apple native inline execution and app-extension-hosted Dart are not supported. |
+| `openApp` | Apple wrappers can enqueue an envelope and request app wake/open; shortcut and protocol artifacts can route into app-owned dispatch. | Artifact/project-sync proof is not live OS discovery or product runtime proof. |
+| `queueOnly` | Apple wrappers can enqueue without opening the app or fallback URL. | Diagnostic/fallback queueing is not promoted product proof or durable delivery. |
+
+Current native handoff storage is at-most-once dispatch: taking pending rows
+clears them before Dart execution reports success or failure. Stronger claim,
+ack, fail, retry, or exactly-once semantics require separate implementation and
+proof.
+
 ## Claim Rule
 
 Use “current” only for behavior covered by repo tests, generated artifacts, or documented sync helpers. Use “roadmap,” “target,” or “experiment” for Android AppFunctions, richer Android App Actions, Windows App Actions / Agent Launchers, AAIF alignment, app-extension-hosted Dart, native background Dart execution, and real OS assistant/launcher discovery.

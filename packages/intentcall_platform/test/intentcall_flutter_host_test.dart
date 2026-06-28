@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:intentcall_core/intentcall_core.dart';
 import 'package:intentcall_platform/intentcall_platform.dart';
 import 'package:intentcall_platform/src/flutter/intentcall_flutter_host.dart';
+import 'package:intentcall_platform/src/flutter/intentcall_host_events.dart';
 import 'package:intentcall_platform/src/flutter/intentcall_invoke_link_stub.dart';
 import 'package:intentcall_schema/intentcall_schema.dart';
 import 'package:test/test.dart';
@@ -61,6 +64,115 @@ void main() {
     expect(drained.single.code, 'invocation_denied');
     expect(deniedEnvelope?.id, 'native-1');
     expect(deniedResult?.code, 'invocation_denied');
+  });
+
+  test('IntentCallFlutterHost drains on injected resume wake', () async {
+    final wakeSignals = StreamController<IntentCallDrainTrigger>();
+    final eventKinds = <IntentCallHostEventKind>[];
+    var pendingReads = 0;
+    final host = IntentCallFlutterHost.bindRegistry(
+      registry: _registry(),
+      policy: const IntentCallAuthorizationPolicy(
+        allowedSources: <String>{IntentCallInvocationSource.nativeGenerated},
+        allowedQualifiedNames: <String>{'app_echo'},
+      ),
+      drainOnStart: false,
+      wakeSignals: wakeSignals.stream,
+      takePendingInvocations: () async {
+        pendingReads += 1;
+        return <IntentCallInvocationEnvelope>[
+          IntentCallInvocationEnvelope(
+            id: 'native-resume',
+            qualifiedName: 'app_echo',
+            arguments: const <String, Object?>{'text': 'resume'},
+            source: IntentCallInvocationSource.nativeGenerated,
+          ),
+        ];
+      },
+    );
+    host.events.listen((final event) => eventKinds.add(event.kind));
+    final finished = host.events.firstWhere(
+      (final event) => event.kind == IntentCallHostEventKind.drainFinished,
+    );
+
+    addTearDown(() async {
+      await wakeSignals.close();
+      await host.dispose();
+    });
+
+    final startResults = await host.start();
+    wakeSignals.add(IntentCallDrainTrigger.resume);
+    final finishedEvent = await finished;
+
+    expect(startResults, isEmpty);
+    expect(pendingReads, 1);
+    expect(finishedEvent.trigger, IntentCallDrainTrigger.resume);
+    expect(finishedEvent.results.single.data['text'], 'resume');
+    expect(eventKinds, <IntentCallHostEventKind>[
+      IntentCallHostEventKind.drainStarted,
+      IntentCallHostEventKind.envelope,
+      IntentCallHostEventKind.result,
+      IntentCallHostEventKind.drainFinished,
+    ]);
+  });
+
+  test('IntentCallFlutterHost coalesces overlapping drain requests', () async {
+    final firstRead = Completer<List<IntentCallInvocationEnvelope>>();
+    var pendingReads = 0;
+    var activeReads = 0;
+    var maxActiveReads = 0;
+    final host = IntentCallFlutterHost.bindRegistry(
+      registry: _registry(),
+      drainOnStart: false,
+      takePendingInvocations: () async {
+        pendingReads += 1;
+        activeReads += 1;
+        maxActiveReads = activeReads > maxActiveReads
+            ? activeReads
+            : maxActiveReads;
+        try {
+          if (pendingReads == 1) {
+            return await firstRead.future;
+          }
+          return const <IntentCallInvocationEnvelope>[];
+        } finally {
+          activeReads -= 1;
+        }
+      },
+    );
+
+    addTearDown(host.dispose);
+
+    final first = host.requestDrain(IntentCallDrainTrigger.manual);
+    final second = host.requestDrain(IntentCallDrainTrigger.resume);
+    firstRead.complete(const <IntentCallInvocationEnvelope>[]);
+    await first;
+    await second;
+
+    expect(pendingReads, 2);
+    expect(maxActiveReads, 1);
+  });
+
+  test('IntentCallFlutterHost dispose stops wake-triggered drains', () async {
+    final wakeSignals = StreamController<IntentCallDrainTrigger>();
+    var pendingReads = 0;
+    final host = IntentCallFlutterHost.bindRegistry(
+      registry: _registry(),
+      drainOnStart: false,
+      wakeSignals: wakeSignals.stream,
+      takePendingInvocations: () async {
+        pendingReads += 1;
+        return const <IntentCallInvocationEnvelope>[];
+      },
+    );
+
+    await host.start();
+    await host.dispose();
+    wakeSignals.add(IntentCallDrainTrigger.resume);
+    await pumpEventQueue();
+    await wakeSignals.close();
+
+    expect(pendingReads, 0);
   });
 
   test('deep-link listener requires an app-owned scheme', () {

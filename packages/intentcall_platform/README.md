@@ -36,9 +36,29 @@ tools.
 
 `IntentCallFlutterHost.bindRegistry(...)` is the high-level Flutter app entry
 point. It binds an `AgentRegistry`, optionally registers Dart-first WebMCP,
-drains pending native envelopes, and can listen for app-owned deep-link wakeups.
+drains pending native envelopes at startup, can drain again on foreground/resume,
+coalesces overlapping drains, and emits host events for dispatch observability.
 Plain deep links are not trusted by default; they should normally wake the app so
 the pending native queue can be drained through the same authorization policy.
+
+Current native handoff storage is at-most-once dispatch. The plugin takes and
+clears pending rows before Dart execution reports success or failure. Treat that
+as a bridge contract, not durable delivery, result transport, secure storage, or
+exactly-once execution.
+
+## Dispatch modes
+
+Each manifest entry can declare a manifest-local `"dispatchMode"`:
+
+| Mode | Meaning |
+|---|---|
+| `"inlineRuntime"` | The current exposed runtime completes the call without app wake. Apple rejects this until separate native runtime proof exists. |
+| `"openApp"` | Queue or route an envelope and open/wake the app for Dart dispatch. This is the default for existing manifests. |
+| `"queueOnly"` | Queue an envelope without opening the app or URL fallback. This is diagnostic/fallback dispatch, not product proof. |
+
+Apple App Intent wrappers are still generated broadly for tools, but
+`AppShortcutsProvider` is curated. Set `"includeInShortcuts": true` only for
+user-facing actions that should appear as shortcuts.
 
 ## Manifest workflow (I4)
 

@@ -56,5 +56,15 @@ artifacts:
     path: packages/intentcall_platform/test/agent_web_mcp_bootstrap_test.dart
     required: true
     durability: behavior
+  - id: platform_native_emitter_test
+    kind: dart
+    path: packages/intentcall_platform/test/native_emitters_test.dart
+    required: true
+    durability: behavior
+  - id: platform_flutter_host_test
+    kind: dart
+    path: packages/intentcall_platform/test/intentcall_flutter_host_test.dart
+    required: true
+    durability: behavior
 blocked_by: null
 owner: intentcall

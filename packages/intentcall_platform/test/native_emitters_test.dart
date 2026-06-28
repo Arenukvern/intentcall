@@ -13,6 +13,7 @@ void main() {
         'name': 'cart_total',
         'description': 'Return cart total',
         'kind': 'tool',
+        'includeInShortcuts': true,
         'inputSchema': <String, Object?>{
           'type': 'object',
           'required': <String>['currency'],
@@ -74,6 +75,12 @@ void main() {
       expect(swift, contains('intentcall.pending_invocations'));
       expect(swift, contains('objc_sync_enter(UserDefaults.standard)'));
       expect(swift, contains('static var openAppWhenRun: Bool = true'));
+      expect(
+        swift,
+        contains(
+          'IntentCallNativeBridge.enqueue(qualifiedName: "app_cart_total", arguments: arguments, openApp: true)',
+        ),
+      );
       expect(swift, contains('IntentDialog("Queued invocation'));
       expect(
         swift,
@@ -106,6 +113,126 @@ void main() {
         contains('private static let fallbackScheme: String? = nil'),
       );
       expect(swift, isNot(contains('demoapp://invoke/')));
+    });
+
+    test('queueOnly enqueues without requesting app open or URL dispatch', () {
+      final swift = const AppleSwiftAppIntentsEmitter().emit(
+        AgentManifest.fromJson(<String, Object?>{
+          'version': 1,
+          'platform': 'apple',
+          'protocolScheme': 'demoapp',
+          'tools': [
+            <String, Object?>{
+              'qualifiedName': 'app_ping',
+              'namespace': 'app',
+              'name': 'ping',
+              'description': 'Ping',
+              'kind': 'tool',
+              'dispatchMode': 'queueOnly',
+              'inputSchema': <String, Object?>{'type': 'object'},
+            },
+          ],
+        }),
+      );
+
+      expect(swift, contains('struct AppPingIntent: AppIntent'));
+      expect(swift, contains('static var openAppWhenRun: Bool = false'));
+      expect(
+        swift,
+        contains(
+          'IntentCallNativeBridge.enqueue(qualifiedName: "app_ping", arguments: arguments, openApp: false)',
+        ),
+      );
+      expect(
+        swift,
+        contains('private static let fallbackScheme: String? = nil'),
+      );
+      expect(swift, contains('guard openApp, let scheme = fallbackScheme'));
+    });
+
+    test('rejects inlineRuntime until Apple runtime proof exists', () {
+      final inline = AgentManifest.fromJson(<String, Object?>{
+        'version': 1,
+        'platform': 'apple',
+        'tools': [
+          <String, Object?>{
+            'qualifiedName': 'app_inline',
+            'namespace': 'app',
+            'name': 'inline',
+            'description': 'Inline',
+            'kind': 'tool',
+            'dispatchMode': 'inlineRuntime',
+            'inputSchema': <String, Object?>{'type': 'object'},
+          },
+        ],
+      });
+
+      expect(
+        () => const AppleSwiftAppIntentsEmitter().emit(inline),
+        throwsA(
+          isA<UnsupportedError>().having(
+            (final error) => error.message,
+            'message',
+            contains('Apple inlineRuntime dispatch is not supported yet'),
+          ),
+        ),
+      );
+    });
+
+    test('generates wrappers broadly but curates AppShortcutsProvider', () {
+      final swift = const AppleSwiftAppIntentsEmitter().emit(
+        AgentManifest.fromJson(<String, Object?>{
+          'version': 1,
+          'platform': 'apple',
+          'tools': [
+            <String, Object?>{
+              'qualifiedName': 'app_publish',
+              'namespace': 'app',
+              'name': 'publish',
+              'description': 'Publish',
+              'kind': 'tool',
+              'includeInShortcuts': true,
+              'inputSchema': <String, Object?>{'type': 'object'},
+            },
+            <String, Object?>{
+              'qualifiedName': 'app_private',
+              'namespace': 'app',
+              'name': 'private',
+              'description': 'Private',
+              'kind': 'tool',
+              'inputSchema': <String, Object?>{'type': 'object'},
+            },
+          ],
+        }),
+      );
+
+      expect(swift, contains('struct AppPublishIntent: AppIntent'));
+      expect(swift, contains('struct AppPrivateIntent: AppIntent'));
+      expect(
+        swift,
+        contains('AppShortcut(intent: AppPublishIntent(), phrases:'),
+      );
+      expect(swift, isNot(contains('AppShortcut(intent: AppPrivateIntent()')));
+    });
+
+    test('rejects unsafe explicit qualifiedName values', () {
+      expect(
+        () => AgentManifest.fromJson(<String, Object?>{
+          'version': 1,
+          'platform': 'apple',
+          'tools': [
+            <String, Object?>{
+              'qualifiedName': r'app_bad/\(name)',
+              'namespace': 'app',
+              'name': 'bad',
+              'description': 'Bad',
+              'kind': 'tool',
+              'inputSchema': <String, Object?>{'type': 'object'},
+            },
+          ],
+        }),
+        throwsFormatException,
+      );
     });
 
     test('matches golden swift', () {
@@ -244,7 +371,7 @@ struct AppCartTotalIntent: AppIntent {
     var arguments: [String: Any] = [:]
     arguments["currency"] = currency
     if let value = includeTax { arguments["includeTax"] = value }
-    let invocationId = await IntentCallNativeBridge.enqueue(qualifiedName: "app_cart_total", arguments: arguments)
+    let invocationId = await IntentCallNativeBridge.enqueue(qualifiedName: "app_cart_total", arguments: arguments, openApp: true)
     return .result(dialog: IntentDialog("Queued invocation \(invocationId) for app dispatch."))
   }
 }
@@ -256,11 +383,22 @@ struct IntentCallShortcutsProvider: AppShortcutsProvider {
   }
 }
 
-enum IntentCallNativeBridge {
+enum IntentCallNativeHandoffStore {
   private static let pendingKey = "intentcall.pending_invocations"
+
+  static func append(_ item: [String: Any]) {
+    objc_sync_enter(UserDefaults.standard)
+    defer { objc_sync_exit(UserDefaults.standard) }
+    var pending = UserDefaults.standard.array(forKey: pendingKey) as? [[String: Any]] ?? []
+    pending.append(item)
+    UserDefaults.standard.set(pending, forKey: pendingKey)
+  }
+}
+
+enum IntentCallNativeBridge {
   private static let fallbackScheme: String? = "demoapp"
 
-  static func enqueue(qualifiedName: String, arguments: [String: Any]) async -> String {
+  static func enqueue(qualifiedName: String, arguments: [String: Any], openApp: Bool) async -> String {
     let invocationId = UUID().uuidString
     let item: [String: Any] = [
       "id": invocationId,
@@ -269,12 +407,11 @@ enum IntentCallNativeBridge {
       "source": "native.generated",
       "createdAt": ISO8601DateFormatter().string(from: Date())
     ]
-    objc_sync_enter(UserDefaults.standard)
-    defer { objc_sync_exit(UserDefaults.standard) }
-    var pending = UserDefaults.standard.array(forKey: pendingKey) as? [[String: Any]] ?? []
-    pending.append(item)
-    UserDefaults.standard.set(pending, forKey: pendingKey)
-    guard let scheme = fallbackScheme, let url = URL(string: "\(scheme)://invoke/\(qualifiedName)") else { return invocationId }
+    IntentCallNativeHandoffStore.append(item)
+    var allowedPath = CharacterSet.alphanumerics
+    allowedPath.insert(charactersIn: "_-.~")
+    let encodedName = qualifiedName.addingPercentEncoding(withAllowedCharacters: allowedPath) ?? qualifiedName
+    guard openApp, let scheme = fallbackScheme, let url = URL(string: "\(scheme)://invoke/\(encodedName)") else { return invocationId }
     #if canImport(UIKit)
     await UIApplication.shared.open(url)
     #elseif canImport(AppKit)
