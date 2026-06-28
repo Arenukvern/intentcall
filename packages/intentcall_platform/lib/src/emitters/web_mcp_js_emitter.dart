@@ -24,6 +24,12 @@ final class WebMcpJsEmitter {
 
   String emit(final AgentManifest manifest) {
     final tools = manifest.tools
+        .where(
+          (final tool) => tool.surfaces.includes(
+            AgentManifestSurface.webMcp,
+            defaultValue: true,
+          ),
+        )
         .map(
           (final tool) => <String, Object?>{
             'name': tool.qualifiedName,

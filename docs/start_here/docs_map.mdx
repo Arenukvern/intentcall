@@ -2,7 +2,7 @@
 
 Index for the IntentCall documentation site and repository.
 
-**IntentCall** lets Dart/Flutter apps define agent-callable actions once in `AgentRegistry`, then project them to MCP, WebMCP, shortcuts, and deep links. App authors start with [mcp_flutter](https://github.com/Arenukvern/mcp_flutter); this repo is for registry, adapters, and platform projection.
+**IntentCall** lets Dart/Flutter apps define agent-callable actions once in `AgentRegistry`, then project them to MCP, WebMCP, shortcuts, and deep links. This repo owns the reusable registry, adapter, session, and platform-projection contracts; [mcp_flutter](https://github.com/Arenukvern/mcp_flutter) is an early consumer and the packaged Flutter product harness.
 
 ## Quick router
 
@@ -15,7 +15,6 @@ Index for the IntentCall documentation site and repository.
 | Charter and scope | [North Star](/NORTH_STAR) |
 | Commands, test, release | [DX FAQ](/DX_FAQ) |
 | Architectural why | [Design FAQ](/DESIGN_FAQ) · [Decisions](/decisions/README) |
-| Stewardship rule for temporary plans | [ADR 0013](/decisions/0013-delete-implemented-plans-after-durable-extraction) |
 | Agent entry map | [AGENTS.md](https://github.com/Arenukvern/intentcall/blob/main/AGENTS.md) |
 | Contribute / PR checklist | [CONTRIBUTING.md](https://github.com/Arenukvern/intentcall/blob/main/CONTRIBUTING.md) |
 | Pre-release and publishing | [PRE_RELEASE.md](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md) · [PUBLISHING.md](https://github.com/Arenukvern/intentcall/blob/main/PUBLISHING.md) |
@@ -39,7 +38,7 @@ Index for the IntentCall documentation site and repository.
 | File | Role |
 |------|------|
 | `README.md` | Install, packages, ecosystem |
-| `AGENTS.md` | Agent map (~60 lines) |
+| `AGENTS.md` | Agent map and repo navigation |
 | `DESIGN_FAQ.md` | Why (compressed) |
 | `DX_FAQ.md` | How — `just` tasks, releases |
 | `CONTRIBUTING.md` | PR checklist |
@@ -52,6 +51,8 @@ Index for the IntentCall documentation site and repository.
 steward doctor --json
 steward actions list --json
 steward action inspect intentcall.validate --json
+steward action inspect intentcall.adapter-contract-test --json
+steward action inspect intentcall.docs-check --json
 steward probe --json --profile quick
 steward benchmark --scenario intentcall.adapter-contract --json
 just test

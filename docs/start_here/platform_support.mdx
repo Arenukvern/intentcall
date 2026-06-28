@@ -12,7 +12,7 @@ flowchart TB
   nativeRoadmap["Roadmap: Android AppFunctions,\nWindows App Actions / Agent Launchers"] -. roadmap .-> native
   assistantCurrent["Current: Apple shortcuts artifacts,\nAndroid shortcuts/deep links, web/PWA artifacts"] -. current .-> assistant
   assistantRoadmap["Roadmap: richer Android App Actions capability generation"] -. roadmap .-> assistant
-  fallbackCurrent["Current: web protocol handlers,\nWindows protocol activation artifacts,\nLinux x-scheme-handler"] -. current .-> fallback
+  fallbackCurrent["Current fallback artifacts: web protocol handlers,\nWindows protocol activation,\nLinux x-scheme-handler"] -. current .-> fallback
 ```
 
 ## Current Matrix
@@ -34,9 +34,21 @@ runtime. It does not replace support tiers.
 
 | Mode | Current support claim | Non-claim |
 |---|---|---|
-| `inlineRuntime` | Dart-first WebMCP can execute in the current page runtime when bound. | Apple native inline execution and app-extension-hosted Dart are not supported. |
+| `inlineRuntime` | Current where IntentCall has an exposed runtime already bound and authorized, presently Dart-first WebMCP. | Apple native inline execution, app-extension-hosted Dart, and background Flutter/Dart runtime startup are not supported. |
 | `openApp` | Apple wrappers can enqueue an envelope and request app wake/open; shortcut and protocol artifacts can route into app-owned dispatch. | Artifact/project-sync proof is not live OS discovery or product runtime proof. |
 | `queueOnly` | Apple wrappers can enqueue without opening the app or fallback URL. | Diagnostic/fallback queueing is not promoted product proof or durable delivery. |
+
+## Projection Surfaces
+
+Manifest entry `surfaces` control generated projection artifacts separately from
+`dispatchMode`. Apple App Shortcuts are opt-in; Android shortcuts, web manifest
+shortcuts, web protocol handlers, WebMCP bootstrap, Windows protocol activation,
+Windows MSIX protocol fragments, and Linux `x-scheme-handler` artifacts preserve
+their existing broad defaults and can be opted out per entry.
+
+Windows and Linux surfaces are protocol fallback artifacts. They can advertise or
+comment which tools the generated artifact was produced for, but runtime routing
+still arrives as app-owned URI input and must be validated by the host.
 
 Current native handoff storage is at-most-once dispatch: taking pending rows
 clears them before Dart execution reports success or failure. Stronger claim,

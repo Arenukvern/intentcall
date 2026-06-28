@@ -6,7 +6,7 @@
 
 *Register intents. Call them everywhere.*
 
-Transport-agnostic agent intent platform for Dart/Flutter: define intent truth once in `AgentRegistry`, then project it into the strongest available surface: MCP/WebMCP, native action metadata where supported, assistant/shortcut fulfillment, and canonical deep-link fallback where native support is incomplete. Extracted from [mcp_flutter](https://github.com/Arenukvern/mcp_flutter).
+Transport-agnostic agent intent platform for Dart/Flutter: define intent truth once in `AgentRegistry`, then project it into the strongest available surface: MCP/WebMCP, native action metadata where supported, assistant/shortcut fulfillment, and canonical deep-link fallback where native support is incomplete.
 
 ![Watercolor comic explainer showing IntentCall as four steps: write one intent, register it once, project it to Web agents desktop OS shortcuts and deep links, then people and agents use it.](docs/assets/intentcall-watercolor-explainer-v2.png)
 
@@ -24,7 +24,7 @@ GitHub: [Arenukvern/intentcall](https://github.com/Arenukvern/intentcall)
 | Repo | Role |
 |---|---|
 | **IntentCall** (this repo) | Platform layer — registry + adapters |
-| **[mcp_flutter](https://github.com/Arenukvern/mcp_flutter)** | Product harness — `mcp_toolkit`, `flutter-mcp-toolkit` CLI |
+| **[mcp_flutter](https://github.com/Arenukvern/mcp_flutter)** | Early consumer and product harness — `mcp_toolkit`, `flutter-mcp-toolkit` CLI |
 | **[Skill Steward](https://github.com/Arenukvern/skill_steward)** | Meta-layer — agent skills governance |
 
 ## Packages
@@ -71,6 +71,7 @@ Agent/operator first run:
 steward doctor --json
 steward actions list --json
 steward action inspect intentcall.validate --json
+steward action inspect intentcall.adapter-contract-test --json
 steward probe --json --profile quick
 steward benchmark --scenario intentcall.adapter-contract --json
 ```
@@ -81,11 +82,11 @@ See [docs/DX_FAQ.mdx](docs/DX_FAQ.mdx) for detailed workflows.
 
 ## Git history
 
-This repository starts with a **fresh history** (2026-05-28). Packages were developed inside `mcp_flutter` until Phase 7 extract; `git filter-repo` / subtree split was deferred to avoid timebox risk. Use `mcp_flutter` git log before the extract commit for prior package history.
+This repository starts with a **fresh history** (2026-05-28). IntentCall originated during early `mcp_flutter` proof work, and earlier package history remains in the `mcp_flutter` git log. The reusable registry, adapter, session, and platform-projection contracts are now owned here; `mcp_flutter` remains an early consumer and proof harness.
 
-## Flutter MCP Toolkit
+## Flutter App Harness
 
-App authors should prefer **`mcp_toolkit`** + `flutter-mcp-toolkit` CLI. IntentCall packages are for platform work and advanced integration.
+Flutter app authors who want the packaged product harness should start with **`mcp_toolkit`** and the `flutter-mcp-toolkit` CLI. IntentCall packages are the reusable platform layer used by that harness and by other adapters, CLIs, servers, and platform bridges.
 
 ## Contributing
 

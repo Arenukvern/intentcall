@@ -53,6 +53,34 @@ void main() {
       );
       expect(output.trim(), _goldenWebManifest.trim());
     });
+
+    test('honors web shortcut and protocol handler opt-outs', () {
+      final output = const WebManifestEmitter().emit(
+        existingManifestJson: _fixtureBaseWebManifest,
+        manifest: AgentManifest.fromJson(<String, Object?>{
+          'version': 1,
+          'platform': 'web',
+          'tools': [
+            <String, Object?>{
+              'qualifiedName': 'app_hidden',
+              'namespace': 'app',
+              'name': 'hidden',
+              'description': 'Hidden',
+              'kind': 'tool',
+              'surfaces': <String, Object?>{
+                'web.manifestShortcuts': <String, Object?>{'include': false},
+                'web.protocolHandlers': <String, Object?>{'include': false},
+              },
+              'inputSchema': <String, Object?>{'type': 'object'},
+            },
+          ],
+        }),
+      );
+
+      final map = jsonDecode(output) as Map<String, Object?>;
+      expect(map['shortcuts'], isEmpty);
+      expect(map['protocol_handlers'], isEmpty);
+    });
   });
 
   group('WebMcpJsEmitter', () {
@@ -190,6 +218,30 @@ void main() {
       expect(js, contains('];'));
       expect(js.split('var tools = [').last.split('];').first.trim(), isEmpty);
     });
+
+    test('honors web.webMcp opt-out', () {
+      final manifest = AgentManifest.fromJson(<String, Object?>{
+        'version': 1,
+        'platform': 'web',
+        'tools': [
+          <String, Object?>{
+            'qualifiedName': 'app_hidden',
+            'namespace': 'app',
+            'name': 'hidden',
+            'description': 'Hidden',
+            'kind': 'tool',
+            'surfaces': <String, Object?>{
+              'web.webMcp': <String, Object?>{'include': false},
+            },
+            'inputSchema': <String, Object?>{'type': 'object'},
+          },
+        ],
+      });
+
+      final js = const WebMcpJsEmitter().emit(manifest);
+      expect(js, isNot(contains('app_hidden')));
+      expect(js.split('var tools = [').last.split('];').first.trim(), isEmpty);
+    });
   });
 
   group('AgentManifest', () {
@@ -210,6 +262,114 @@ void main() {
       });
       expect(manifest.entries, hasLength(1));
       expect(manifest.tools.first.qualifiedName, 'app_ping');
+    });
+
+    test('reads surfaces with boolean and object exposure', () {
+      final manifest = AgentManifest.fromJson(<String, Object?>{
+        'version': 1,
+        'platform': 'web',
+        'tools': [
+          <String, Object?>{
+            'qualifiedName': 'app_ping',
+            'namespace': 'app',
+            'name': 'ping',
+            'description': 'ping',
+            'kind': 'tool',
+            'surfaces': <String, Object?>{
+              'web.webMcp': false,
+              'web.protocolHandlers': <String, Object?>{
+                'include': true,
+                'note': 'kept',
+              },
+            },
+            'inputSchema': <String, Object?>{'type': 'object'},
+          },
+        ],
+      });
+      final entry = manifest.tools.first;
+      expect(
+        entry.surfaces.includes(
+          AgentManifestSurface.webMcp,
+          defaultValue: true,
+        ),
+        isFalse,
+      );
+      expect(
+        entry
+            .surfaces
+            .overrides[AgentManifestSurface.webProtocolHandlers]
+            ?.options['note'],
+        'kept',
+      );
+      expect(entry.toJson()['surfaces'], isA<Map<String, Object?>>());
+    });
+
+    test('rejects unknown surface keys', () {
+      expect(
+        () => AgentManifest.fromJson(<String, Object?>{
+          'version': 1,
+          'platform': 'web',
+          'tools': [
+            <String, Object?>{
+              'qualifiedName': 'app_ping',
+              'namespace': 'app',
+              'name': 'ping',
+              'description': 'ping',
+              'kind': 'tool',
+              'surfaces': <String, Object?>{'web.unknown': true},
+              'inputSchema': <String, Object?>{'type': 'object'},
+            },
+          ],
+        }),
+        throwsFormatException,
+      );
+    });
+
+    test('rejects non-boolean surface include', () {
+      expect(
+        () => AgentManifest.fromJson(<String, Object?>{
+          'version': 1,
+          'platform': 'web',
+          'tools': [
+            <String, Object?>{
+              'qualifiedName': 'app_ping',
+              'namespace': 'app',
+              'name': 'ping',
+              'description': 'ping',
+              'kind': 'tool',
+              'surfaces': <String, Object?>{
+                'web.webMcp': <String, Object?>{'include': 'yes'},
+              },
+              'inputSchema': <String, Object?>{'type': 'object'},
+            },
+          ],
+        }),
+        throwsFormatException,
+      );
+    });
+
+    test('rejects removed includeInShortcuts even with surfaces present', () {
+      expect(
+        () => AgentManifest.fromJson(<String, Object?>{
+          'version': 1,
+          'platform': 'apple',
+          'tools': [
+            <String, Object?>{
+              'qualifiedName': 'app_ping',
+              'namespace': 'app',
+              'name': 'ping',
+              'description': 'ping',
+              'kind': 'tool',
+              'includeInShortcuts': true,
+              'surfaces': <String, Object?>{
+                'apple.appShortcuts': <String, Object?>{'include': false},
+              },
+              'inputSchema': <String, Object?>{'type': 'object'},
+            },
+          ],
+        }),
+        throwsFormatException,
+      );
     });
   });
 }

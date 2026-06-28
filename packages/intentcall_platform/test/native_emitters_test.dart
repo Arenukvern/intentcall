@@ -13,7 +13,9 @@ void main() {
         'name': 'cart_total',
         'description': 'Return cart total',
         'kind': 'tool',
-        'includeInShortcuts': true,
+        'surfaces': <String, Object?>{
+          'apple.appShortcuts': <String, Object?>{'include': true},
+        },
         'inputSchema': <String, Object?>{
           'type': 'object',
           'required': <String>['currency'],
@@ -59,6 +61,32 @@ void main() {
         () => const AndroidShortcutsXmlEmitter().emit(noScheme),
         throwsStateError,
       );
+    });
+
+    test('honors android.shortcuts opt-out', () {
+      final xml = const AndroidShortcutsXmlEmitter().emit(
+        AgentManifest.fromJson(<String, Object?>{
+          'version': 1,
+          'platform': 'android',
+          'protocolScheme': 'demoapp',
+          'tools': [
+            <String, Object?>{
+              'qualifiedName': 'app_hidden',
+              'namespace': 'app',
+              'name': 'hidden',
+              'description': 'Hidden',
+              'kind': 'tool',
+              'surfaces': <String, Object?>{
+                'android.shortcuts': <String, Object?>{'include': false},
+              },
+              'inputSchema': <String, Object?>{'type': 'object'},
+            },
+          ],
+        }),
+      );
+
+      expect(xml, isNot(contains('app_hidden')));
+      expect(xml, contains('<shortcuts'));
     });
   });
 
@@ -191,7 +219,9 @@ void main() {
               'name': 'publish',
               'description': 'Publish',
               'kind': 'tool',
-              'includeInShortcuts': true,
+              'surfaces': <String, Object?>{
+                'apple.appShortcuts': <String, Object?>{'include': true},
+              },
               'inputSchema': <String, Object?>{'type': 'object'},
             },
             <String, Object?>{
@@ -213,6 +243,27 @@ void main() {
         contains('AppShortcut(intent: AppPublishIntent(), phrases:'),
       );
       expect(swift, isNot(contains('AppShortcut(intent: AppPrivateIntent()')));
+    });
+
+    test('rejects removed includeInShortcuts field', () {
+      expect(
+        () => AgentManifest.fromJson(<String, Object?>{
+          'version': 1,
+          'platform': 'apple',
+          'tools': [
+            <String, Object?>{
+              'qualifiedName': 'app_publish',
+              'namespace': 'app',
+              'name': 'publish',
+              'description': 'Publish',
+              'kind': 'tool',
+              'includeInShortcuts': true,
+              'inputSchema': <String, Object?>{'type': 'object'},
+            },
+          ],
+        }),
+        throwsFormatException,
+      );
     });
 
     test('rejects unsafe explicit qualifiedName values', () {
@@ -314,6 +365,32 @@ void main() {
       final desktop = const LinuxDesktopEntryEmitter().emit(manifest);
       expect(desktop.trim(), _goldenLinuxDesktop.trim());
     });
+
+    test('honors linux.schemeHandler opt-out for tool metadata', () {
+      final desktop = const LinuxDesktopEntryEmitter().emit(
+        AgentManifest.fromJson(<String, Object?>{
+          'version': 1,
+          'platform': 'linux',
+          'protocolScheme': 'demoapp',
+          'tools': [
+            <String, Object?>{
+              'qualifiedName': 'app_hidden',
+              'namespace': 'app',
+              'name': 'hidden',
+              'description': 'Hidden',
+              'kind': 'tool',
+              'surfaces': <String, Object?>{
+                'linux.schemeHandler': <String, Object?>{'include': false},
+              },
+              'inputSchema': <String, Object?>{'type': 'object'},
+            },
+          ],
+        }),
+      );
+
+      expect(desktop, contains('x-scheme-handler/demoapp'));
+      expect(desktop, isNot(contains('tool: app_hidden')));
+    });
   });
 
   group('WindowsProtocolEmitter', () {
@@ -327,6 +404,35 @@ void main() {
       final msix = const WindowsProtocolEmitter().emitMsixFragment(manifest);
       expect(msix, contains('windows.protocol'));
       expect(msix, contains('Name="demoapp"'));
+    });
+
+    test('honors windows protocol surface opt-outs for metadata', () {
+      final manifest = AgentManifest.fromJson(<String, Object?>{
+        'version': 1,
+        'platform': 'windows',
+        'protocolScheme': 'demoapp',
+        'tools': [
+          <String, Object?>{
+            'qualifiedName': 'app_hidden',
+            'namespace': 'app',
+            'name': 'hidden',
+            'description': 'Hidden',
+            'kind': 'tool',
+            'surfaces': <String, Object?>{
+              'windows.protocolActivation': <String, Object?>{'include': false},
+              'windows.msixProtocol': <String, Object?>{'include': false},
+            },
+            'inputSchema': <String, Object?>{'type': 'object'},
+          },
+        ],
+      });
+
+      final reg = const WindowsProtocolEmitter().emit(manifest);
+      final msix = const WindowsProtocolEmitter().emitMsixFragment(manifest);
+      expect(reg, contains(r'[HKEY_CURRENT_USER\Software\Classes\demoapp]'));
+      expect(reg, isNot(contains('tool: app_hidden')));
+      expect(msix, contains('windows.protocol'));
+      expect(msix, isNot(contains('app_hidden')));
     });
   });
 }

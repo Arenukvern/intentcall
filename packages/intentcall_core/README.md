@@ -20,7 +20,7 @@ Authors define **descriptors + executors**; they do not implement a public `Agen
 MCP CallToolRequest → AgentRegistry.invoke → AgentResult → CallToolResult
 ```
 
-The Flutter MCP server uses `McpHost`, which owns an `AgentRuntime` with `McpPublishAdapter` as the sole MCP attach path: registry registration drives MCP publish via `IntentRegistered` events, and `runtime.stop()` on host dispose.
+A concrete consumer such as Flutter MCP can compose `AgentRuntime` with `McpPublishAdapter`; the core contract is registry registration, adapter publish, and `AgentRegistry.invoke(...)`. Registry registration drives publish via `IntentRegistered` events, and hosts stop their runtime on dispose.
 
 MCP publish lives in `intentcall_mcp` (`McpPublishAdapter`). WebMCP and Gemma use parallel adapters on the same registry:
 
@@ -42,7 +42,8 @@ await runtime.start();
 - `AgentWireArgs` for string-key maps
 - Tool/resource registration contracts for hosts that expose capability
   surfaces without depending on a concrete transport adapter
-- `AgentClientInstall.once` in `mcp_toolkit` for lazy registration
+- Example consumer helper: `AgentClientInstall.once` in `mcp_toolkit` for lazy
+  registration in the Flutter MCP product harness
 
 ## Public surface ownership
 

@@ -8,6 +8,61 @@ const kAgentManifestSchemaVersion = 1;
 /// Manifest-local native dispatch behavior.
 enum AgentManifestDispatchMode { inlineRuntime, openApp, queueOnly }
 
+/// Platform projection surfaces that can expose a manifest entry.
+enum AgentManifestSurface {
+  appleAppShortcuts,
+  androidShortcuts,
+  webManifestShortcuts,
+  webProtocolHandlers,
+  webMcp,
+  windowsProtocolActivation,
+  windowsMsixProtocol,
+  linuxSchemeHandler,
+}
+
+/// Per-surface exposure override.
+final class AgentManifestSurfaceExposure {
+  const AgentManifestSurfaceExposure({this.include, this.options = const {}});
+
+  final bool? include;
+  final Map<String, Object?> options;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    if (include != null) 'include': include,
+    ...options,
+  };
+}
+
+/// Entry-local platform projection policy.
+final class AgentManifestSurfacePolicy {
+  const AgentManifestSurfacePolicy(this.overrides);
+
+  static const empty = AgentManifestSurfacePolicy(
+    <AgentManifestSurface, AgentManifestSurfaceExposure>{},
+  );
+
+  final Map<AgentManifestSurface, AgentManifestSurfaceExposure> overrides;
+
+  bool get isEmpty => overrides.isEmpty;
+
+  bool includes(
+    final AgentManifestSurface surface, {
+    required final bool defaultValue,
+  }) => overrides[surface]?.include ?? defaultValue;
+
+  Map<String, Object?> toJson() {
+    final out = <String, Object?>{};
+    for (final surface in AgentManifestSurface.values) {
+      final exposure = overrides[surface];
+      if (exposure == null) {
+        continue;
+      }
+      out[surface.manifestKey] = exposure.toJson();
+    }
+    return out;
+  }
+}
+
 /// One tool/intent row from [agent_manifest.json].
 final class AgentManifestEntry {
   const AgentManifestEntry({
@@ -18,7 +73,7 @@ final class AgentManifestEntry {
     required this.kind,
     required this.inputSchema,
     this.dispatchMode = AgentManifestDispatchMode.openApp,
-    this.includeInShortcuts = false,
+    this.surfaces = AgentManifestSurfacePolicy.empty,
     this.resourceUri,
   });
 
@@ -30,6 +85,11 @@ final class AgentManifestEntry {
         : qualifyName(namespace: namespace, name: name);
     _validateQualifiedName(qualifiedName);
     final kindName = '${json['kind'] ?? 'tool'}'.trim();
+    if (json.containsKey('includeInShortcuts')) {
+      throw const FormatException(
+        'includeInShortcuts is not supported; use surfaces["apple.appShortcuts"].',
+      );
+    }
     return AgentManifestEntry(
       qualifiedName: qualifiedName,
       namespace: namespace,
@@ -38,7 +98,7 @@ final class AgentManifestEntry {
       kind: AgentIntentKind.values.byName(kindName),
       inputSchema: _readInputSchema(json['inputSchema']),
       dispatchMode: _readDispatchMode(json['dispatchMode']),
-      includeInShortcuts: _readIncludeInShortcuts(json['includeInShortcuts']),
+      surfaces: _readSurfaces(json['surfaces']),
       resourceUri: json['resourceUri'] as String?,
     );
   }
@@ -50,7 +110,7 @@ final class AgentManifestEntry {
   final AgentIntentKind kind;
   final Map<String, Object?> inputSchema;
   final AgentManifestDispatchMode dispatchMode;
-  final bool includeInShortcuts;
+  final AgentManifestSurfacePolicy surfaces;
   final String? resourceUri;
 
   Map<String, Object?> toJson() => <String, Object?>{
@@ -60,7 +120,7 @@ final class AgentManifestEntry {
     'description': description,
     'kind': kind.name,
     'dispatchMode': dispatchMode.name,
-    'includeInShortcuts': includeInShortcuts,
+    if (!surfaces.isEmpty) 'surfaces': surfaces.toJson(),
     if (resourceUri != null) 'resourceUri': resourceUri,
     'inputSchema': inputSchema,
   };
@@ -164,14 +224,60 @@ AgentManifestDispatchMode _readDispatchMode(final Object? value) {
   );
 }
 
-bool _readIncludeInShortcuts(final Object? value) {
-  if (value == null) {
-    return false;
+AgentManifestSurfacePolicy _readSurfaces(final Object? value) {
+  final overrides = <AgentManifestSurface, AgentManifestSurfaceExposure>{};
+  if (value != null) {
+    final raw = switch (value) {
+      final Map<String, Object?> map => map,
+      final Map map => map.cast<String, Object?>(),
+      _ => throw const FormatException('surfaces must be an object.'),
+    };
+    for (final entry in raw.entries) {
+      final surface = _readSurface(entry.key);
+      overrides[surface] = _readSurfaceExposure(entry.value);
+    }
   }
+
+  if (overrides.isEmpty) {
+    return AgentManifestSurfacePolicy.empty;
+  }
+  return AgentManifestSurfacePolicy(Map.unmodifiable(overrides));
+}
+
+AgentManifestSurface _readSurface(final String key) {
+  final trimmed = key.trim();
+  for (final surface in AgentManifestSurface.values) {
+    if (surface.manifestKey == trimmed) {
+      return surface;
+    }
+  }
+  throw FormatException(
+    'Invalid surface "$trimmed"; expected one of '
+    '${AgentManifestSurface.values.map((final s) => s.manifestKey).join(', ')}.',
+  );
+}
+
+AgentManifestSurfaceExposure _readSurfaceExposure(final Object? value) {
   if (value is bool) {
-    return value;
+    return AgentManifestSurfaceExposure(include: value);
   }
-  throw const FormatException('includeInShortcuts must be a boolean.');
+  final raw = switch (value) {
+    final Map<String, Object?> map => map,
+    final Map map => map.cast<String, Object?>(),
+    _ => throw const FormatException(
+      'surface exposure must be a boolean or object.',
+    ),
+  };
+  final include = raw['include'];
+  if (include != null && include is! bool) {
+    throw const FormatException('surface include must be a boolean.');
+  }
+  return AgentManifestSurfaceExposure(
+    include: include as bool?,
+    options: Map.unmodifiable(
+      Map<String, Object?>.from(raw)..remove('include'),
+    ),
+  );
 }
 
 void _validateQualifiedName(final String qualifiedName) {
@@ -189,4 +295,18 @@ String? _readOptionalProtocolScheme(final Object? value) {
     return null;
   }
   return scheme;
+}
+
+extension AgentManifestSurfaceKey on AgentManifestSurface {
+  String get manifestKey => switch (this) {
+    AgentManifestSurface.appleAppShortcuts => 'apple.appShortcuts',
+    AgentManifestSurface.androidShortcuts => 'android.shortcuts',
+    AgentManifestSurface.webManifestShortcuts => 'web.manifestShortcuts',
+    AgentManifestSurface.webProtocolHandlers => 'web.protocolHandlers',
+    AgentManifestSurface.webMcp => 'web.webMcp',
+    AgentManifestSurface.windowsProtocolActivation =>
+      'windows.protocolActivation',
+    AgentManifestSurface.windowsMsixProtocol => 'windows.msixProtocol',
+    AgentManifestSurface.linuxSchemeHandler => 'linux.schemeHandler',
+  };
 }

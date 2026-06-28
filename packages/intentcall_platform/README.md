@@ -57,8 +57,28 @@ Each manifest entry can declare a manifest-local `"dispatchMode"`:
 | `"queueOnly"` | Queue an envelope without opening the app or URL fallback. This is diagnostic/fallback dispatch, not product proof. |
 
 Apple App Intent wrappers are still generated broadly for tools, but
-`AppShortcutsProvider` is curated. Set `"includeInShortcuts": true` only for
-user-facing actions that should appear as shortcuts.
+`AppShortcutsProvider` is curated. Use entry-local `"surfaces"` for publication
+and fallback artifact projection:
+
+```json
+{
+  "dispatchMode": "openApp",
+  "surfaces": {
+    "apple.appShortcuts": { "include": true },
+    "android.shortcuts": { "include": true },
+    "web.manifestShortcuts": { "include": true },
+    "web.protocolHandlers": { "include": true },
+    "web.webMcp": { "include": true },
+    "windows.protocolActivation": { "include": true },
+    "windows.msixProtocol": { "include": true },
+    "linux.schemeHandler": { "include": true }
+  }
+}
+```
+
+Apple App Shortcuts default to opt-in (`false`) so apps publish only
+user-facing actions. Android, web, Windows, and Linux projection artifacts
+preserve existing broad defaults and can be opted out with `"include": false`.
 
 ## Manifest workflow (I4)
 
@@ -70,6 +90,15 @@ Apps that generate protocol fallback artifacts must declare their own URI scheme
 with a top-level `"protocolScheme"` in `agent_manifest.json`, or pass an explicit
 scheme to the sync/emitter API. IntentCall does not reserve a global
 `intentcall://` scheme because each app owns its platform URL declarations.
+Generated protocol artifacts do not guarantee OS registration, default-handler
+selection, or trusted dispatch. Web protocol handlers, Windows protocol
+activation, and Linux `x-scheme-handler` entries are app-owned fallback routes;
+host apps must validate source, scheme, qualified name, payload, and
+authorization before dispatch.
+
+The package-owned contract is the manifest, emitter, and sync API. Host CLIs may
+wrap that API for their own product workflow. For example, Flutter MCP Toolkit
+consumers can run:
 
 ```bash
 flutter-mcp-toolkit codegen sync \
@@ -82,6 +111,8 @@ generated artifact or native project membership would change without writing
 files.
 
 ### One-time hooks
+
+Flutter MCP Toolkit consumer example:
 
 ```bash
 flutter-mcp-toolkit init intentcall-platform --project-dir <flutter_app>

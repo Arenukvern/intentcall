@@ -80,7 +80,10 @@ final class AppleSwiftAppIntentsEmitter {
         ..writeln('  }')
         ..writeln('}')
         ..writeln();
-      if (tool.includeInShortcuts) {
+      if (tool.surfaces.includes(
+        AgentManifestSurface.appleAppShortcuts,
+        defaultValue: false,
+      )) {
         shortcutLines.add(
           '    AppShortcut(intent: $typeName(), phrases: ["\\(.applicationName) $phrase"])',
         );
