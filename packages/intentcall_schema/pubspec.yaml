@@ -1,6 +1,6 @@
 name: intentcall_schema
 description: PRE-RELEASE — Transport-agnostic agent result envelopes and JSON Schema validation.
-version: 0.3.1
+version: 0.4.0
 license: MIT
 repository: https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_schema
 issue_tracker: https://github.com/Arenukvern/intentcall/issues
