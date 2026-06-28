@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.4.0](https://github.com/Arenukvern/intentcall/compare/intentcall_platform-v0.3.1...intentcall_platform-v0.4.0) (2026-06-28)
+
+
+### Features
+
+* **intentcall_platform:** add Apple inline runtime proof scaffolds ([a09f403](https://github.com/Arenukvern/intentcall/commit/a09f40326233e04e28901e2d06c7649b039a54d8))
+* **intentcall_platform:** add Apple inline runtime proof scaffolds ([f9a6221](https://github.com/Arenukvern/intentcall/commit/f9a6221a0e1ff49a87dc670d6a0dbb805931522b))
+* **platform:** add dispatch handoff contract ([6376056](https://github.com/Arenukvern/intentcall/commit/63760569bc2a7a508f103689d2c8932ba7fd15c5))
+
 ## [0.3.1](https://github.com/Arenukvern/intentcall/compare/intentcall_platform-v0.3.0...intentcall_platform-v0.3.1) (2026-06-27)
 
 

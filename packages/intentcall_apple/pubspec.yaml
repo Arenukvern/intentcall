@@ -1,6 +1,6 @@
 name: intentcall_apple
 description: PRE-RELEASE — Apple App Intents manifest generator from intentcall agent manifest JSON.
-version: 0.3.1
+version: 0.4.0
 license: MIT
 repository: https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_apple
 issue_tracker: https://github.com/Arenukvern/intentcall/issues
