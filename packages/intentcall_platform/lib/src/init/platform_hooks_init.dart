@@ -64,7 +64,14 @@ final class PlatformHooksInit {
       ),
       await _patchFile(
         id: 'android_manifest',
-        path: p.join(root, 'android', 'app', 'src', 'main', 'AndroidManifest.xml'),
+        path: p.join(
+          root,
+          'android',
+          'app',
+          'src',
+          'main',
+          'AndroidManifest.xml',
+        ),
         snippet: kAndroidShortcutsManifestSnippet.trim(),
         checkOnly: checkOnly,
         insertBefore: '</application>',
@@ -110,13 +117,18 @@ final class PlatformHooksInit {
         id: id,
         path: path,
         ok: false,
-        message: 'Missing Xcode project — add Run Script manually (see INTENTCALL_PLATFORM.md)',
+        message:
+            'Missing Xcode project — add Run Script manually (see INTENTCALL_PLATFORM.md)',
       );
     }
-    final scriptPath = p.join(p.dirname(p.dirname(path)), 'intentcall_codegen.sh');
+    final scriptPath = p.join(
+      p.dirname(p.dirname(path)),
+      'intentcall_codegen.sh',
+    );
     final scriptOk = File(scriptPath).existsSync();
     final content = file.readAsStringSync();
-    final ok = scriptOk ||
+    final ok =
+        scriptOk ||
         (content.contains(_markerBegin) &&
             content.contains('flutter-mcp-toolkit codegen sync'));
     return PlatformHookTargetResult(
@@ -126,7 +138,7 @@ final class PlatformHooksInit {
       message: ok
           ? null
           : r'Add Xcode Run Script: bash "$SRCROOT/intentcall_codegen.sh" '
-              '(see INTENTCALL_PLATFORM.md)',
+                '(see INTENTCALL_PLATFORM.md)',
     );
   }
 

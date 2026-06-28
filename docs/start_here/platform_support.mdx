@@ -8,7 +8,7 @@ flowchart TB
   assistant --> fallback["Protocol fallback\napp-owned invoke URLs and handlers"]
   fallback --> ecosystem["Ecosystem alignment\nagent conventions, not OS support"]
 
-  nativeCurrent["Current: MCP, Dart-first WebMCP,\nApple App Intents dispatch wrappers"] -. current .-> native
+  nativeCurrent["Current: MCP, Dart-first WebMCP,\nApple App Intents dispatch and nativeInline artifacts"] -. current .-> native
   nativeRoadmap["Roadmap: Android AppFunctions,\nWindows App Actions / Agent Launchers"] -. roadmap .-> native
   assistantCurrent["Current: Apple shortcuts artifacts,\nAndroid shortcuts/deep links, web/PWA artifacts"] -. current .-> assistant
   assistantRoadmap["Roadmap: richer Android App Actions capability generation"] -. roadmap .-> assistant
@@ -21,7 +21,7 @@ flowchart TB
 |---|---|---|---|---|---|
 | MCP | `McpPublishAdapter` maps registry tools/resources to `dart_mcp`. | Dart `AgentRegistry` handler. | Shared adapter contract tests. | Transport host policy plus registry validation. | Not an LLM backend, RAG system, or Flutter runtime inspector. |
 | WebMCP | Dart-first in-page registration and JS emitter/bootstrap helpers. | Dart registry when bound; optional network fallback only when configured. | Emitter/bootstrap tests. | Deny unavailable runtime by default; network fallback is opt-in. | Live browser-host interoperability needs separate proof. |
-| Apple App Intents / Shortcuts | Generated parameter wrappers and artifacts. | Wrapper launches or wakes app and dispatches envelope to Dart. | Artifact/project-sync and bridge authorization tests. | `IntentCallAuthorizationPolicy`; allowlists or confirmation for sensitive calls. | No stable claim of app-extension-hosted Dart or native background business logic. |
+| Apple App Intents / Shortcuts | Generated parameter wrappers and artifacts; explicit `nativeInline` can call app-owned Swift handlers; Apple inline runtimes can generate primitive typed App Intents returns; `dartExtensionInline` has an experimental extension scaffold; Apple 27+ AppIntentsTesting UI-test scaffolds can be generated for live proof. | `openApp` launches or wakes app and dispatches envelope to Dart; `nativeInline` completes in generated Swift/native handler; scaffolded `dartExtensionInline` is not wired by default. | Artifact/project-sync tests, emitter tests, typed return generation tests, Dart extension runtime bridge tests, AppIntentsTesting scaffold tests, and local SDK typechecks. | `IntentCallAuthorizationPolicy` for Dart handoff and Dart extension bridge; native inline handlers must enforce app-owned permission policy. | No stable claim of automatic app-extension target generation, proven app-extension-hosted Dart, or completed live OS invocation in a real app. |
 | Android shortcuts / deep links | Manifest and shortcut/deep-link metadata. | App receives route and dispatches to Dart. | Manifest generator tests. | Treat plain deep links as untrusted unless generated wrapper or app allowlist marks source trusted. | Android AppFunctions and fuller App Actions capability generation are roadmap. |
 | Windows protocol activation | Protocol activation artifacts. | App route dispatches to Dart when wired by host. | Artifact-level support. | Fallback routes are untrusted by default. | Windows App Actions / Agent Launchers are roadmap. |
 | Linux `x-scheme-handler` | Desktop protocol handler artifacts for the app-owned scheme. | App route dispatches to Dart when wired by host. | Artifact-level support. | Fallback routes are untrusted by default. | No Linux OS-level native intent API claim. |
@@ -34,7 +34,7 @@ runtime. It does not replace support tiers.
 
 | Mode | Current support claim | Non-claim |
 |---|---|---|
-| `inlineRuntime` | Current where IntentCall has an exposed runtime already bound and authorized, presently Dart-first WebMCP. | Apple native inline execution, app-extension-hosted Dart, and background Flutter/Dart runtime startup are not supported. |
+| `inlineRuntime` | Current where IntentCall has an exposed runtime already bound and authorized: Dart-first WebMCP and Apple `nativeInline` main-app Swift handlers. Apple inline runtimes can declare primitive typed App Intents return values. Apple `dartExtensionInline` is scaffold-only behind an explicit experimental emitter. Apple 27+ live invocation scaffolds can be generated with AppIntentsTesting. | Automatic Apple extension target generation, proven app-extension-hosted Dart, background Flutter/Dart runtime startup, and completed live OS invocation in a real app are not supported. |
 | `openApp` | Apple wrappers can enqueue an envelope and request app wake/open; shortcut and protocol artifacts can route into app-owned dispatch. | Artifact/project-sync proof is not live OS discovery or product runtime proof. |
 | `queueOnly` | Apple wrappers can enqueue without opening the app or fallback URL. | Diagnostic/fallback queueing is not promoted product proof or durable delivery. |
 
@@ -57,4 +57,4 @@ proof.
 
 ## Claim Rule
 
-Use “current” only for behavior covered by repo tests, generated artifacts, or documented sync helpers. Use “roadmap,” “target,” or “experiment” for Android AppFunctions, richer Android App Actions, Windows App Actions / Agent Launchers, AAIF alignment, app-extension-hosted Dart, native background Dart execution, and real OS assistant/launcher discovery.
+Use “current” only for behavior covered by repo tests, generated artifacts, documented sync helpers, or local SDK typechecks. Use “experiment” for Apple `dartExtensionInline` scaffolds until a fixture app proves extension target membership, FlutterEngine boot, plugin allowlisting, App Group/shared storage or IPC, timeout/memory limits, and live OS invocation through AppIntentsTesting or Shortcuts. Use “roadmap” or “target” for Android AppFunctions, richer Android App Actions, Windows App Actions / Agent Launchers, AAIF alignment, native background Dart execution, and real OS assistant/launcher discovery.

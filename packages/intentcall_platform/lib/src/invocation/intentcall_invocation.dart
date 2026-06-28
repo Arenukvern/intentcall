@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:intentcall_core/intentcall_core.dart';
 import 'package:intentcall_schema/intentcall_schema.dart';
@@ -12,6 +13,7 @@ final class IntentCallInvocationSource {
   static const String webMcpDart = 'webmcp.dart';
   static const String webMcpFallback = 'webmcp.fallback';
   static const String nativeGenerated = 'native.generated';
+  static const String appleDartExtensionInline = 'apple.dart_extension_inline';
   static const String deepLink = 'deeplink';
 }
 
@@ -162,3 +164,84 @@ final class IntentCallNativeBridge {
     );
   }
 }
+
+/// VM-safe runtime used by the experimental Apple Dart extension inline bridge.
+///
+/// The Flutter extension entrypoint owns MethodChannel binding; this class owns
+/// request decoding, source attribution, authorization, registry invocation, and
+/// stable result encoding.
+final class IntentCallDartExtensionInlineRuntime {
+  IntentCallDartExtensionInlineRuntime._({required this.bridge});
+
+  factory IntentCallDartExtensionInlineRuntime.bindRegistry({
+    required final AgentRegistry registry,
+    final IntentCallAuthorizationPolicy policy =
+        const IntentCallAuthorizationPolicy.denyAll(),
+  }) => IntentCallDartExtensionInlineRuntime._(
+    bridge: IntentCallNativeBridge.bindRegistry(
+      registry: registry,
+      policy: policy,
+    ),
+  );
+
+  final IntentCallNativeBridge bridge;
+
+  Future<Map<String, Object?>> perform(final Object? request) async {
+    final envelope = _readDartExtensionEnvelope(request);
+    if (envelope == null) {
+      return _encodeAgentResult(
+        AgentResult.failure(
+          code: 'invalid_extension_request',
+          message: 'Invalid dartExtensionInline invocation request.',
+        ),
+      );
+    }
+    final result = await bridge.execute(envelope);
+    return _encodeAgentResult(result);
+  }
+}
+
+IntentCallInvocationEnvelope? _readDartExtensionEnvelope(
+  final Object? request,
+) {
+  if (request is! Map) {
+    return null;
+  }
+  final raw = Map<String, Object?>.from(request);
+  final qualifiedName = '${raw['qualifiedName'] ?? ''}'.trim();
+  if (qualifiedName.isEmpty) {
+    return null;
+  }
+  final arguments = raw['arguments'];
+  return IntentCallInvocationEnvelope(
+    id: '${raw['id'] ?? ''}'.trim().isEmpty
+        ? 'dart-extension-${DateTime.now().toUtc().microsecondsSinceEpoch}'
+        : '${raw['id']}',
+    qualifiedName: qualifiedName,
+    arguments: arguments is Map
+        ? Map<String, Object?>.from(arguments)
+        : const <String, Object?>{},
+    source: IntentCallInvocationSource.appleDartExtensionInline,
+    createdAt: DateTime.tryParse('${raw['createdAt'] ?? ''}'),
+  );
+}
+
+Map<String, Object?> _encodeAgentResult(
+  final AgentResult result,
+) => <String, Object?>{
+  'ok': result.ok,
+  'message': result.message,
+  'dialog': result.message,
+  if (result.code != null) 'code': result.code,
+  'data': result.data,
+  'details': result.details,
+  'artifacts': result.artifacts
+      .map(
+        (final artifact) => <String, Object?>{
+          'mimeType': artifact.mimeType,
+          if (artifact.text != null) 'text': artifact.text,
+          if (artifact.bytes != null) 'base64': base64Encode(artifact.bytes!),
+        },
+      )
+      .toList(),
+};

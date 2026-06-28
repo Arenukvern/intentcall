@@ -3,6 +3,10 @@
 
 # intentcall_core
 
+[![pub package](https://img.shields.io/pub/v/intentcall_core.svg?include_prereleases)](https://pub.dev/packages/intentcall_core)
+[![pub points](https://img.shields.io/pub/points/intentcall_core.svg)](https://pub.dev/packages/intentcall_core/score)
+[![repository](https://img.shields.io/badge/repo-intentcall-blue)](https://github.com/Arenukvern/intentcall)
+
 Transport-agnostic agent intent registry and runtime for Dart and Flutter apps.
 
 ## Authoring

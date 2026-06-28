@@ -85,7 +85,7 @@ sequenceDiagram
   end
 ```
 
-Native wrappers and fallback routes should collect supported parameters, authorize the source, and dispatch an invocation envelope back to Dart. Apple App Intents wrappers currently launch or wake the app and dispatch to the Dart registry; they do not prove app-extension-hosted Dart execution or native background business logic.
+Native wrappers and fallback routes should collect supported parameters, authorize the source, and dispatch an invocation envelope back to Dart when Dart owns execution. Apple App Intents wrappers can launch or wake the app and dispatch to the Dart registry, or use explicit `nativeInline` to call app-owned Swift handlers in the main app target. Apple inline runtimes can generate primitive typed App Intents returns when `inlineRuntime.result` is declared. `dartExtensionInline` has an experimental scaffold and Dart runtime bridge, but still does not prove automatic extension target generation or live OS invocation.
 
 ## Neighboring Systems
 

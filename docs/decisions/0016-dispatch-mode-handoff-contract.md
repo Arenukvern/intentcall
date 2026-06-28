@@ -38,9 +38,12 @@ App Intent wrappers still collect primitive parameters broadly. Shortcut
 publication is curated separately with manifest `surfaces`; not every tool is
 published through `AppShortcutsProvider`.
 
-Apple `inlineRuntime` is rejected until there is separate proof for app
-extension hosting or another native runtime path. `queueOnly` enqueues without
-`openAppWhenRun` and without URL fallback dispatch.
+Apple `inlineRuntime` is supported only with explicit inline runtime metadata.
+ADR 0017 accepts the first Apple path: `nativeInline` in the main app target,
+where generated Swift calls app-owned native handlers and returns an App Intents
+dialog. Apple `dartExtensionInline` is experimental scaffold-only until app
+extension target generation and live runtime proof exist. `queueOnly` enqueues
+without app foregrounding and without URL fallback dispatch.
 
 Manifest entries can also declare per-surface projection hints:
 
@@ -96,7 +99,8 @@ Tradeoffs:
   protocol projection.
 - Existing app authors who expected every tool to appear in App Shortcuts must
   opt in with `surfaces["apple.appShortcuts"]`.
-- `inlineRuntime` remains a non-claim for Apple until runtime proof exists.
+- Apple `dartExtensionInline` remains a scaffold-only experiment until runtime
+  proof exists.
 - The current store is not durable delivery; stronger retry semantics require a
   later implementation and evidence loop.
 - `surfaces` can curate generated metadata, but host apps still own runtime
@@ -107,20 +111,21 @@ Tradeoffs:
 Current proof is artifact and contract-test proof:
 
 - manifest parser/default behavior,
-- Apple emitter behavior for `openApp`, `queueOnly`, and rejected
-  `inlineRuntime`,
+- Apple emitter behavior for `openApp`, `queueOnly`, `nativeInline`, rejected
+  main-app `dartExtensionInline`, and experimental extension scaffolds,
 - Flutter host startup/resume/manual drain behavior,
 - bridge authorization tests,
 - Steward adapter-contract scenario coverage.
 
 Live OS discovery, assistant invocation, app-extension-hosted Dart, background
-Dart execution, native semantic result execution, exactly-once delivery, and
+Dart execution, typed native result execution, exactly-once delivery, and
 production authorization UX remain consuming-app proof requirements.
 
 ## Official References
 
 - Apple App Intents and `AppIntent` execution:
   [AppIntent](https://developer.apple.com/documentation/appintents/appintent),
+  [supportedModes](https://developer.apple.com/documentation/appintents/appintent/supportedmodes),
   [openAppWhenRun](https://developer.apple.com/documentation/appintents/appintent/openappwhenrun).
 - Flutter host/runtime and app-extension constraints:
   [iOS app extensions](https://docs.flutter.dev/platform-integration/ios/app-extensions),

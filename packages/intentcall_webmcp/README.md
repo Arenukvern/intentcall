@@ -3,6 +3,10 @@
 
 # intentcall_webmcp
 
+[![pub package](https://img.shields.io/pub/v/intentcall_webmcp.svg?include_prereleases)](https://pub.dev/packages/intentcall_webmcp)
+[![pub points](https://img.shields.io/pub/points/intentcall_webmcp.svg)](https://pub.dev/packages/intentcall_webmcp/score)
+[![repository](https://img.shields.io/badge/repo-intentcall-blue)](https://github.com/Arenukvern/intentcall)
+
 `WebMcpPublishAdapter` — Dart-first registry hot-sync to WebMCP
 `document.modelContext` tool registration, with older `navigator.modelContext`
 experiments treated as a compatibility shim.

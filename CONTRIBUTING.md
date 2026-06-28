@@ -27,6 +27,17 @@ pnpm install   # once
 just docs-check
 ```
 
+Agent/operator preflight starts with the declared Steward surface:
+
+```bash
+steward doctor --json
+steward actions list --json
+steward action inspect intentcall.validate --json
+steward action inspect intentcall.adapter-contract-test --json
+steward probe --json --profile quick
+steward benchmark --scenario intentcall.adapter-contract --json
+```
+
 ## Conventional commits
 
 This repo uses [Conventional Commits](https://www.conventionalcommits.org/) for automated changelog generation via [release-please](https://github.com/googleapis/release-please).
@@ -48,10 +59,34 @@ Significant design changes (new transport, schema field change, package split) r
 
 See [docs/DX_FAQ.mdx](docs/DX_FAQ.mdx) — "How do I add a new `intentcall_*` package to the workspace?"
 
+## Contributors
+
+IntentCall uses [all-contributors](https://allcontributors.org/) for visible
+credit. The canonical roster is [`.all-contributorsrc`](.all-contributorsrc),
+and the rendered table lives in [README.md](README.md).
+
+To credit a contributor from a PR:
+
+```bash
+npx all-contributors-cli add <github-login> code,doc
+npx all-contributors-cli generate
+```
+
+Commit both `.all-contributorsrc` and `README.md`. Pick contribution types that
+describe what happened, such as `code`, `doc`, `bug`, `infra`, `security`,
+`maintenance`, `research`, `tutorial`, or `userTesting`.
+
+## Security
+
+Do not put secrets, private URLs, tokens, or unpublished customer data in docs,
+ADRs, tests, issues, or PRs. Report vulnerabilities privately through
+[SECURITY.md](SECURITY.md).
+
 ## Publishing
 
 Publishing to pub.dev is maintainer-gated. Maintainers normally merge the Release Please PR and let tag-triggered GitHub Actions publish through pub.dev automated publishing. `just publish-dry-run` and tag dry-runs are preflight checks; manual execute commands are recovery-only. See [PUBLISHING.md](PUBLISHING.md).
 
 ## Pre-release note
 
-All packages are `0.2.x` train. APIs may change without a semver major. See [PRE_RELEASE.md](PRE_RELEASE.md).
+The hosted packages are on the current `0.3.x` pre-1.0 train. APIs may change
+without a semver major. See [PRE_RELEASE.md](PRE_RELEASE.md).

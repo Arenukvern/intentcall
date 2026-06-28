@@ -102,6 +102,12 @@ void main() {
       expect(swift, contains('IntentCallNativeBridge'));
       expect(swift, contains('intentcall.pending_invocations'));
       expect(swift, contains('objc_sync_enter(UserDefaults.standard)'));
+      expect(
+        swift,
+        contains(
+          'static var supportedModes: IntentModes { .foreground(.immediate) }',
+        ),
+      );
       expect(swift, contains('static var openAppWhenRun: Bool = true'));
       expect(
         swift,
@@ -135,6 +141,12 @@ void main() {
         }),
       );
 
+      expect(
+        swift,
+        contains(
+          'static var supportedModes: IntentModes { .foreground(.immediate) }',
+        ),
+      );
       expect(swift, contains('static var openAppWhenRun: Bool = true'));
       expect(
         swift,
@@ -164,6 +176,10 @@ void main() {
       );
 
       expect(swift, contains('struct AppPingIntent: AppIntent'));
+      expect(
+        swift,
+        contains('static var supportedModes: IntentModes { .background }'),
+      );
       expect(swift, contains('static var openAppWhenRun: Bool = false'));
       expect(
         swift,
@@ -178,7 +194,149 @@ void main() {
       expect(swift, contains('guard openApp, let scheme = fallbackScheme'));
     });
 
-    test('rejects inlineRuntime until Apple runtime proof exists', () {
+    test('nativeInline emits handler invocation without app wake', () {
+      final swift = const AppleSwiftAppIntentsEmitter().emit(
+        AgentManifest.fromJson(<String, Object?>{
+          'version': 1,
+          'platform': 'apple',
+          'protocolScheme': 'demoapp',
+          'tools': [
+            <String, Object?>{
+              'qualifiedName': 'app_inline',
+              'namespace': 'app',
+              'name': 'inline',
+              'description': 'Inline',
+              'kind': 'tool',
+              'dispatchMode': 'inlineRuntime',
+              'inlineRuntime': <String, Object?>{
+                'kind': 'nativeInline',
+                'platforms': <String, Object?>{
+                  'apple': <String, Object?>{'target': 'mainApp'},
+                },
+              },
+              'inputSchema': <String, Object?>{
+                'type': 'object',
+                'required': <String>['message'],
+                'properties': <String, Object?>{
+                  'message': <String, Object?>{'type': 'string'},
+                },
+              },
+            },
+          ],
+        }),
+      );
+
+      expect(swift, contains('struct AppInlineIntent: AppIntent'));
+      expect(
+        swift,
+        contains('static var supportedModes: IntentModes { .background }'),
+      );
+      expect(swift, isNot(contains('openAppWhenRun')));
+      expect(
+        swift,
+        contains(
+          'IntentCallAppleInlineRuntime.perform(qualifiedName: "app_inline", arguments: arguments)',
+        ),
+      );
+      expect(swift, contains('IntentCallInlineRuntimeError'));
+      expect(swift, contains('No native inline handler registered'));
+      expect(
+        swift,
+        contains(
+          'return .result(dialog: IntentDialog(stringLiteral: inlineResult.dialog))',
+        ),
+      );
+      expect(
+        swift,
+        contains('private static let fallbackScheme: String? = nil'),
+      );
+      expect(
+        swift,
+        isNot(contains('app_inline", arguments: arguments, openApp')),
+      );
+    });
+
+    test('nativeInline emits typed App Intents return value', () {
+      final swift = const AppleSwiftAppIntentsEmitter().emit(
+        AgentManifest.fromJson(<String, Object?>{
+          'version': 1,
+          'platform': 'apple',
+          'tools': [
+            <String, Object?>{
+              'qualifiedName': 'app_inline',
+              'namespace': 'app',
+              'name': 'inline',
+              'description': 'Inline',
+              'kind': 'tool',
+              'dispatchMode': 'inlineRuntime',
+              'inlineRuntime': <String, Object?>{
+                'kind': 'nativeInline',
+                'result': <String, Object?>{'type': 'string'},
+                'platforms': <String, Object?>{
+                  'apple': <String, Object?>{'target': 'mainApp'},
+                },
+              },
+              'inputSchema': <String, Object?>{'type': 'object'},
+            },
+          ],
+        }),
+      );
+
+      expect(
+        swift,
+        contains(
+          'static var allowedExecutionTargets: IntentExecutionTargets { .main }',
+        ),
+      );
+      expect(
+        swift,
+        contains(
+          'func perform() async throws -> some IntentResult & ReturnsValue<String> & ProvidesDialog',
+        ),
+      );
+      expect(
+        swift,
+        contains(
+          'IntentCallAppleInlineRuntime.typedValue(inlineResult, as: String.self, qualifiedName: "app_inline")',
+        ),
+      );
+      expect(
+        swift,
+        contains(
+          'return .result(value: value, dialog: IntentDialog(stringLiteral: inlineResult.dialog))',
+        ),
+      );
+      expect(swift, contains('case invalidTypedResult(String, String)'));
+      expect(
+        swift,
+        contains(
+          'init(dialog: String = "Completed inline runtime invocation.", value: Any? = nil)',
+        ),
+      );
+    });
+
+    test('rejects inlineRuntime without inlineRuntime metadata', () {
+      expect(
+        () => AgentManifest.fromJson(<String, Object?>{
+          'version': 1,
+          'platform': 'apple',
+          'tools': [
+            <String, Object?>{
+              'qualifiedName': 'app_inline',
+              'namespace': 'app',
+              'name': 'inline',
+              'description': 'Inline',
+              'kind': 'tool',
+              'dispatchMode': 'inlineRuntime',
+              'inputSchema': <String, Object?>{'type': 'object'},
+            },
+          ],
+        }),
+        throwsFormatException,
+      );
+    });
+
+    test('rejects Apple dartExtensionInline until runtime proof exists', () {
       final inline = AgentManifest.fromJson(<String, Object?>{
         'version': 1,
         'platform': 'apple',
@@ -190,6 +348,12 @@ void main() {
             'description': 'Inline',
             'kind': 'tool',
             'dispatchMode': 'inlineRuntime',
+            'inlineRuntime': <String, Object?>{
+              'kind': 'dartExtensionInline',
+              'platforms': <String, Object?>{
+                'apple': <String, Object?>{'target': 'appIntentsExtension'},
+              },
+            },
             'inputSchema': <String, Object?>{'type': 'object'},
           },
         ],
@@ -201,7 +365,44 @@ void main() {
           isA<UnsupportedError>().having(
             (final error) => error.message,
             'message',
-            contains('Apple inlineRuntime dispatch is not supported yet'),
+            contains(
+              'AppleDartExtensionInlineEmitter(enableExperimental: true)',
+            ),
+          ),
+        ),
+      );
+    });
+
+    test('rejects Apple nativeInline app extension target for now', () {
+      final inline = AgentManifest.fromJson(<String, Object?>{
+        'version': 1,
+        'platform': 'apple',
+        'tools': [
+          <String, Object?>{
+            'qualifiedName': 'app_inline',
+            'namespace': 'app',
+            'name': 'inline',
+            'description': 'Inline',
+            'kind': 'tool',
+            'dispatchMode': 'inlineRuntime',
+            'inlineRuntime': <String, Object?>{
+              'kind': 'nativeInline',
+              'platforms': <String, Object?>{
+                'apple': <String, Object?>{'target': 'appIntentsExtension'},
+              },
+            },
+            'inputSchema': <String, Object?>{'type': 'object'},
+          },
+        ],
+      });
+
+      expect(
+        () => const AppleSwiftAppIntentsEmitter().emit(inline),
+        throwsA(
+          isA<UnsupportedError>().having(
+            (final error) => error.message,
+            'message',
+            contains('target "mainApp" only'),
           ),
         ),
       );
@@ -354,6 +555,271 @@ void main() {
     });
   });
 
+  group('AppleDartExtensionInlineEmitter', () {
+    test('requires explicit experimental gate', () {
+      final manifest = _dartExtensionInlineManifest();
+
+      expect(
+        () => const AppleDartExtensionInlineEmitter().emitSwiftExtension(
+          manifest,
+        ),
+        throwsA(
+          isA<UnsupportedError>().having(
+            (final error) => error.message,
+            'message',
+            contains('enableExperimental: true'),
+          ),
+        ),
+      );
+    });
+
+    test('emits extension Swift scaffold for Dart runtime boot', () {
+      final swift = const AppleDartExtensionInlineEmitter(
+        enableExperimental: true,
+      ).emitSwiftExtension(_dartExtensionInlineManifest());
+
+      expect(swift, contains('@main'));
+      expect(
+        swift,
+        contains(
+          'struct IntentCallDartExtensionInlineExtension: AppIntentsExtension',
+        ),
+      );
+      expect(swift, contains('import FlutterMacOS'));
+      expect(swift, contains('import Flutter'));
+      expect(swift, contains('struct AppInlineIntent: AppIntent'));
+      expect(
+        swift,
+        contains('static var supportedModes: IntentModes { .background }'),
+      );
+      expect(
+        swift,
+        contains(
+          'static var allowedExecutionTargets: IntentExecutionTargets { .appIntentsExtension }',
+        ),
+      );
+      expect(
+        swift,
+        contains(
+          'IntentCallDartExtensionInlineRuntime.perform(qualifiedName: "app_inline", arguments: arguments)',
+        ),
+      );
+      expect(swift, contains('FlutterEngine(name:'));
+      expect(swift, contains('next.run(withEntrypoint: dartEntrypoint)'));
+      expect(
+        swift,
+        contains(
+          'FlutterMethodChannel(name: channelName, binaryMessenger: engine.binaryMessenger)',
+        ),
+      );
+      expect(swift, contains('"source": "apple.dart_extension_inline"'));
+      expect(swift, contains('registerAllowedPlugins(with: next)'));
+      expect(swift, contains('audited extension-safe plugins'));
+    });
+
+    test('emits typed Dart extension inline App Intents return value', () {
+      final manifest = AgentManifest.fromJson(<String, Object?>{
+        'version': 1,
+        'platform': 'apple',
+        'tools': [
+          <String, Object?>{
+            'qualifiedName': 'app_inline',
+            'namespace': 'app',
+            'name': 'inline',
+            'description': 'Inline',
+            'kind': 'tool',
+            'dispatchMode': 'inlineRuntime',
+            'inlineRuntime': <String, Object?>{
+              'kind': 'dartExtensionInline',
+              'result': <String, Object?>{
+                'type': 'integer',
+                'dataKey': 'count',
+              },
+              'platforms': <String, Object?>{
+                'apple': <String, Object?>{'target': 'appIntentsExtension'},
+              },
+            },
+            'inputSchema': <String, Object?>{'type': 'object'},
+          },
+        ],
+      });
+      final swift = const AppleDartExtensionInlineEmitter(
+        enableExperimental: true,
+      ).emitSwiftExtension(manifest);
+
+      expect(
+        swift,
+        contains(
+          'func perform() async throws -> some IntentResult & ReturnsValue<Int> & ProvidesDialog',
+        ),
+      );
+      expect(swift, contains('let data: [String: Any]'));
+      expect(
+        swift,
+        contains('let data = map["data"] as? [String: Any] ?? [:]'),
+      );
+      expect(
+        swift,
+        contains(
+          'typedValue(result, dataKey: "count", as: Int.self, qualifiedName: "app_inline")',
+        ),
+      );
+      expect(
+        swift,
+        contains(
+          'return .result(value: value, dialog: IntentDialog(stringLiteral: result.dialog))',
+        ),
+      );
+      expect(
+        swift,
+        contains('case invalidTypedResult(String, String, String)'),
+      );
+    });
+
+    test('emits Dart entrypoint template for registry invocation', () {
+      final dart = const AppleDartExtensionInlineEmitter(
+        enableExperimental: true,
+      ).emitDartEntrypointTemplate();
+
+      expect(dart, contains("@pragma('vm:entry-point')"));
+      expect(dart, contains('void intentCallDartExtensionInlineMain()'));
+      expect(
+        dart,
+        contains("MethodChannel('dev.intentcall/dart_extension_inline')"),
+      );
+      expect(
+        dart,
+        contains('IntentCallDartExtensionInlineRuntime.bindRegistry'),
+      );
+      expect(dart, contains('buildIntentCallDartExtensionRegistry()'));
+      expect(dart, contains('IntentCallAuthorizationPolicy.denyAll'));
+    });
+
+    test('rejects dartExtensionInline without extension target', () {
+      final manifest = AgentManifest.fromJson(<String, Object?>{
+        'version': 1,
+        'platform': 'apple',
+        'tools': [
+          <String, Object?>{
+            'qualifiedName': 'app_inline',
+            'namespace': 'app',
+            'name': 'inline',
+            'description': 'Inline',
+            'kind': 'tool',
+            'dispatchMode': 'inlineRuntime',
+            'inlineRuntime': <String, Object?>{
+              'kind': 'dartExtensionInline',
+              'platforms': <String, Object?>{
+                'apple': <String, Object?>{'target': 'mainApp'},
+              },
+            },
+            'inputSchema': <String, Object?>{'type': 'object'},
+          },
+        ],
+      });
+
+      expect(
+        () => const AppleDartExtensionInlineEmitter(
+          enableExperimental: true,
+        ).emitSwiftExtension(manifest),
+        throwsA(
+          isA<UnsupportedError>().having(
+            (final error) => error.message,
+            'message',
+            contains('requires target "appIntentsExtension"'),
+          ),
+        ),
+      );
+    });
+  });
+
+  group('AppleAppIntentsTestingEmitter', () {
+    test('emits AppIntentsTesting live invocation scaffold', () {
+      final swift = const AppleAppIntentsTestingEmitter(
+        bundleIdentifier: 'com.example.intentcall',
+        sampleArguments: <String, Map<String, Object?>>{
+          'app_cart_total': <String, Object?>{
+            'currency': 'USD',
+            'includeTax': true,
+          },
+        },
+      ).emitUiTests(manifest);
+
+      expect(swift, contains('#if canImport(AppIntentsTesting)'));
+      expect(swift, contains('import AppIntentsTesting'));
+      expect(swift, contains('import XCTest'));
+      expect(
+        swift,
+        contains(
+          'final class IntentCallAppIntentsLiveInvocationTests: XCTestCase',
+        ),
+      );
+      expect(swift, contains('await XCUIApplication().launch()'));
+      expect(
+        swift,
+        contains(
+          'IntentDefinitions(bundleIdentifier: "com.example.intentcall")',
+        ),
+      );
+      expect(
+        swift,
+        contains(
+          'let intent = definitions.intents["AppCartTotalIntent"].makeIntent(currency: "USD", includeTax: true)',
+        ),
+      );
+      expect(swift, contains('let result = try await intent.run()'));
+    });
+
+    test('emits typed result extraction for live invocation scaffold', () {
+      final swift =
+          const AppleAppIntentsTestingEmitter(
+            bundleIdentifier: 'com.example.intentcall',
+          ).emitUiTests(
+            AgentManifest.fromJson(<String, Object?>{
+              'version': 1,
+              'platform': 'apple',
+              'tools': [
+                <String, Object?>{
+                  'qualifiedName': 'app_inline',
+                  'namespace': 'app',
+                  'name': 'inline',
+                  'description': 'Inline',
+                  'kind': 'tool',
+                  'dispatchMode': 'inlineRuntime',
+                  'inlineRuntime': <String, Object?>{
+                    'kind': 'nativeInline',
+                    'result': <String, Object?>{'type': 'number'},
+                    'platforms': <String, Object?>{
+                      'apple': <String, Object?>{'target': 'mainApp'},
+                    },
+                  },
+                  'inputSchema': <String, Object?>{'type': 'object'},
+                },
+              ],
+            }),
+          );
+
+      expect(swift, contains('let result = try await intent.run()'));
+      expect(swift, contains('let value: Double = try result.value'));
+      expect(swift, contains('_ = value'));
+    });
+
+    test('requires live sample values for required parameters', () {
+      expect(
+        () => const AppleAppIntentsTestingEmitter(
+          bundleIdentifier: 'com.example.intentcall',
+        ).emitUiTests(manifest),
+        throwsA(
+          isA<UnsupportedError>().having(
+            (final error) => error.message,
+            'message',
+            contains('Missing sample argument "currency"'),
+          ),
+        ),
+      );
+    });
+  });
+
   group('LinuxDesktopEntryEmitter', () {
     test('registers x-scheme-handler', () {
       final desktop = const LinuxDesktopEntryEmitter().emit(manifest);
@@ -437,6 +903,36 @@ void main() {
   });
 }
 
+AgentManifest _dartExtensionInlineManifest() =>
+    AgentManifest.fromJson(<String, Object?>{
+      'version': 1,
+      'platform': 'apple',
+      'tools': [
+        <String, Object?>{
+          'qualifiedName': 'app_inline',
+          'namespace': 'app',
+          'name': 'inline',
+          'description': 'Inline',
+          'kind': 'tool',
+          'dispatchMode': 'inlineRuntime',
+          'inlineRuntime': <String, Object?>{
+            'kind': 'dartExtensionInline',
+            'platforms': <String, Object?>{
+              'apple': <String, Object?>{'target': 'appIntentsExtension'},
+            },
+          },
+          'inputSchema': <String, Object?>{
+            'type': 'object',
+            'required': <String>['message'],
+            'properties': <String, Object?>{
+              'message': <String, Object?>{'type': 'string'},
+              'count': <String, Object?>{'type': 'integer'},
+            },
+          },
+        },
+      ],
+    });
+
 const _goldenAndroidShortcutsXml = '''
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Generated by intentcall_platform — do not edit by hand. -->
@@ -465,7 +961,11 @@ import AppKit
 @available(iOS 16.0, macOS 13.0, *)
 struct AppCartTotalIntent: AppIntent {
   static var title: LocalizedStringResource = "Return cart total"
+  @available(iOS 26.0, macOS 26.0, *)
+  static var supportedModes: IntentModes { .foreground(.immediate) }
   static var openAppWhenRun: Bool = true
+  @available(iOS 27.0, macOS 27.0, *)
+  static var allowedExecutionTargets: IntentExecutionTargets { .default }
 
   @Parameter(title: "Currency")
   var currency: String
@@ -486,6 +986,81 @@ struct AppCartTotalIntent: AppIntent {
 struct IntentCallShortcutsProvider: AppShortcutsProvider {
   static var appShortcuts: [AppShortcut] {
     AppShortcut(intent: AppCartTotalIntent(), phrases: ["\(.applicationName) Cart Total"])
+  }
+}
+
+struct IntentCallInlineRuntimeResult {
+  let dialog: String
+  let value: Any?
+
+  init(dialog: String = "Completed inline runtime invocation.", value: Any? = nil) {
+    self.dialog = dialog
+    self.value = value
+  }
+}
+
+enum IntentCallInlineRuntimeError: Error, CustomStringConvertible {
+  case missingHandler(String)
+  case handlerFailed(String)
+  case invalidTypedResult(String, String)
+
+  var description: String {
+    switch self {
+    case .missingHandler(let qualifiedName):
+      return "No native inline handler registered for \(qualifiedName)."
+    case .handlerFailed(let message):
+      return "Inline runtime failed: \(message)"
+    case .invalidTypedResult(let qualifiedName, let typeName):
+      return "Inline runtime for \(qualifiedName) did not return \(typeName)."
+    }
+  }
+}
+
+typealias IntentCallAppleInlineRuntimeHandler = @Sendable ([String: Any]) async throws -> IntentCallInlineRuntimeResult
+
+enum IntentCallAppleInlineRuntime {
+  private static let lock = NSObject()
+  private nonisolated(unsafe) static var handlers: [String: IntentCallAppleInlineRuntimeHandler] = [:]
+
+  static func register(qualifiedName: String, handler: @escaping IntentCallAppleInlineRuntimeHandler) {
+    objc_sync_enter(lock)
+    defer { objc_sync_exit(lock) }
+    handlers[qualifiedName] = handler
+  }
+
+  static func perform(qualifiedName: String, arguments: [String: Any]) async throws -> IntentCallInlineRuntimeResult {
+    objc_sync_enter(lock)
+    let handler = handlers[qualifiedName]
+    objc_sync_exit(lock)
+    guard let handler else {
+      throw IntentCallInlineRuntimeError.missingHandler(qualifiedName)
+    }
+    do {
+      return try await handler(arguments)
+    } catch let error as IntentCallInlineRuntimeError {
+      throw error
+    } catch {
+      throw IntentCallInlineRuntimeError.handlerFailed(error.localizedDescription)
+    }
+  }
+
+  static func typedValue<T>(_ result: IntentCallInlineRuntimeResult, as type: T.Type, qualifiedName: String) throws -> T {
+    guard let raw = result.value else {
+      throw IntentCallInlineRuntimeError.invalidTypedResult(qualifiedName, String(describing: T.self))
+    }
+    if let value = raw as? T {
+      return value
+    }
+    if T.self == Int.self, let value = raw as? NSNumber {
+      return value.intValue as! T
+    }
+    if T.self == Double.self, let value = raw as? NSNumber {
+      return value.doubleValue as! T
+    }
+    if T.self == Bool.self, let value = raw as? NSNumber {
+      return value.boolValue as! T
+    }
+    throw IntentCallInlineRuntimeError.invalidTypedResult(qualifiedName, String(describing: T.self))
   }
 }
 

@@ -8,6 +8,77 @@ const kAgentManifestSchemaVersion = 1;
 /// Manifest-local native dispatch behavior.
 enum AgentManifestDispatchMode { inlineRuntime, openApp, queueOnly }
 
+/// Runtime implementation used for [AgentManifestDispatchMode.inlineRuntime].
+enum AgentManifestInlineRuntimeKind { nativeInline, dartExtensionInline }
+
+/// Apple runtime target for inline dispatch.
+enum AgentManifestAppleInlineRuntimeTarget { mainApp, appIntentsExtension }
+
+/// App Intents typed value returned by an inline runtime.
+enum AgentManifestInlineRuntimeResultType { string, integer, number, boolean }
+
+/// Typed result metadata for inline runtime dispatch.
+final class AgentManifestInlineRuntimeResult {
+  const AgentManifestInlineRuntimeResult({
+    required this.type,
+    this.dataKey = 'value',
+  });
+
+  final AgentManifestInlineRuntimeResultType type;
+
+  /// Key read from `AgentResult.data` for Dart-backed inline runtimes.
+  ///
+  /// Native Swift inline handlers return the typed value directly through
+  /// `IntentCallInlineRuntimeResult.value`.
+  final String dataKey;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'type': type.name,
+    'dataKey': dataKey,
+  };
+}
+
+/// Apple-specific inline runtime metadata.
+final class AgentManifestAppleInlineRuntime {
+  const AgentManifestAppleInlineRuntime({required this.target});
+
+  final AgentManifestAppleInlineRuntimeTarget target;
+
+  Map<String, Object?> toJson() => <String, Object?>{'target': target.name};
+}
+
+/// Platform-specific inline runtime metadata.
+final class AgentManifestInlineRuntimePlatforms {
+  const AgentManifestInlineRuntimePlatforms({this.apple});
+
+  final AgentManifestAppleInlineRuntime? apple;
+
+  bool get isEmpty => apple == null;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    if (apple != null) 'apple': apple!.toJson(),
+  };
+}
+
+/// Inline runtime selection metadata.
+final class AgentManifestInlineRuntime {
+  const AgentManifestInlineRuntime({
+    required this.kind,
+    this.result,
+    this.platforms = const AgentManifestInlineRuntimePlatforms(),
+  });
+
+  final AgentManifestInlineRuntimeKind kind;
+  final AgentManifestInlineRuntimeResult? result;
+  final AgentManifestInlineRuntimePlatforms platforms;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'kind': kind.name,
+    if (result != null) 'result': result!.toJson(),
+    if (!platforms.isEmpty) 'platforms': platforms.toJson(),
+  };
+}
+
 /// Platform projection surfaces that can expose a manifest entry.
 enum AgentManifestSurface {
   appleAppShortcuts,
@@ -73,6 +144,7 @@ final class AgentManifestEntry {
     required this.kind,
     required this.inputSchema,
     this.dispatchMode = AgentManifestDispatchMode.openApp,
+    this.inlineRuntime,
     this.surfaces = AgentManifestSurfacePolicy.empty,
     this.resourceUri,
   });
@@ -90,6 +162,20 @@ final class AgentManifestEntry {
         'includeInShortcuts is not supported; use surfaces["apple.appShortcuts"].',
       );
     }
+    final dispatchMode = _readDispatchMode(json['dispatchMode']);
+    final inlineRuntime = _readInlineRuntime(json['inlineRuntime']);
+    if (dispatchMode == AgentManifestDispatchMode.inlineRuntime &&
+        inlineRuntime == null) {
+      throw const FormatException(
+        'dispatchMode "inlineRuntime" requires an inlineRuntime object.',
+      );
+    }
+    if (dispatchMode != AgentManifestDispatchMode.inlineRuntime &&
+        inlineRuntime != null) {
+      throw const FormatException(
+        'inlineRuntime metadata requires dispatchMode "inlineRuntime".',
+      );
+    }
     return AgentManifestEntry(
       qualifiedName: qualifiedName,
       namespace: namespace,
@@ -97,7 +183,8 @@ final class AgentManifestEntry {
       description: '${json['description'] ?? ''}'.trim(),
       kind: AgentIntentKind.values.byName(kindName),
       inputSchema: _readInputSchema(json['inputSchema']),
-      dispatchMode: _readDispatchMode(json['dispatchMode']),
+      dispatchMode: dispatchMode,
+      inlineRuntime: inlineRuntime,
       surfaces: _readSurfaces(json['surfaces']),
       resourceUri: json['resourceUri'] as String?,
     );
@@ -110,6 +197,7 @@ final class AgentManifestEntry {
   final AgentIntentKind kind;
   final Map<String, Object?> inputSchema;
   final AgentManifestDispatchMode dispatchMode;
+  final AgentManifestInlineRuntime? inlineRuntime;
   final AgentManifestSurfacePolicy surfaces;
   final String? resourceUri;
 
@@ -120,6 +208,7 @@ final class AgentManifestEntry {
     'description': description,
     'kind': kind.name,
     'dispatchMode': dispatchMode.name,
+    if (inlineRuntime != null) 'inlineRuntime': inlineRuntime!.toJson(),
     if (!surfaces.isEmpty) 'surfaces': surfaces.toJson(),
     if (resourceUri != null) 'resourceUri': resourceUri,
     'inputSchema': inputSchema,
@@ -221,6 +310,133 @@ AgentManifestDispatchMode _readDispatchMode(final Object? value) {
   throw FormatException(
     'Invalid dispatchMode "$name"; expected one of '
     '${AgentManifestDispatchMode.values.map((final mode) => mode.name).join(', ')}.',
+  );
+}
+
+AgentManifestInlineRuntime? _readInlineRuntime(final Object? value) {
+  if (value == null) {
+    return null;
+  }
+  final raw = switch (value) {
+    final Map<String, Object?> map => map,
+    final Map map => map.cast<String, Object?>(),
+    _ => throw const FormatException('inlineRuntime must be an object.'),
+  };
+  return AgentManifestInlineRuntime(
+    kind: _readInlineRuntimeKind(raw['kind']),
+    result: _readInlineRuntimeResult(raw['result']),
+    platforms: _readInlineRuntimePlatforms(raw['platforms']),
+  );
+}
+
+AgentManifestInlineRuntimeKind _readInlineRuntimeKind(final Object? value) {
+  final name = '${value ?? ''}'.trim();
+  if (name.isEmpty) {
+    throw const FormatException('inlineRuntime.kind is required.');
+  }
+  for (final kind in AgentManifestInlineRuntimeKind.values) {
+    if (kind.name == name) {
+      return kind;
+    }
+  }
+  throw FormatException(
+    'Invalid inlineRuntime.kind "$name"; expected one of '
+    '${AgentManifestInlineRuntimeKind.values.map((final k) => k.name).join(', ')}.',
+  );
+}
+
+AgentManifestInlineRuntimeResult? _readInlineRuntimeResult(
+  final Object? value,
+) {
+  if (value == null) {
+    return null;
+  }
+  final raw = switch (value) {
+    final Map<String, Object?> map => map,
+    final Map map => map.cast<String, Object?>(),
+    _ => throw const FormatException('inlineRuntime.result must be an object.'),
+  };
+  final dataKey = '${raw['dataKey'] ?? 'value'}'.trim();
+  if (!RegExp(r'^[A-Za-z_][A-Za-z0-9_]*$').hasMatch(dataKey)) {
+    throw FormatException(
+      'Invalid inlineRuntime.result.dataKey "$dataKey"; expected an identifier.',
+    );
+  }
+  return AgentManifestInlineRuntimeResult(
+    type: _readInlineRuntimeResultType(raw['type']),
+    dataKey: dataKey,
+  );
+}
+
+AgentManifestInlineRuntimeResultType _readInlineRuntimeResultType(
+  final Object? value,
+) {
+  final name = '${value ?? ''}'.trim();
+  if (name.isEmpty) {
+    throw const FormatException('inlineRuntime.result.type is required.');
+  }
+  for (final type in AgentManifestInlineRuntimeResultType.values) {
+    if (type.name == name) {
+      return type;
+    }
+  }
+  throw FormatException(
+    'Invalid inlineRuntime.result.type "$name"; expected one of '
+    '${AgentManifestInlineRuntimeResultType.values.map((final t) => t.name).join(', ')}.',
+  );
+}
+
+AgentManifestInlineRuntimePlatforms _readInlineRuntimePlatforms(
+  final Object? value,
+) {
+  if (value == null) {
+    return const AgentManifestInlineRuntimePlatforms();
+  }
+  final raw = switch (value) {
+    final Map<String, Object?> map => map,
+    final Map map => map.cast<String, Object?>(),
+    _ => throw const FormatException(
+      'inlineRuntime.platforms must be an object.',
+    ),
+  };
+  return AgentManifestInlineRuntimePlatforms(
+    apple: _readAppleInlineRuntime(raw['apple']),
+  );
+}
+
+AgentManifestAppleInlineRuntime? _readAppleInlineRuntime(final Object? value) {
+  if (value == null) {
+    return null;
+  }
+  final raw = switch (value) {
+    final Map<String, Object?> map => map,
+    final Map map => map.cast<String, Object?>(),
+    _ => throw const FormatException(
+      'inlineRuntime.platforms.apple must be an object.',
+    ),
+  };
+  return AgentManifestAppleInlineRuntime(
+    target: _readAppleInlineRuntimeTarget(raw['target']),
+  );
+}
+
+AgentManifestAppleInlineRuntimeTarget _readAppleInlineRuntimeTarget(
+  final Object? value,
+) {
+  final name = '${value ?? ''}'.trim();
+  if (name.isEmpty) {
+    throw const FormatException(
+      'inlineRuntime.platforms.apple.target is required.',
+    );
+  }
+  for (final target in AgentManifestAppleInlineRuntimeTarget.values) {
+    if (target.name == name) {
+      return target;
+    }
+  }
+  throw FormatException(
+    'Invalid inlineRuntime.platforms.apple.target "$name"; expected one of '
+    '${AgentManifestAppleInlineRuntimeTarget.values.map((final t) => t.name).join(', ')}.',
   );
 }
 

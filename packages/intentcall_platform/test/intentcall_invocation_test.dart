@@ -171,6 +171,69 @@ void main() {
     expect(allowedResult.ok, isTrue);
     expect(allowedResult.data['text'], 'ok');
   });
+
+  test('IntentCallDartExtensionInlineRuntime denies by default', () async {
+    final runtime = IntentCallDartExtensionInlineRuntime.bindRegistry(
+      registry: _registry(),
+    );
+
+    final result = await runtime.perform(<String, Object?>{
+      'id': 'extension-1',
+      'qualifiedName': 'app_echo',
+      'arguments': const <String, Object?>{'text': 'hello'},
+      'source': 'spoofed',
+    });
+
+    expect(result['ok'], isFalse);
+    expect(result['code'], 'invocation_denied');
+    expect(
+      (result['details']! as Map)['source'],
+      'apple.dart_extension_inline',
+    );
+  });
+
+  test(
+    'IntentCallDartExtensionInlineRuntime invokes allowed registry',
+    () async {
+      final runtime = IntentCallDartExtensionInlineRuntime.bindRegistry(
+        registry: _registry(),
+        policy: const IntentCallAuthorizationPolicy(
+          allowedSources: <String>{
+            IntentCallInvocationSource.appleDartExtensionInline,
+          },
+          allowedQualifiedNames: <String>{'app_echo'},
+        ),
+      );
+
+      final result = await runtime.perform(<String, Object?>{
+        'id': 'extension-1',
+        'qualifiedName': 'app_echo',
+        'arguments': const <String, Object?>{'text': 'hello'},
+      });
+
+      expect(result['ok'], isTrue);
+      expect(result['dialog'], 'ok');
+      expect((result['data']! as Map)['text'], 'hello');
+      expect((result['data']! as Map)['correlationId'], 'extension-1');
+    },
+  );
+
+  test(
+    'IntentCallDartExtensionInlineRuntime rejects invalid requests',
+    () async {
+      final runtime = IntentCallDartExtensionInlineRuntime.bindRegistry(
+        registry: _registry(),
+        policy: const IntentCallAuthorizationPolicy.allowAll(),
+      );
+
+      final result = await runtime.perform(<String, Object?>{
+        'arguments': const <String, Object?>{'text': 'hello'},
+      });
+
+      expect(result['ok'], isFalse);
+      expect(result['code'], 'invalid_extension_request');
+    },
+  );
 }
 
 InMemoryAgentRegistry _registry() => InMemoryAgentRegistry()

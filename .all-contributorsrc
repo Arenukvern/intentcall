@@ -1,0 +1,24 @@
+{
+  "projectName": "intentcall",
+  "projectOwner": "Arenukvern",
+  "files": [
+    "README.md"
+  ],
+  "commitType": "docs",
+  "commitConvention": "angular",
+  "contributorsPerLine": 7,
+  "contributors": [
+    {
+      "login": "Arenukvern",
+      "name": "Anton Malofeev",
+      "avatar_url": "https://avatars.githubusercontent.com/u/15068151?v=4",
+      "profile": "https://github.com/Arenukvern",
+      "contributions": [
+        "code",
+        "doc",
+        "maintenance",
+        "infra"
+      ]
+    }
+  ]
+}

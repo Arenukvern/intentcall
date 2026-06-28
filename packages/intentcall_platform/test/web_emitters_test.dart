@@ -348,6 +348,201 @@ void main() {
       );
     });
 
+    test('reads nativeInline runtime metadata', () {
+      final manifest = AgentManifest.fromJson(<String, Object?>{
+        'version': 1,
+        'platform': 'apple',
+        'tools': [
+          <String, Object?>{
+            'qualifiedName': 'app_inline',
+            'namespace': 'app',
+            'name': 'inline',
+            'description': 'inline',
+            'kind': 'tool',
+            'dispatchMode': 'inlineRuntime',
+            'inlineRuntime': <String, Object?>{
+              'kind': 'nativeInline',
+              'platforms': <String, Object?>{
+                'apple': <String, Object?>{'target': 'mainApp'},
+              },
+            },
+            'inputSchema': <String, Object?>{'type': 'object'},
+          },
+        ],
+      });
+
+      final inlineRuntime = manifest.tools.first.inlineRuntime;
+      expect(inlineRuntime?.kind, AgentManifestInlineRuntimeKind.nativeInline);
+      expect(
+        inlineRuntime?.platforms.apple?.target,
+        AgentManifestAppleInlineRuntimeTarget.mainApp,
+      );
+      expect(manifest.tools.first.toJson()['inlineRuntime'], isA<Map>());
+    });
+
+    test('reads inline runtime typed result metadata', () {
+      final manifest = AgentManifest.fromJson(<String, Object?>{
+        'version': 1,
+        'platform': 'apple',
+        'tools': [
+          <String, Object?>{
+            'qualifiedName': 'app_inline',
+            'namespace': 'app',
+            'name': 'inline',
+            'description': 'inline',
+            'kind': 'tool',
+            'dispatchMode': 'inlineRuntime',
+            'inlineRuntime': <String, Object?>{
+              'kind': 'dartExtensionInline',
+              'result': <String, Object?>{'type': 'number', 'dataKey': 'total'},
+              'platforms': <String, Object?>{
+                'apple': <String, Object?>{'target': 'appIntentsExtension'},
+              },
+            },
+            'inputSchema': <String, Object?>{'type': 'object'},
+          },
+        ],
+      });
+
+      final result = manifest.tools.first.inlineRuntime?.result;
+      expect(result?.type, AgentManifestInlineRuntimeResultType.number);
+      expect(result?.dataKey, 'total');
+      expect(
+        (manifest.tools.first.toJson()['inlineRuntime']! as Map)['result'],
+        isA<Map>(),
+      );
+    });
+
+    test('rejects inlineRuntime config without inline dispatch mode', () {
+      expect(
+        () => AgentManifest.fromJson(<String, Object?>{
+          'version': 1,
+          'platform': 'apple',
+          'tools': [
+            <String, Object?>{
+              'qualifiedName': 'app_inline',
+              'namespace': 'app',
+              'name': 'inline',
+              'description': 'inline',
+              'kind': 'tool',
+              'dispatchMode': 'openApp',
+              'inlineRuntime': <String, Object?>{'kind': 'nativeInline'},
+              'inputSchema': <String, Object?>{'type': 'object'},
+            },
+          ],
+        }),
+        throwsFormatException,
+      );
+    });
+
+    test('rejects unknown inline runtime kind', () {
+      expect(
+        () => AgentManifest.fromJson(<String, Object?>{
+          'version': 1,
+          'platform': 'apple',
+          'tools': [
+            <String, Object?>{
+              'qualifiedName': 'app_inline',
+              'namespace': 'app',
+              'name': 'inline',
+              'description': 'inline',
+              'kind': 'tool',
+              'dispatchMode': 'inlineRuntime',
+              'inlineRuntime': <String, Object?>{'kind': 'unknownInline'},
+              'inputSchema': <String, Object?>{'type': 'object'},
+            },
+          ],
+        }),
+        throwsFormatException,
+      );
+    });
+
+    test('rejects unknown Apple inline runtime target', () {
+      expect(
+        () => AgentManifest.fromJson(<String, Object?>{
+          'version': 1,
+          'platform': 'apple',
+          'tools': [
+            <String, Object?>{
+              'qualifiedName': 'app_inline',
+              'namespace': 'app',
+              'name': 'inline',
+              'description': 'inline',
+              'kind': 'tool',
+              'dispatchMode': 'inlineRuntime',
+              'inlineRuntime': <String, Object?>{
+                'kind': 'nativeInline',
+                'platforms': <String, Object?>{
+                  'apple': <String, Object?>{'target': 'sidecar'},
+                },
+              },
+              'inputSchema': <String, Object?>{'type': 'object'},
+            },
+          ],
+        }),
+        throwsFormatException,
+      );
+    });
+
+    test('rejects unknown inline runtime typed result type', () {
+      expect(
+        () => AgentManifest.fromJson(<String, Object?>{
+          'version': 1,
+          'platform': 'apple',
+          'tools': [
+            <String, Object?>{
+              'qualifiedName': 'app_inline',
+              'namespace': 'app',
+              'name': 'inline',
+              'description': 'inline',
+              'kind': 'tool',
+              'dispatchMode': 'inlineRuntime',
+              'inlineRuntime': <String, Object?>{
+                'kind': 'nativeInline',
+                'result': <String, Object?>{'type': 'object'},
+                'platforms': <String, Object?>{
+                  'apple': <String, Object?>{'target': 'mainApp'},
+                },
+              },
+              'inputSchema': <String, Object?>{'type': 'object'},
+            },
+          ],
+        }),
+        throwsFormatException,
+      );
+    });
+
+    test('rejects unsafe inline runtime typed result data key', () {
+      expect(
+        () => AgentManifest.fromJson(<String, Object?>{
+          'version': 1,
+          'platform': 'apple',
+          'tools': [
+            <String, Object?>{
+              'qualifiedName': 'app_inline',
+              'namespace': 'app',
+              'name': 'inline',
+              'description': 'inline',
+              'kind': 'tool',
+              'dispatchMode': 'inlineRuntime',
+              'inlineRuntime': <String, Object?>{
+                'kind': 'dartExtensionInline',
+                'result': <String, Object?>{
+                  'type': 'string',
+                  'dataKey': 'bad.key',
+                },
+                'platforms': <String, Object?>{
+                  'apple': <String, Object?>{'target': 'appIntentsExtension'},
+                },
+              },
+              'inputSchema': <String, Object?>{'type': 'object'},
+            },
+          ],
+        }),
+        throwsFormatException,
+      );
+    });
+
     test('rejects removed includeInShortcuts even with surfaces present', () {
       expect(
         () => AgentManifest.fromJson(<String, Object?>{

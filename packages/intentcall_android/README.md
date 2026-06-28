@@ -3,6 +3,10 @@
 
 # intentcall_android
 
+[![pub package](https://img.shields.io/pub/v/intentcall_android.svg?include_prereleases)](https://pub.dev/packages/intentcall_android)
+[![pub points](https://img.shields.io/pub/points/intentcall_android.svg)](https://pub.dev/packages/intentcall_android/score)
+[![repository](https://img.shields.io/badge/repo-intentcall-blue)](https://github.com/Arenukvern/intentcall)
+
 Android manifest codegen for IntentCall shortcut and deep-link artifacts.
 
 Current Android support is shortcut/deep-link dispatch into Dart. Android
