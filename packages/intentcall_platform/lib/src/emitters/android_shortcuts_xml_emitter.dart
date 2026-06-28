@@ -24,7 +24,14 @@ final class AndroidShortcutsXmlEmitter {
         '<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">',
       );
 
-    for (final tool in manifest.tools) {
+    final tools = manifest.tools.where(
+      (final tool) => tool.surfaces.includes(
+        AgentManifestSurface.androidShortcuts,
+        defaultValue: true,
+      ),
+    );
+
+    for (final tool in tools) {
       final shortLabel = escapeXml(humanizeAgentName(tool.name));
       final longLabel = escapeXml(
         tool.description.isEmpty ? shortLabel : tool.description,

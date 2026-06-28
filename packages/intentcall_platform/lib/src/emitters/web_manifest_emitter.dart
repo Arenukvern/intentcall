@@ -22,7 +22,20 @@ final class WebManifestEmitter {
     }
     final map = Map<String, Object?>.from(base.cast<String, Object?>());
 
-    map['shortcuts'] = manifest.tools
+    final shortcutTools = manifest.tools.where(
+      (final tool) => tool.surfaces.includes(
+        AgentManifestSurface.webManifestShortcuts,
+        defaultValue: true,
+      ),
+    );
+    final protocolTools = manifest.tools.where(
+      (final tool) => tool.surfaces.includes(
+        AgentManifestSurface.webProtocolHandlers,
+        defaultValue: true,
+      ),
+    );
+
+    map['shortcuts'] = shortcutTools
         .map(
           (final tool) => <String, Object?>{
             'name': _humanize(tool.name),
@@ -33,17 +46,22 @@ final class WebManifestEmitter {
         )
         .toList(growable: false);
 
+    final protocolHandlerRows = protocolTools
+        .map(
+          (final tool) => <String, Object?>{
+            'protocol': protocol,
+            'url':
+                '$invokePath?name=${Uri.encodeQueryComponent(tool.qualifiedName)}&payload=%s',
+          },
+        )
+        .toList(growable: false);
     map['protocol_handlers'] = <Map<String, Object?>>[
-      <String, Object?>{
-        'protocol': protocol,
-        'url': '$invokePath?protocol=%s',
-      },
-      ...manifest.tools.map(
-        (final tool) => <String, Object?>{
+      if (protocolHandlerRows.isNotEmpty)
+        <String, Object?>{
           'protocol': protocol,
-          'url': '$invokePath?name=${Uri.encodeQueryComponent(tool.qualifiedName)}&payload=%s',
+          'url': '$invokePath?protocol=%s',
         },
-      ),
+      ...protocolHandlerRows,
     ];
 
     return const JsonEncoder.withIndent('    ').convert(map);

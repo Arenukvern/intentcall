@@ -3,6 +3,9 @@
 
 # intentcall_gemma
 
+[![publish: none](https://img.shields.io/badge/pub.dev-unpublished-lightgrey)](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_gemma)
+[![repository](https://img.shields.io/badge/repo-intentcall-blue)](https://github.com/Arenukvern/intentcall)
+
 Example-only `GemmaPublishAdapter` for on-device Gemma experiments.
 
 This package is intentionally not published to pub.dev. It remains in the

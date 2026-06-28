@@ -20,7 +20,8 @@ flowchart TB
   registry --> assistant["Assistant / shortcut fulfillment"]
   registry --> fallback["Protocol fallback"]
   registry --> ecosystem["Ecosystem alignment"]
-  native --> nativeNow["Current: MCP, Dart-first WebMCP,\nApple dispatch wrappers"]
+  native --> nativeNow["Current: MCP, Dart-first WebMCP,\nApple dispatch wrappers + nativeInline"]
+  native --> nativeExperiment["Experiment: Apple dartExtensionInline scaffold"]
   native --> nativeLater["Roadmap: Android AppFunctions,\nWindows App Actions / Agent Launchers"]
   assistant --> assistantNow["Current: shortcuts and web/PWA artifacts"]
   fallback --> fallbackNow["Current: app-owned invoke URLs,\nprotocol handler artifacts"]
@@ -28,12 +29,12 @@ flowchart TB
 
 | Tier | Meaning | Current / target surfaces |
 |---|---|---|
-| Native semantic | Platform-recognized tool/action models that preserve intent metadata and structured invocation semantics. | Current: MCP adapter, Dart-first WebMCP adapter, Apple App Intents dispatch wrappers. Target: Android AppFunctions, Windows App Actions / Agent Launchers. |
+| Native semantic | Platform-recognized tool/action models that preserve intent metadata and structured invocation semantics. | Current: MCP adapter, Dart-first WebMCP adapter, Apple App Intents dispatch wrappers plus explicit main-app Swift `nativeInline`. Target: Android AppFunctions, Windows App Actions / Agent Launchers. |
 | Assistant / shortcut fulfillment | Assistant, shortcut, or launcher declarations that can route user-visible actions into app intent handling. | Current: Apple shortcuts artifacts, Android shortcut/deep-link artifacts, web/PWA artifacts. Target: richer Android App Actions capability generation. |
 | Protocol fallback | Stable URI/protocol invocation when no native semantic surface is available or implemented yet. | Current: app-owned `<scheme>://invoke/...`, web protocol handlers, Windows protocol activation artifacts, Linux `x-scheme-handler/<scheme>` artifacts. |
 | Ecosystem alignment | Compatibility with agent ecosystem conventions without claiming an OS-level integration contract. | Current: MCP conventions. Target: AAIF-hosted ecosystem alignment where relevant. |
 
-Support tiers are explicit on purpose. Apple App Intents are currently parameterized native wrappers that enqueue an invocation envelope and open/wake the app for Dart execution; app-extension-hosted Dart is experimental only. Linux is currently protocol-fallback first. Windows currently has protocol activation artifacts, while native Windows App Actions / Agent Launcher support remains roadmap. Android currently has shortcut/deep-link artifacts, while AppFunctions and fuller App Actions capability generation remain roadmap.
+Support tiers are explicit on purpose. Apple App Intents are currently parameterized native wrappers that can enqueue an invocation envelope and open/wake the app for Dart execution, or call app-owned Swift code through explicit `nativeInline`; `dartExtensionInline` is scaffold-only until a fixture extension proves live runtime behavior. Linux is currently protocol-fallback first. Windows currently has protocol activation artifacts, while native Windows App Actions / Agent Launcher support remains roadmap. Android currently has shortcut/deep-link artifacts, while AppFunctions and fuller App Actions capability generation remain roadmap.
 
 ---
 
@@ -71,7 +72,7 @@ Support tiers are explicit on purpose. Apple App Intents are currently parameter
 | Repo | Role |
 |---|---|
 | **IntentCall** (this repo) | Platform layer — registry + adapters |
-| **[mcp_flutter](https://github.com/Arenukvern/mcp_flutter)** | Product harness — `mcp_toolkit`, `flutter-mcp-toolkit` CLI |
+| **[mcp_flutter](https://github.com/Arenukvern/mcp_flutter)** | Early consumer and product harness — `mcp_toolkit`, `flutter-mcp-toolkit` CLI |
 | **[Skill Steward](https://github.com/Arenukvern/skill_steward)** | Meta-layer — agent skills governance |
 
 ---

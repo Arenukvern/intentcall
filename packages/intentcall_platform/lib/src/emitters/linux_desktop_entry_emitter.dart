@@ -19,6 +19,12 @@ final class LinuxDesktopEntryEmitter {
       artifact: 'Linux desktop entry',
     );
     final toolsComment = manifest.tools
+        .where(
+          (final tool) => tool.surfaces.includes(
+            AgentManifestSurface.linuxSchemeHandler,
+            defaultValue: true,
+          ),
+        )
         .map((final t) => '# tool: ${t.qualifiedName}')
         .join('\n');
     return '''

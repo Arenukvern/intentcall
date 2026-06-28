@@ -3,6 +3,10 @@
 
 # intentcall_mcp
 
+[![pub package](https://img.shields.io/pub/v/intentcall_mcp.svg?include_prereleases)](https://pub.dev/packages/intentcall_mcp)
+[![pub points](https://img.shields.io/pub/points/intentcall_mcp.svg)](https://pub.dev/packages/intentcall_mcp/score)
+[![repository](https://img.shields.io/badge/repo-intentcall-blue)](https://github.com/Arenukvern/intentcall)
+
 MCP bridge: `McpPublishAdapter`, registry ↔ `dart_mcp` publish.
 
 Depends on `intentcall_core` and `intentcall_schema`. Only intentcall package that imports `dart_mcp`.

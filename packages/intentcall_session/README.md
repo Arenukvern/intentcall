@@ -2,6 +2,10 @@
 
 # intentcall_session
 
+[![pub package](https://img.shields.io/pub/v/intentcall_session.svg?include_prereleases)](https://pub.dev/packages/intentcall_session)
+[![pub points](https://img.shields.io/pub/points/intentcall_session.svg)](https://pub.dev/packages/intentcall_session/score)
+[![repository](https://img.shields.io/badge/repo-intentcall-blue)](https://github.com/Arenukvern/intentcall)
+
 IntentCall runtime sessions for commandable tools and apps.
 
 Use this package when a CLI, MCP server, app host, or agent tool needs to keep a

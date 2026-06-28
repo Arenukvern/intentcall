@@ -69,12 +69,32 @@
         {
           "title": "0014 — Runtime sessions",
           "href": "/decisions/0014-own-runtime-sessions-in-intentcall"
+        },
+        {
+          "title": "0015 — Dart-first native bridge",
+          "href": "/decisions/0015-dart-first-native-bridge"
+        },
+        {
+          "title": "0016 — Dispatch mode handoff",
+          "href": "/decisions/0016-dispatch-mode-handoff-contract"
         }
       ]
     },
     {
       "group": "Contributing",
       "pages": [
+        {
+          "title": "Contribution guide",
+          "href": "https://github.com/Arenukvern/intentcall/blob/main/CONTRIBUTING.md"
+        },
+        {
+          "title": "Contributors",
+          "href": "/contributing/contributors"
+        },
+        {
+          "title": "Security",
+          "href": "https://github.com/Arenukvern/intentcall/blob/main/SECURITY.md"
+        },
         {
           "title": "Enable docs.page",
           "href": "/contributing/enable_docs_page"

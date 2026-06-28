@@ -3,12 +3,17 @@
 
 # intentcall_apple
 
+[![pub package](https://img.shields.io/pub/v/intentcall_apple.svg?include_prereleases)](https://pub.dev/packages/intentcall_apple)
+[![pub points](https://img.shields.io/pub/points/intentcall_apple.svg)](https://pub.dev/packages/intentcall_apple/score)
+[![repository](https://img.shields.io/badge/repo-intentcall-blue)](https://github.com/Arenukvern/intentcall)
+
 Apple platform manifest projection for IntentCall.
 
 Current generated App Intents collect supported primitive parameters, enqueue a
 pending invocation envelope, and open or wake the Flutter app for Dart registry
-execution. They return dispatch status in v1; they do not run Dart business
-logic inside an App Intent extension.
+execution. `nativeInline` can call app-owned Swift code in the main app target.
+`dartExtensionInline` is experimental scaffold-only in `intentcall_platform`;
+it does not yet prove Dart business logic inside an App Intent extension.
 
 This package owns Apple manifest JSON projection only. Flutter project sync and
 generated Swift AppIntent artifacts live in `intentcall_platform`, so there is

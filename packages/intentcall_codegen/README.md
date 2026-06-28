@@ -3,6 +3,10 @@
 
 # intentcall_codegen
 
+[![pub package](https://img.shields.io/pub/v/intentcall_codegen.svg?include_prereleases)](https://pub.dev/packages/intentcall_codegen)
+[![pub points](https://img.shields.io/pub/points/intentcall_codegen.svg)](https://pub.dev/packages/intentcall_codegen/score)
+[![repository](https://img.shields.io/badge/repo-intentcall-blue)](https://github.com/Arenukvern/intentcall)
+
 Optional `@AgentTool` / `@AgentParam` annotations and **build_runner** codegen pilot.
 
 Hand-written `AgentCallEntry` remains first-class; codegen is opt-in for stable tools with typed parameters.

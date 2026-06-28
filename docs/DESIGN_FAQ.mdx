@@ -4,10 +4,7 @@
 
 ---
 
-## Origin & positioning
-
-**Q: Why was IntentCall extracted from mcp_flutter?**
-A: As `mcp_flutter` scaled, the intent registry, wire types, and adapters became a distinct platform concern separate from the product harness (`mcp_toolkit`). Extracting to a standalone repo clarifies the dependency boundary: `mcp_flutter` is a consumer of IntentCall, not its host. See [ADR 0010](decisions/0010-adopt-intentcall-product-name.md).
+## Problem & positioning
 
 **Q: Why is it called IntentCall and not AgentKit?**
 A: OpenAI shipped a product named AgentKit in October 2025, creating a direct pub.dev and search collision. IntentCall — "register intents, call them everywhere" — describes the registry-plus-invoke model without overlap. See [ADR 0010](decisions/0010-adopt-intentcall-product-name.md).
@@ -17,6 +14,9 @@ A: `dart_mcp` is a transport implementation. IntentCall adds a typed *intent reg
 
 **Q: Where should canonical IntentCall design decisions live?**
 A: In this repository. IntentCall owns the product philosophy, platform projection model, AX/DX contracts, adapter expectations, and public direction such as IntentPack. Consumer repositories such as `mcp_flutter` own proof and integration guidance: hosted dependency checks, Flutter MCP Toolkit bootstrap, migration recipes, regression checklists, and consumer-facing examples. They should route architectural questions back to this repo instead of defining IntentCall's platform contract.
+
+**Q: Why was IntentCall extracted from mcp_flutter?**
+A: As `mcp_flutter` scaled, the intent registry, wire types, sessions, and adapters became a distinct platform concern separate from the product harness (`mcp_toolkit`). Extracting to a standalone repo clarifies the dependency boundary: `mcp_flutter` is an early consumer and proof harness for IntentCall, not its architectural owner. See [ADR 0010](decisions/0010-adopt-intentcall-product-name.md).
 
 ---
 
@@ -96,7 +96,11 @@ A: WebMCP's browser-hosted tool registration model requires different lifecycle 
 A: Deep links are the universal fallback, not the whole vision. Some platforms expose semantic agent/action registries; others only provide launch routing today. IntentCall preserves one invocation contract across both: native metadata where the platform supports it, and app-owned `<scheme>://invoke/...` or platform protocol handlers where it does not. Treat plain deep links as untrusted input unless they originate from generated native wrappers or an app-provided allowlist.
 
 **Q: How should platform support be described during pre-release?**
-A: Be explicit about tiers. WebMCP is a Dart-first in-page registration surface. Apple App Intents are currently generated parameter wrappers that dispatch to Dart after launch/wake; app-extension-hosted Dart is an experiment, not supported. Android AppFunctions and Windows App Actions are roadmap native semantic targets; Android App Actions and shortcuts are assistant/shortcut fulfillment; Windows protocol activation and Linux `x-scheme-handler` are protocol fallback. AAIF is ecosystem alignment around agent infrastructure, not a Linux desktop intent API.
+A: Be explicit about tiers. WebMCP is a Dart-first in-page registration surface. Apple App Intents currently generate parameter wrappers that either dispatch to Dart after launch/wake or, with explicit `nativeInline`, call app-owned Swift handlers in the main app target. Apple inline runtimes can generate primitive typed App Intents returns when `inlineRuntime.result` is declared. Apple `dartExtensionInline` has a scaffold and VM-safe Dart runtime bridge, but remains experimental until a fixture extension proves target membership, FlutterEngine boot, plugin allowlisting, shared storage/IPC, limits, and live OS invocation. Android AppFunctions and Windows App Actions are roadmap native semantic targets; Android App Actions and shortcuts are assistant/shortcut fulfillment; Windows protocol activation and Linux `x-scheme-handler` are protocol fallback. AAIF is ecosystem alignment around agent infrastructure, not a Linux desktop intent API.
+
+Windows App Actions URI launch and plain Windows protocol activation should not
+be collapsed into the same support claim. App Actions are a semantic action
+surface; protocol activation is fallback routing into an app-owned URI handler.
 
 ---
 

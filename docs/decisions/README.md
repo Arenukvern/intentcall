@@ -3,7 +3,7 @@
 Architecture Decision Records (ADRs) for IntentCall.
 Format: [MADR](https://adr.github.io/madr/) — see any existing ADR for the template.
 
-Next ADR number: **0016**
+Next ADR number: **0018**
 
 ---
 
@@ -17,6 +17,8 @@ Next ADR number: **0016**
 | [0013](0013-delete-implemented-plans-after-durable-extraction.md) | accepted | Delete implemented plans after durable extraction | 2026-06-10 |
 | [0014](0014-own-runtime-sessions-in-intentcall.md) | accepted | Own runtime sessions in IntentCall | 2026-06-22 |
 | [0015](0015-dart-first-native-bridge.md) | accepted | Dart-first Native Bridge for Platform Surfaces | 2026-06-26 |
+| [0016](0016-dispatch-mode-handoff-contract.md) | accepted | Dispatch Mode Handoff Contract | 2026-06-28 |
+| [0017](0017-apple-inline-runtime-tracks.md) | accepted | Apple Inline Runtime Tracks | 2026-06-28 |
 
 ---
 

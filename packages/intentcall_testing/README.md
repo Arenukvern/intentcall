@@ -3,6 +3,10 @@
 
 # intentcall_testing
 
+[![pub package](https://img.shields.io/pub/v/intentcall_testing.svg?include_prereleases)](https://pub.dev/packages/intentcall_testing)
+[![pub points](https://img.shields.io/pub/points/intentcall_testing.svg)](https://pub.dev/packages/intentcall_testing/score)
+[![repository](https://img.shields.io/badge/repo-intentcall-blue)](https://github.com/Arenukvern/intentcall)
+
 Contract and invoke helpers for IntentCall adapters, `AgentCallEntry`, and
 registry envelopes.
 

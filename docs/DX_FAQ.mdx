@@ -292,7 +292,7 @@ final diff = await snapshots.diffSnapshots(fromId: 'before', toId: 'after');
 
 ---
 
-## 🧰 Using IntentCall without Flutter MCP Toolkit
+## 🧰 Direct IntentCall Usage
 
 **Q: Can I use IntentCall in a CLI, server, or non-Flutter host?**
 
@@ -313,7 +313,7 @@ final result = await registry.invoke('namespace.name', arguments);
 Custom adapters should stay thin: publish registry metadata, translate incoming
 calls, then route execution back through `AgentRegistry.invoke(...)`.
 
-**Q: When should I still choose mcp_flutter?**
+**Q: When should I choose mcp_flutter?**
 
 Choose `mcp_flutter` / `mcp_toolkit` when you are building a Flutter app and
 want the product harness: CLI workflows, runtime discovery, Flutter VM
@@ -397,7 +397,7 @@ final manager = IntentSessionManager(
 );
 ```
 
-**Q: How do I run integration tests against the mcp_flutter sibling repo?**
+**Q: How do I run consumer regression checks against mcp_flutter?**
 
 ```bash
 # from the mcp_flutter repo root:
@@ -447,7 +447,7 @@ is marked `publish_to: none` and is not part of the pub.dev release train.
 
 ## 🔗 Local sibling repo path overrides
 
-**Q: When should I use local path overrides from mcp_flutter?**
+**Q: When should the mcp_flutter sibling use local IntentCall path overrides?**
 
 Normal consumers should use hosted `intentcall_*` packages from pub.dev. Use
 path overrides only for local IntentCall development before a release is
