@@ -350,7 +350,11 @@ callbacks can answer while Flutter is cold.
 Generated entity schemas, App Intents artifacts, native cache rows, and indexing
 or donation helpers are not live Spotlight, Siri, Shortcuts, or product proof.
 For Apple, claim donation/indexing only after a signed consuming app or
-AppIntentsTesting proves the system path you are describing.
+AppIntentsTesting proves the system path you are describing. Treat
+AppIntentsTesting as the primary automated regression lane for Apple App Intents
+behavior: actions, supported entity queries, and Spotlight query paths where the
+API covers them. Manual Siri, Shortcuts, and Spotlight runs remain smoke/product
+UX checks.
 
 ---
 
@@ -434,12 +438,62 @@ For iOS and macOS open-app App Intents, the readiness checklist is:
    and curated `"surfaces": { "apple.appShortcuts": { "include": true } }`.
 3. `codegen sync --platform ios,macos --check` passes, proving generated Swift,
    Runner target membership, and `Runner/Info.plist` `CFBundleURLTypes` drift.
-4. The app is signed and installed before claiming Shortcuts or Spotlight proof.
-5. Live proof uses Shortcuts, Spotlight, or AppIntentsTesting and verifies that
-   Flutter consumed the pending invocation, not merely that Swift compiled.
+4. The app is signed and installed before claiming manual Shortcuts or Spotlight
+   product proof.
+5. Automated Apple App Intents regression proof uses AppIntentsTesting where the
+   API covers the behavior, and verifies that Flutter consumed the pending
+   invocation, not merely that Swift compiled.
 6. Any typed entity or indexing path refreshes a Dart-owned snapshot into a
    durable native cache, and Apple query/indexing code reads that cache instead
    of assuming Flutter is already running.
+
+Use the exact proof label in release notes and docs: generated Swift compile
+proof, AppIntentsTesting runtime proof, entity query proof, Spotlight
+indexing/query proof, or manual smoke. The current local repo proof can stop at
+scaffold/API-shape tests plus Steward gates when the active toolchain cannot
+import `AppIntentsTesting`.
+
+If `xcode-select -p` points at `/Library/Developer/CommandLineTools`, raw
+`xcrun swiftc -typecheck` may still typecheck `import AppIntents` but fail on
+`import AppIntentsTesting` with `no such module`. That is expected: the testing
+framework is shipped with full Xcode under the platform Developer framework
+directory. Use the Xcode-backed probe before claiming local AppIntentsTesting
+compile support:
+
+```bash
+just apple-appintents-testing-typecheck /Applications/Xcode-beta.app
+```
+
+Generate the XCTest UI-test source from the same `agent_manifest.json` that
+drives platform sync:
+
+```bash
+dart run tool/intentcall/bin/intentcall.dart apple-appintents-testing generate-fixtures \
+  --manifest path/to/agent_manifest.json \
+  --sample-arguments-output path/to/appintents_arguments.json \
+  --entity-fixtures-output path/to/appintents_entities.json
+
+dart run tool/intentcall/bin/intentcall.dart apple-appintents-testing generate-tests \
+  --manifest path/to/agent_manifest.json \
+  --bundle-id com.example.app \
+  --sample-arguments path/to/appintents_arguments.json \
+  --entity-fixtures path/to/appintents_entities.json \
+  --output ios/RunnerUITests/IntentCallAppIntentsTests.swift
+```
+
+`appintents_arguments.json` is keyed by action `qualifiedName`; each value is
+an object of primitive App Intent parameter fixtures. `appintents_entities.json`
+is keyed by entity `qualifiedName`; each value contains `identifier`, `search`,
+and `expectedTitle`. Treat generated fixture files as editable templates:
+replace placeholder argument values with data seeded by the consuming app's
+UI-test setup before claiming runtime proof. The generated source is still
+scaffold proof until it is added to a signed consuming app's XCTest UI-test
+target and run with `xcodebuild test`.
+
+The command emits a proof-label reminder because these claims are different:
+typechecking `import AppIntentsTesting` proves full-Xcode framework visibility,
+generated XCTest source proves scaffold/API shape, and a passing generated UI
+test in the app target is the AppIntentsTesting runtime proof.
 
 For web runtime checks, prefer local Flutter web resources when the consumer
 fixture does not check in `web/canvaskit/`. In Flutter CLI terms, launch with

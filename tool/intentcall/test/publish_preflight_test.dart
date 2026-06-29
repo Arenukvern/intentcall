@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:intentcall_platform/intentcall_platform.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
@@ -188,6 +189,185 @@ Use intentcall_core-v<version> for release tag examples.
           'macos/intentcall_platform/Sources/intentcall_platform/IntentCallPlatformPlugin.swift is missing',
         ),
       );
+    });
+  });
+
+  group('Apple AppIntentsTesting CLI helpers', () {
+    test('reads entity fixtures from JSON', () async {
+      final dir = await Directory.systemTemp.createTemp(
+        'intentcall_appintents_fixtures_',
+      );
+      addTearDown(() => dir.deleteSync(recursive: true));
+      final file = File(p.join(dir.path, 'entities.json'))
+        ..writeAsStringSync('''
+{
+  "app_project": {
+    "identifier": "project-1",
+    "search": "Apollo",
+    "expectedTitle": "Apollo Roadmap"
+  }
+}
+''');
+
+      final fixtures = intentcall_cli.readAppleAppIntentsTestingEntityFixtures(
+        file,
+      );
+
+      expect(fixtures.keys, ['app_project']);
+      expect(fixtures['app_project']!.identifier, 'project-1');
+      expect(fixtures['app_project']!.search, 'Apollo');
+      expect(fixtures['app_project']!.expectedTitle, 'Apollo Roadmap');
+    });
+
+    test('rejects incomplete entity fixtures', () async {
+      final dir = await Directory.systemTemp.createTemp(
+        'intentcall_appintents_bad_fixtures_',
+      );
+      addTearDown(() => dir.deleteSync(recursive: true));
+      final file = File(p.join(dir.path, 'entities.json'))
+        ..writeAsStringSync('{"app_project":{"identifier":"project-1"}}');
+
+      expect(
+        () => intentcall_cli.readAppleAppIntentsTestingEntityFixtures(file),
+        throwsFormatException,
+      );
+    });
+
+    test('derives starter fixture JSON from manifest', () {
+      final manifest = AgentManifest.fromJson(<String, Object?>{
+        'version': 1,
+        'platform': 'apple',
+        'tools': [
+          <String, Object?>{
+            'qualifiedName': 'app_echo',
+            'namespace': 'app',
+            'name': 'echo',
+            'description': 'Echo',
+            'kind': 'tool',
+            'inputSchema': <String, Object?>{
+              'type': 'object',
+              'required': <String>['message', 'count', 'ratio', 'enabled'],
+              'properties': <String, Object?>{
+                'message': <String, Object?>{'type': 'string'},
+                'count': <String, Object?>{'type': 'integer'},
+                'ratio': <String, Object?>{'type': 'number'},
+                'enabled': <String, Object?>{'type': 'boolean'},
+                'optionalNote': <String, Object?>{'type': 'string'},
+              },
+            },
+          },
+        ],
+        'entityTypes': [
+          <String, Object?>{
+            'qualifiedName': 'app_project',
+            'namespace': 'app',
+            'name': 'project',
+            'displayName': 'Project',
+            'description': 'Project',
+            'idKey': 'projectId',
+          },
+        ],
+      });
+
+      expect(
+        intentcall_cli.appIntentsTestingSampleArgumentsTemplate(manifest),
+        {
+          'app_echo': {
+            'message': '<sample string>',
+            'count': 1,
+            'ratio': 1.0,
+            'enabled': true,
+          },
+        },
+      );
+      expect(intentcall_cli.appIntentsTestingEntityFixturesTemplate(manifest), {
+        'app_project': {
+          'identifier': '<projectId>',
+          'search': '<search text>',
+          'expectedTitle': '<Project title>',
+        },
+      });
+    });
+
+    test('emits scaffold from manifest and JSON fixtures', () async {
+      final dir = await Directory.systemTemp.createTemp(
+        'intentcall_appintents_scaffold_',
+      );
+      addTearDown(() => dir.deleteSync(recursive: true));
+      final manifest = File(p.join(dir.path, 'agent_manifest.json'))
+        ..writeAsStringSync('''
+{
+  "version": 1,
+  "platform": "apple",
+  "tools": [
+    {
+      "qualifiedName": "app_echo",
+      "namespace": "app",
+      "name": "echo",
+      "description": "Echo",
+      "kind": "tool",
+      "inputSchema": {
+        "type": "object",
+        "required": ["message"],
+        "properties": {
+          "message": {"type": "string"}
+        }
+      }
+    }
+  ],
+  "entityTypes": [
+    {
+      "qualifiedName": "app_project",
+      "namespace": "app",
+      "name": "project",
+      "displayName": "Project",
+      "description": "Project"
+    }
+  ]
+}
+''');
+      final sampleArguments = File(p.join(dir.path, 'arguments.json'))
+        ..writeAsStringSync('''
+{
+  "app_echo": {
+    "message": "hello"
+  }
+}
+''');
+      final entityFixtures = File(p.join(dir.path, 'entities.json'))
+        ..writeAsStringSync('''
+{
+  "app_project": {
+    "identifier": "project-1",
+    "search": "Apollo",
+    "expectedTitle": "Apollo Roadmap"
+  }
+}
+''');
+
+      final swift = intentcall_cli.emitAppleAppIntentsTestingScaffold(
+        manifestFile: manifest,
+        bundleIdentifier: 'com.example.intentcall',
+        testClassName: 'IntentCallAppIntentsTests',
+        sampleArgumentsFile: sampleArguments,
+        entityFixturesFile: entityFixtures,
+      );
+
+      expect(swift, contains('final class IntentCallAppIntentsTests'));
+      expect(
+        swift,
+        contains(
+          'IntentDefinitions(bundleIdentifier: "com.example.intentcall")',
+        ),
+      );
+      expect(
+        swift,
+        contains(
+          'definitions.intents["AppEchoIntent"].makeIntent(message: "hello")',
+        ),
+      );
+      expect(swift, contains('definitions.entities["AppProjectEntity"]'));
+      expect(swift, contains('spotlightQuery("Apollo")'));
     });
   });
 

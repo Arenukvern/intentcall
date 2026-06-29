@@ -23,7 +23,7 @@ final class AgentEntityTypeDescriptor {
        ) {
     validateNamespace(namespace);
     validateBareName(name);
-    validateBareName(identifierName);
+    _validateSnapshotFieldName(identifierName);
     final names = <String>{};
     for (final property in this.properties) {
       if (!names.add(property.name)) {
@@ -51,4 +51,10 @@ final class AgentEntityTypeDescriptor {
 
   Iterable<AgentEntityPropertyDescriptor> get indexedProperties =>
       properties.where((final property) => property.isIndexed);
+}
+
+void _validateSnapshotFieldName(final String value) {
+  if (!RegExp(r'^[A-Za-z_][A-Za-z0-9_]*$').hasMatch(value)) {
+    throw ArgumentError('Invalid snapshot field name: $value');
+  }
 }

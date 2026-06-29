@@ -882,6 +882,86 @@ void main() {
       expect(swift, contains('_ = value'));
     });
 
+    test('emits entity query and Spotlight scaffolds from fixtures', () {
+      final swift =
+          const AppleAppIntentsTestingEmitter(
+            bundleIdentifier: 'com.example.intentcall',
+            entityFixtures: <String, AppleAppIntentsTestingEntityFixture>{
+              'app_project': AppleAppIntentsTestingEntityFixture(
+                identifier: 'project-1',
+                search: 'Apollo',
+                expectedTitle: 'Apollo Roadmap',
+              ),
+            },
+          ).emitUiTests(
+            AgentManifest.fromJson(<String, Object?>{
+              'version': 1,
+              'platform': 'apple',
+              'entityTypes': [
+                <String, Object?>{
+                  'qualifiedName': 'app_project',
+                  'namespace': 'app',
+                  'name': 'project',
+                  'displayName': 'Project',
+                  'description': 'Open project',
+                },
+                <String, Object?>{
+                  'qualifiedName': 'app_customer',
+                  'namespace': 'app',
+                  'name': 'customer',
+                  'displayName': 'Customer',
+                  'description': 'Open customer',
+                },
+              ],
+              'tools': const <Object?>[],
+            }),
+          );
+
+      expect(swift, contains('@available(iOS 27.0, macOS 27.0, *)'));
+      expect(
+        swift,
+        contains(
+          'let entityDefinition = try XCTUnwrap(definitions.entities["AppProjectEntity"])',
+        ),
+      );
+      expect(
+        swift,
+        contains(
+          'let byIdentifier = try await entityDefinition.entities(identifiers: ["project-1"])',
+        ),
+      );
+      expect(
+        swift,
+        contains(
+          'let bySearch = try await entityDefinition.entities(matching: "Apollo")',
+        ),
+      );
+      expect(
+        swift,
+        contains(
+          r'XCTAssertTrue(bySearch.contains { String(describing: $0.displayRepresentation.title).contains("Apollo Roadmap") })',
+        ),
+      );
+      expect(
+        swift,
+        contains(
+          'let suggested = try await entityDefinition.suggestedEntities()',
+        ),
+      );
+      expect(
+        swift,
+        contains('let all = try await entityDefinition.allEntities()'),
+      );
+      expect(swift, contains('#if os(iOS) || os(macOS)'));
+      expect(
+        swift,
+        contains(
+          'let spotlight = try await entityDefinition.spotlightQuery("Apollo")',
+        ),
+      );
+      expect(swift, isNot(contains('AppCustomerEntity')));
+    });
+
     test('requires live sample values for required parameters', () {
       expect(
         () => const AppleAppIntentsTestingEmitter(

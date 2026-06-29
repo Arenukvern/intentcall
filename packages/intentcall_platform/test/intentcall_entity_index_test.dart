@@ -1,3 +1,4 @@
+import 'package:intentcall_core/intentcall_core.dart';
 import 'package:intentcall_platform/src/flutter/intentcall_entity_index.dart';
 import 'package:intentcall_schema/intentcall_schema.dart';
 import 'package:test/test.dart';
@@ -69,6 +70,78 @@ void main() {
       expect(row['keywords'], ['launch']);
       expect(row['deepLink'], 'demo://entity/notes_note/note-1');
       expect(row['updatedAt'], '2026-06-29T00:00:00.000Z');
+    },
+  );
+
+  test(
+    'IntentCallPlatformEntityIndex writes descriptor-aware snapshot rows',
+    () async {
+      final calls = <String, Object?>{};
+      final index = IntentCallPlatformEntityIndex(
+        invoke: (final method, final arguments) async {
+          calls[method] = arguments;
+          return 1;
+        },
+      );
+      final descriptor = AgentEntityTypeDescriptor(
+        namespace: 'projects',
+        name: 'project',
+        identifierName: 'projectId',
+        properties: [
+          AgentEntityPropertyDescriptor(
+            name: 'name',
+            valueType: AgentEntityPropertyValueType.string,
+            isDisplay: true,
+          ),
+          AgentEntityPropertyDescriptor(
+            name: 'summary',
+            valueType: AgentEntityPropertyValueType.string,
+            isSearchable: true,
+          ),
+          AgentEntityPropertyDescriptor(
+            name: 'tags',
+            valueType: AgentEntityPropertyValueType.array,
+            isSearchable: true,
+            isIndexed: true,
+          ),
+        ],
+      );
+
+      final count = await index.upsertAgentSnapshotsForType(
+        descriptor: descriptor,
+        snapshots: [
+          AgentEntitySnapshot(
+            ref: const AgentEntityRef(
+              namespace: 'projects',
+              typeName: 'project',
+              identifier: 'project-1',
+            ),
+            title: 'Fallback title',
+            subtitle: 'Fallback subtitle',
+            keywords: const <String>['fallback'],
+            deepLink: 'demo://projects/project-1',
+            properties: const <String, Object?>{
+              'name': 'Launch project',
+              'summary': 'Descriptor-owned summary',
+              'tags': <String>['launch', 'work'],
+            },
+          ),
+        ],
+      );
+
+      expect(count, 1);
+      final args = calls['upsertEntitySnapshots']! as Map<String, Object?>;
+      expect(args['entityType'], 'projects_project');
+      final row = (args['snapshots']! as List).single as Map;
+      expect(row['projectId'], 'project-1');
+      expect(row['id'], 'project-1');
+      expect(row['name'], 'Launch project');
+      expect(row['summary'], 'Descriptor-owned summary');
+      expect(row['tags'], ['launch', 'work']);
+      expect(row['title'], 'Fallback title');
+      expect(row['subtitle'], 'Fallback subtitle');
+      expect(row['keywords'], ['fallback']);
+      expect(row['deepLink'], 'demo://projects/project-1');
     },
   );
 

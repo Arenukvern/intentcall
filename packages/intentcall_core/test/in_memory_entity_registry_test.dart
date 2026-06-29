@@ -2,6 +2,25 @@ import 'package:intentcall_core/intentcall_core.dart';
 import 'package:test/test.dart';
 
 void main() {
+  test('entity identifier names use snapshot field syntax', () {
+    expect(
+      AgentEntityTypeDescriptor(
+        namespace: 'projects',
+        name: 'project',
+        identifierName: 'projectId',
+      ).identifierName,
+      'projectId',
+    );
+    expect(
+      () => AgentEntityTypeDescriptor(
+        namespace: 'projects',
+        name: 'project',
+        identifierName: 'project-id',
+      ),
+      throwsArgumentError,
+    );
+  });
+
   test('registers, lists, gets, and unregisters entity types', () {
     final registry = InMemoryAgentRegistry();
     final events = <AgentRegistryEvent>[];

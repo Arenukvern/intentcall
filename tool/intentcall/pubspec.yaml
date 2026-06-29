@@ -10,6 +10,7 @@ resolution: workspace
 
 dependencies:
   args: ^2.7.0
+  intentcall_platform:
   meta: ^1.17.0
   path: ^1.9.1
 

@@ -1,3 +1,4 @@
+import 'package:intentcall_core/intentcall_core.dart';
 import 'package:intentcall_schema/intentcall_schema.dart';
 
 import 'intentcall_entity_index_channel_stub.dart'
@@ -29,6 +30,16 @@ final class IntentCallPlatformEntityIndex {
     }
     return count;
   }
+
+  Future<int> upsertAgentSnapshotsForType({
+    required final AgentEntityTypeDescriptor descriptor,
+    required final Iterable<AgentEntitySnapshot> snapshots,
+  }) => upsertSnapshots(
+    entityType: descriptor.qualifiedName,
+    snapshots: snapshots.map(
+      (final snapshot) => projectAgentEntitySnapshot(snapshot, descriptor),
+    ),
+  );
 
   Future<int> deleteAgentRefs({
     required final Iterable<AgentEntityRef> refs,

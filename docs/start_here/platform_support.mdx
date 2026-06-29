@@ -73,6 +73,76 @@ Spotlight/Siri/Shortcuts discovery, accepted donation or indexing, ranking,
 freshness, deletion behavior, and product UX require a signed consuming app or
 AppIntentsTesting proof where that API covers the scenario.
 
+## Apple Proof Labels
+
+Keep Apple evidence labels separate:
+
+- Generated Swift compile proof: generated App Intents code compiles against the
+  active SDK, but this is not runtime behavior.
+- AppIntentsTesting runtime proof: the primary automated regression lane for
+  Apple App Intents behavior, including actions, supported entity queries, and
+  Spotlight query paths where Apple's testing API covers the scenario.
+- Entity query proof: native query code can read the durable projection cache
+  while Flutter is cold.
+- Spotlight indexing/query proof: indexed records are accepted, queryable, and
+  refreshed/deleted through the signed consuming app or AppIntentsTesting path
+  that exercises the system behavior being claimed.
+- Manual smoke: Siri, Shortcuts, and Spotlight product UX checks remain useful,
+  but they are smoke/product lanes, not the primary automated regression lane.
+
+On machines where the active developer directory is Command Line Tools or
+`AppIntentsTesting` is not importable, the strongest local proof remains
+scaffold/API-shape repo tests, Steward gates, and SDK typechecks that do not
+exercise AppIntentsTesting at runtime.
+
+To prove that a full Xcode install exposes the Apple test framework, run:
+
+```bash
+just apple-appintents-testing-typecheck /Applications/Xcode-beta.app
+```
+
+This recipe sets `DEVELOPER_DIR` to the chosen Xcode app and passes Xcode's
+platform Developer framework directory to `swiftc`, where
+`AppIntentsTesting.framework` lives. It fixes the common false-negative where
+`xcode-select -p` points at `/Library/Developer/CommandLineTools`: the Command
+Line Tools SDK can typecheck `import AppIntents`, but it does not carry the
+Xcode UI-test framework needed for `import AppIntentsTesting`.
+
+To generate the XCTest UI-test source a consuming app can add to its UI-test
+target, run:
+
+```bash
+dart run tool/intentcall/bin/intentcall.dart apple-appintents-testing generate-fixtures \
+  --manifest path/to/agent_manifest.json \
+  --sample-arguments-output path/to/appintents_arguments.json \
+  --entity-fixtures-output path/to/appintents_entities.json
+
+dart run tool/intentcall/bin/intentcall.dart apple-appintents-testing generate-tests \
+  --manifest path/to/agent_manifest.json \
+  --bundle-id com.example.app \
+  --sample-arguments path/to/appintents_arguments.json \
+  --entity-fixtures path/to/appintents_entities.json \
+  --output ios/RunnerUITests/IntentCallAppIntentsTests.swift
+```
+
+Action fixtures are keyed by manifest `qualifiedName`. Entity fixtures are keyed
+by entity `qualifiedName` and require `identifier`, `search`, and
+`expectedTitle`. Generated fixtures are editable templates; replace placeholders
+with data seeded by the consuming app's UI-test setup. This generated source
+proves only scaffold/API shape until the consuming app compiles and runs it in a
+signed XCTest UI-test target.
+
+That typecheck is still not live runtime proof. Runtime proof requires a signed
+consuming app, a generated XCTest UI-test source file in that app's UI-test
+target, and an `xcodebuild test` run through full Xcode:
+
+```bash
+DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer \
+  xcrun xcodebuild test \
+  -scheme <YourAppUITestsScheme> \
+  -destination 'platform=macOS'
+```
+
 ## Claim Rule
 
 Use “current” only for behavior covered by repo tests, generated artifacts, documented sync helpers, configuration checks, or local SDK typechecks. Use “experiment” for Apple `dartExtensionInline` scaffolds until a fixture app proves extension target membership, FlutterEngine boot, plugin allowlisting, App Group/shared storage or IPC, timeout/memory limits, and live OS invocation through AppIntentsTesting or Shortcuts. Use “roadmap” or “target” for Android AppFunctions, richer Android App Actions, Windows App Actions / Agent Launchers, AAIF alignment, native background Dart execution, and real OS assistant/launcher discovery. Apple Info.plist URL-scheme sync proves configuration drift only; live Shortcuts/App Intents proof still belongs to a signed consuming app. Generated entity/indexing artifacts and native cache storage prove projection shape only; live Spotlight, Siri, Shortcuts, donation, indexing, and product proof require a signed consuming app or AppIntentsTesting where applicable.

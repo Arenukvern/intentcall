@@ -12,6 +12,20 @@ test:
 analyze:
     dart analyze .
 
+# Typecheck the Apple AppIntentsTesting import against a full Xcode toolchain.
+# This proves the local Xcode SDK/framework shape only; live runtime proof still
+# requires a signed consuming app and an XCTest UI-test target.
+apple-appintents-testing-typecheck xcode_app="/Applications/Xcode-beta.app":
+    dart run tool/intentcall/bin/intentcall.dart apple-appintents-testing typecheck --xcode "{{xcode_app}}"
+
+# Generate an XCTest UI-test scaffold for AppIntentsTesting runtime proof.
+apple-appintents-testing-generate manifest bundle_id output:
+    dart run tool/intentcall/bin/intentcall.dart apple-appintents-testing generate-tests --manifest "{{manifest}}" --bundle-id "{{bundle_id}}" --output "{{output}}"
+
+# Generate starter JSON fixtures for AppIntentsTesting sample arguments/entities.
+apple-appintents-testing-fixtures manifest sample_arguments_output entity_fixtures_output:
+    dart run tool/intentcall/bin/intentcall.dart apple-appintents-testing generate-fixtures --manifest "{{manifest}}" --sample-arguments-output "{{sample_arguments_output}}" --entity-fixtures-output "{{entity_fixtures_output}}"
+
 # Dry-run publishing all packages in order (default)
 publish-dry-run:
     dart run tool/intentcall/bin/intentcall.dart publish-all

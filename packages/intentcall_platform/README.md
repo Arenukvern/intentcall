@@ -92,6 +92,52 @@ indexing/donation helpers are not live Spotlight, Siri, Shortcuts, donation,
 indexing, or product proof. Claim those only from a signed consuming app or
 AppIntentsTesting proof where the API covers the scenario.
 
+Keep Apple proof labels precise:
+
+- Generated Swift compile proof means the generated code compiles against the
+  active SDK; it does not prove runtime behavior.
+- AppIntentsTesting runtime proof is the primary automated regression lane for
+  Apple App Intents actions, supported entity queries, and Spotlight query paths
+  where Apple's testing API covers them.
+- Entity query proof shows native query code reading the durable projection
+  cache while Flutter may be cold.
+- Spotlight indexing/query proof shows accepted, queryable, refreshed, or
+  deleted records through the signed consuming app or AppIntentsTesting path
+  that exercises that system behavior.
+- Manual Siri, Shortcuts, and Spotlight runs are smoke/product UX lanes.
+
+If the active developer directory is Command Line Tools or `AppIntentsTesting`
+is not importable, local package evidence should be described as scaffold and
+API-shape proof plus Steward gates, not AppIntentsTesting runtime proof.
+
+For the local Xcode framework probe, run:
+
+```bash
+just apple-appintents-testing-typecheck /Applications/Xcode-beta.app
+```
+
+The recipe points `DEVELOPER_DIR` at the full Xcode app and adds Xcode's
+platform Developer framework directory to `swiftc`, which is where
+`AppIntentsTesting.framework` is found. It does not prove live invocation;
+runtime proof still requires the generated XCTest source in a signed consuming
+app's UI-test target and an `xcodebuild test` run.
+
+Generate that XCTest source from the consuming app's manifest and fixtures:
+
+```bash
+dart run tool/intentcall/bin/intentcall.dart apple-appintents-testing generate-tests \
+  --manifest path/to/agent_manifest.json \
+  --bundle-id com.example.app \
+  --sample-arguments path/to/appintents_arguments.json \
+  --entity-fixtures path/to/appintents_entities.json \
+  --output ios/RunnerUITests/IntentCallAppIntentsTests.swift
+```
+
+`appintents_arguments.json` is keyed by action `qualifiedName`; each value is an
+object of primitive argument fixtures. `appintents_entities.json` is keyed by
+entity `qualifiedName`; each value contains `identifier`, `search`, and
+`expectedTitle`.
+
 ## Dispatch modes
 
 Each manifest entry can declare a manifest-local `"dispatchMode"`:

@@ -11,6 +11,7 @@ final class AppleAppIntentsTestingEmitter {
     required this.bundleIdentifier,
     this.testClassName = 'IntentCallAppIntentsLiveInvocationTests',
     this.sampleArguments = const <String, Map<String, Object?>>{},
+    this.entityFixtures = const <String, AppleAppIntentsTestingEntityFixture>{},
   });
 
   final String bundleIdentifier;
@@ -22,10 +23,26 @@ final class AppleAppIntentsTestingEmitter {
   /// invocation tests to be runnable in a consuming app.
   final Map<String, Map<String, Object?>> sampleArguments;
 
+  /// Sample entity values keyed by manifest entity `qualifiedName`.
+  ///
+  /// Entity tests are emitted only for entity types with fixtures. This keeps
+  /// the generated scaffold opt-in for apps that have seeded searchable entity
+  /// data in their UI-test environment.
+  final Map<String, AppleAppIntentsTestingEntityFixture> entityFixtures;
+
   String emitUiTests(final AgentManifest manifest) {
     final tools = manifest.tools.toList();
-    if (tools.isEmpty) {
-      throw StateError('Apple App Intents testing requires at least one tool.');
+    final entityTypes = manifest.entityTypes
+        .where(
+          (final entityType) =>
+              entityFixtures.containsKey(entityType.qualifiedName),
+        )
+        .toList();
+    if (tools.isEmpty && entityTypes.isEmpty) {
+      throw StateError(
+        'Apple App Intents testing requires at least one tool or entity '
+        'fixture.',
+      );
     }
 
     final buffer = StringBuffer()
@@ -50,6 +67,13 @@ final class AppleAppIntentsTestingEmitter {
 
     for (final tool in tools) {
       _writeToolTest(buffer, tool);
+    }
+    for (final entityType in entityTypes) {
+      _writeEntityTest(
+        buffer,
+        entityType,
+        entityFixtures[entityType.qualifiedName]!,
+      );
     }
 
     buffer
@@ -82,6 +106,51 @@ final class AppleAppIntentsTestingEmitter {
     buffer.writeln('  }');
   }
 
+  void _writeEntityTest(
+    final StringBuffer buffer,
+    final AgentManifestEntityType entityType,
+    final AppleAppIntentsTestingEntityFixture fixture,
+  ) {
+    final typeName = _swiftEntityTypeName(entityType);
+    final functionName = 'test${typeName}EntityResolution';
+    final escapedIdentifier = escapeSwiftString(fixture.identifier);
+    final escapedSearch = escapeSwiftString(fixture.search);
+    final escapedTitle = escapeSwiftString(fixture.expectedTitle);
+    buffer
+      ..writeln()
+      ..writeln('  func $functionName() async throws {')
+      ..writeln(
+        '    let entityDefinition = try XCTUnwrap(definitions.entities["$typeName"])',
+      )
+      ..writeln(
+        '    let byIdentifier = try await entityDefinition.entities(identifiers: ["$escapedIdentifier"])',
+      )
+      ..writeln('    XCTAssertFalse(byIdentifier.isEmpty)')
+      ..writeln(
+        '    XCTAssertTrue(byIdentifier.contains { String(describing: \$0.displayRepresentation.title).contains("$escapedTitle") })',
+      )
+      ..writeln(
+        '    let bySearch = try await entityDefinition.entities(matching: "$escapedSearch")',
+      )
+      ..writeln('    XCTAssertFalse(bySearch.isEmpty)')
+      ..writeln(
+        '    XCTAssertTrue(bySearch.contains { String(describing: \$0.displayRepresentation.title).contains("$escapedTitle") })',
+      )
+      ..writeln(
+        '    let suggested = try await entityDefinition.suggestedEntities()',
+      )
+      ..writeln('    XCTAssertFalse(suggested.isEmpty)')
+      ..writeln('    let all = try await entityDefinition.allEntities()')
+      ..writeln('    XCTAssertFalse(all.isEmpty)')
+      ..writeln('    #if os(iOS) || os(macOS)')
+      ..writeln(
+        '    let spotlight = try await entityDefinition.spotlightQuery("$escapedSearch")',
+      )
+      ..writeln('    XCTAssertFalse(spotlight.isEmpty)')
+      ..writeln('    #endif')
+      ..writeln('  }');
+  }
+
   String _swiftSampleArguments(final AgentManifestEntry tool) {
     final values = sampleArguments[tool.qualifiedName] ?? const {};
     final parameters = _swiftParameters(tool);
@@ -104,6 +173,24 @@ final class AppleAppIntentsTestingEmitter {
     }
     return out.join(', ');
   }
+}
+
+/// Fixture values for generated AppIntentsTesting AppEntity checks.
+final class AppleAppIntentsTestingEntityFixture {
+  const AppleAppIntentsTestingEntityFixture({
+    required this.identifier,
+    required this.search,
+    required this.expectedTitle,
+  });
+
+  /// Identifier expected to resolve through the entity definition.
+  final String identifier;
+
+  /// Search text expected to resolve through the entity query and Spotlight.
+  final String search;
+
+  /// Display title expected on the resolved sample entity.
+  final String expectedTitle;
 }
 
 final class _LiveTestParameter {
@@ -191,6 +278,16 @@ String _swiftTypeForResult(final AgentManifestInlineRuntimeResultType type) =>
       AgentManifestInlineRuntimeResultType.number => 'Double',
       AgentManifestInlineRuntimeResultType.boolean => 'Bool',
     };
+
+String _swiftEntityTypeName(final AgentManifestEntityType entityType) =>
+    '${_swiftTypeBaseName(entityType.qualifiedName)}Entity';
+
+String _swiftTypeBaseName(final String qualifiedName) {
+  final parts = qualifiedName.split('_').where((final p) => p.isNotEmpty);
+  return parts
+      .map((final part) => '${part[0].toUpperCase()}${part.substring(1)}')
+      .join();
+}
 
 String _swiftIdentifier(final String name) {
   final parts = name
