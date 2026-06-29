@@ -33,6 +33,9 @@ jobs:
           channel: stable
           cache: true
 
+      - name: release train metadata check
+        run: dart tool/intentcall/bin/release_train.dart check
+
       - name: dart pub get
         run: dart pub get
 

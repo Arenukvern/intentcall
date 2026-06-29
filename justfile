@@ -45,6 +45,18 @@ publish-tag-execute tag:
 check-path-deps:
     dart run tool/intentcall/bin/intentcall.dart check-path-deps
 
+# Check release train metadata without requiring pub resolution
+check-release-train:
+    dart tool/intentcall/bin/release_train.dart check
+
+# Synchronize release train versions, internal floors, and native podspecs
+sync-release-train:
+    dart run tool/intentcall/bin/intentcall.dart sync-release-train
+
+# Synchronize release train metadata to a specific version
+sync-release-train-version version:
+    dart run tool/intentcall/bin/intentcall.dart sync-release-train --version {{version}}
+
 # Print hosted dependencies block for the synchronized package train
 print-hosted-deps:
     dart run tool/intentcall/bin/intentcall.dart print-hosted-deps
