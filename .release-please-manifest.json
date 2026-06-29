@@ -1,12 +1,12 @@
 {
-  "packages/intentcall_schema": "0.4.0",
-  "packages/intentcall_core": "0.4.0",
-  "packages/intentcall_session": "0.4.0",
-  "packages/intentcall_mcp": "0.4.0",
-  "packages/intentcall_webmcp": "0.4.0",
-  "packages/intentcall_apple": "0.4.0",
-  "packages/intentcall_android": "0.4.0",
-  "packages/intentcall_codegen": "0.4.0",
-  "packages/intentcall_platform": "0.4.0",
-  "packages/intentcall_testing": "0.4.0"
+  "packages/intentcall_schema": "0.5.0",
+  "packages/intentcall_core": "0.5.0",
+  "packages/intentcall_session": "0.5.0",
+  "packages/intentcall_mcp": "0.5.0",
+  "packages/intentcall_webmcp": "0.5.0",
+  "packages/intentcall_apple": "0.5.0",
+  "packages/intentcall_android": "0.5.0",
+  "packages/intentcall_codegen": "0.5.0",
+  "packages/intentcall_platform": "0.5.0",
+  "packages/intentcall_testing": "0.5.0"
 }

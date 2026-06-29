@@ -7,6 +7,14 @@
 - Allow Apple manifest generation to include neutral typed entity descriptors
   and snapshot field metadata for downstream App Intents projection.
 
+## [0.5.0](https://github.com/Arenukvern/intentcall/compare/intentcall_apple-v0.4.0...intentcall_apple-v0.5.0) (2026-06-29)
+
+
+### Features
+
+* add release-ready typed entity projections ([b2119b1](https://github.com/Arenukvern/intentcall/commit/b2119b14a1e157129ead9cf18e795bdde1ea2cd3))
+* add release-ready typed entity projections ([f7b9546](https://github.com/Arenukvern/intentcall/commit/f7b9546d291f7206c3be0ea71302144de6b836eb))
+
 ## [0.4.0](https://github.com/Arenukvern/intentcall/compare/intentcall_apple-v0.3.1...intentcall_apple-v0.4.0) (2026-06-28)
 
 
