@@ -7,6 +7,13 @@
 - Ignore typed entity registry events in the MCP publish adapter until MCP gets
   an explicit entity projection surface.
 
+## [0.6.0](https://github.com/Arenukvern/intentcall/compare/intentcall_mcp-v0.5.0...intentcall_mcp-v0.6.0) (2026-06-29)
+
+
+### Miscellaneous Chores
+
+* **intentcall_mcp:** Synchronize intentcall package train versions
+
 ## [0.5.0](https://github.com/Arenukvern/intentcall/compare/intentcall_mcp-v0.4.0...intentcall_mcp-v0.5.0) (2026-06-29)
 
 

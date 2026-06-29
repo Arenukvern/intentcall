@@ -8,6 +8,13 @@
   interfaces, and registry events so applications can describe entities and
   indexing lifecycle without Apple-specific vocabulary in core.
 
+## [0.6.0](https://github.com/Arenukvern/intentcall/compare/intentcall_core-v0.5.0...intentcall_core-v0.6.0) (2026-06-29)
+
+
+### Features
+
+* add AppIntentsTesting proof tooling ([a456b30](https://github.com/Arenukvern/intentcall/commit/a456b30d6e505b0e69872fa568196efcd9136fc7))
+
 ## [0.5.0](https://github.com/Arenukvern/intentcall/compare/intentcall_core-v0.4.0...intentcall_core-v0.5.0) (2026-06-29)
 
 
