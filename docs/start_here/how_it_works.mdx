@@ -10,10 +10,12 @@ flowchart LR
   registry --> core["intentcall_core\nregistry, runtime, neutral capability values"]
   registry --> schema["intentcall_schema\nAgentResult + wire validation"]
   registry --> session["intentcall_session\nruntime attachment + snapshots"]
+  registry --> entitySnapshot["Dart-owned snapshots\nentities + index records"]
   core --> mcp["intentcall_mcp\nMCP tools/resources"]
   core --> webmcp["intentcall_webmcp\nDart-first WebMCP registration"]
   core --> platform["intentcall_platform\nnative/web artifacts + invocation envelopes"]
   core --> codegen["intentcall_codegen\noptional @AgentTool helpers"]
+  entitySnapshot --> platform
   mcp --> callers["Agents, CLIs, assistants, app hosts"]
   webmcp --> callers
   platform --> callers
@@ -86,6 +88,22 @@ sequenceDiagram
 ```
 
 Native wrappers and fallback routes should collect supported parameters, authorize the source, and dispatch an invocation envelope back to Dart when Dart owns execution. Apple App Intents wrappers can launch or wake the app and dispatch to the Dart registry, or use explicit `nativeInline` to call app-owned Swift handlers in the main app target. Apple inline runtimes can generate primitive typed App Intents returns when `inlineRuntime.result` is declared. `dartExtensionInline` has an experimental scaffold and Dart runtime bridge, but still does not prove automatic extension target generation or live OS invocation.
+
+## Actions, Entities, and Indexing
+
+L3 keeps actions, typed entities, and indexing additive:
+
+- Actions are still registered behavior in `AgentRegistry`.
+- Typed entities come from Dart-owned snapshots of app data.
+- Indexing and donation lifecycles copy those snapshots into platform
+  projection caches.
+- Native query/indexing code reads durable native cache data because Flutter may
+  be cold.
+
+Apple is the first concrete projection for this lane. Generated schemas,
+artifacts, cache rows, and native storage helpers prove shape and synchronization
+only; live Spotlight, Siri, Shortcuts, donation, indexing, and product behavior
+need a signed consuming app or AppIntentsTesting proof where applicable.
 
 ## Neighboring Systems
 

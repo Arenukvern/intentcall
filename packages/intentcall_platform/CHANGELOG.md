@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased
+
+### Features
+
+- Add neutral `entityTypes` manifest support and Apple App Intents entity
+  projection for `AppEntity`, `IndexedEntity`, `EntityStringQuery`,
+  `IndexedEntityQuery`, open intents, and `CSSearchableIndex.indexAppEntities`
+  helper generation.
+- Add Dart-facing and native iOS/macOS snapshot cache APIs so app-owned Dart
+  snapshots can be projected into native storage for cold Apple query/indexing
+  callbacks.
+- Add Apple URL-scheme Info.plist sync/check support for app-owned fallback
+  handoff schemes.
+
+### Fixes
+
+- Keep generated Apple entity Swift typecheckable by avoiding macro-backed
+  property query emission in the default artifact until it has separate Xcode
+  macro proof.
+
 ## [0.4.0](https://github.com/Arenukvern/intentcall/compare/intentcall_platform-v0.3.1...intentcall_platform-v0.4.0) (2026-06-28)
 
 

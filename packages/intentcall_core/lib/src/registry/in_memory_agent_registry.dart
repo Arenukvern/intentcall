@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:intentcall_schema/intentcall_schema.dart';
 
+import '../entity/agent_entity_type_descriptor.dart';
 import '../intent/agent_intent_descriptor.dart';
 import '../intent/agent_invocation.dart';
 import '../intent/registered_agent_intent.dart';
@@ -15,6 +16,8 @@ final class InMemoryAgentRegistry implements AgentRegistry {
 
   final Map<String, RegisteredAgentIntent> _intents =
       <String, RegisteredAgentIntent>{};
+  final Map<String, AgentEntityTypeDescriptor> _entityTypes =
+      <String, AgentEntityTypeDescriptor>{};
   final StreamController<AgentRegistryEvent> _events =
       StreamController<AgentRegistryEvent>.broadcast(sync: true);
 
@@ -74,6 +77,49 @@ final class InMemoryAgentRegistry implements AgentRegistry {
   @override
   Iterable<AgentIntentDescriptor> listDescriptors({final String? namespace}) =>
       listEntries(namespace: namespace).map((final entry) => entry.descriptor);
+
+  @override
+  void registerEntityType(final AgentEntityTypeDescriptor descriptor) {
+    final key = descriptor.qualifiedName;
+    if (_entityTypes.containsKey(key)) {
+      throw AgentEntityTypeCollisionError(
+        'Entity type "$key" registered twice.',
+      );
+    }
+    _entityTypes[key] = descriptor;
+    _events.add(
+      EntityTypeRegistered(timestamp: DateTime.now(), qualifiedName: key),
+    );
+  }
+
+  @override
+  void unregisterEntityType(final String qualifiedName) {
+    if (_entityTypes.remove(qualifiedName) != null) {
+      _events.add(
+        EntityTypeUnregistered(
+          timestamp: DateTime.now(),
+          qualifiedName: qualifiedName,
+        ),
+      );
+    }
+  }
+
+  @override
+  AgentEntityTypeDescriptor? getEntityType(final String qualifiedName) =>
+      _entityTypes[qualifiedName];
+
+  @override
+  Iterable<AgentEntityTypeDescriptor> listEntityTypes({
+    final String? namespace,
+  }) {
+    final values = _entityTypes.values;
+    if (namespace == null) {
+      return values;
+    }
+    return values.where(
+      (final descriptor) => descriptor.namespace == namespace,
+    );
+  }
 
   @override
   Future<AgentResult> invoke(

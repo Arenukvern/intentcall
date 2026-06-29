@@ -14,6 +14,9 @@ timeline
   Dart-first platform bridge : IntentCallInvocationEnvelope
                              : IntentCallAuthorizationPolicy
                              : native wrappers dispatch to Dart
+  L3 projection lifecycle : additive actions
+                          : typed app entities
+                          : indexing and donation from Dart-owned snapshots
   Packaging direction : IntentPack metadata
                       : examples, safety policy, projection hints
   Native semantic targets : Android AppFunctions
@@ -27,6 +30,8 @@ timeline
 
 - Keep handwritten `AgentCallEntry` registration first-class.
 - Keep the registry as the behavior source of truth.
+- Keep Dart-owned snapshots as the source for typed entity and indexing
+  projections.
 - Keep adapters thin: publish metadata, translate transport calls, and invoke the registry.
 - Keep platform support tiers explicit, with artifact proof separated from live OS proof.
 - Keep `IntentPack` as direction until it is a stable public API.
@@ -41,3 +46,9 @@ IntentCall can support production-oriented integration design today, but the pac
 4. Run adapter contract tests and repo validation.
 5. Prove the actual target runtime or OS surface in the consuming app.
 6. Document non-claims beside the integration.
+
+For typed app entities, donation, or indexing, a production claim also needs the
+consuming app to refresh Dart-owned snapshots into a durable native cache and
+prove the platform query/indexing path in a signed app or AppIntentsTesting
+where applicable. Generated schemas, artifacts, or cache storage alone are not
+Spotlight, Siri, Shortcuts, donation, indexing, or product proof.

@@ -18,10 +18,7 @@ void main() {
       registration: registration,
     );
     final result = await intent.execute(
-      AgentInvocation(
-        descriptor: intent.descriptor,
-        arguments: const {},
-      ),
+      AgentInvocation(descriptor: intent.descriptor, arguments: const {}),
     );
     expect(result.ok, isTrue);
     expect(result.data['text'], '{"ok":true}');
@@ -65,10 +62,7 @@ void main() {
       () => intent.execute(
         AgentInvocation(
           descriptor: intent.descriptor,
-          arguments: const <String, Object?>{
-            'ref': 'ok',
-            'extra': true,
-          },
+          arguments: const <String, Object?>{'ref': 'ok', 'extra': true},
         ),
       ),
       throwsA(isA<AgentValidationException>()),

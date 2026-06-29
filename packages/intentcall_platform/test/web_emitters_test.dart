@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:intentcall_core/intentcall_core.dart';
 import 'package:intentcall_platform/intentcall_platform.dart';
 import 'package:test/test.dart';
 
@@ -245,6 +246,85 @@ void main() {
   });
 
   group('AgentManifest', () {
+    test('reads entityTypes with neutral snapshot fields', () {
+      final manifest = AgentManifest.fromJson(<String, Object?>{
+        'version': 1,
+        'platform': 'web',
+        'entityTypes': [
+          <String, Object?>{
+            'qualifiedName': 'app_project',
+            'namespace': 'app',
+            'name': 'project',
+            'displayName': 'Project',
+            'pluralDisplayName': 'Projects',
+            'description': 'A project snapshot',
+            'idKey': 'id',
+            'titleKey': 'name',
+            'subtitleKey': 'summary',
+            'keywordsKey': 'tags',
+            'urlKey': 'url',
+            'defaultQueryLimit': 12,
+            'snapshotSchema': <String, Object?>{
+              'type': 'object',
+              'required': <String>['id', 'name'],
+            },
+          },
+        ],
+        'tools': const <Object?>[],
+      });
+
+      expect(manifest.entityTypes, hasLength(1));
+      final entityType = manifest.entityTypes.first;
+      expect(entityType.qualifiedName, 'app_project');
+      expect(entityType.displayName, 'Project');
+      expect(entityType.pluralDisplayName, 'Projects');
+      expect(entityType.titleKey, 'name');
+      expect(entityType.subtitleKey, 'summary');
+      expect(entityType.keywordsKey, 'tags');
+      expect(entityType.defaultQueryLimit, 12);
+      expect(entityType.snapshotSchema['required'], isA<List>());
+      expect(entityType.toJson()['entityKind'], isNull);
+    });
+
+    test('rejects malformed entityTypes entries', () {
+      expect(
+        () => AgentManifest.fromJson(<String, Object?>{
+          'version': 1,
+          'platform': 'web',
+          'entityTypes': [
+            <String, Object?>{
+              'qualifiedName': 'app_project',
+              'namespace': 'app',
+              'name': 'project',
+              'displayName': 'Project',
+              'titleKey': 'bad.key',
+            },
+          ],
+        }),
+        throwsFormatException,
+      );
+    });
+
+    test('generateWebAgentManifest passes through raw entityTypes', () {
+      final json = generateWebAgentManifest(
+        <AgentIntentDescriptor>[],
+        entityTypes: [
+          <String, Object?>{
+            'qualifiedName': 'app_project',
+            'namespace': 'app',
+            'name': 'project',
+            'displayName': 'Project',
+          },
+        ],
+      );
+
+      final map = jsonDecode(json) as Map<String, Object?>;
+      expect(map['platform'], 'web');
+      final entityTypes = map['entityTypes']! as List;
+      expect(entityTypes, hasLength(1));
+      expect((entityTypes.first as Map)['qualifiedName'], 'app_project');
+    });
+
     test('reads shortcuts and intents arrays', () {
       final manifest = AgentManifest.fromJson(<String, Object?>{
         'version': 1,

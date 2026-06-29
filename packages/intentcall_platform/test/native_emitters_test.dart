@@ -123,6 +123,84 @@ void main() {
       expect(swift, contains('demoapp'));
     });
 
+    test('emits AppEntity snapshots, query, open intent, and index helper', () {
+      final swift = const AppleSwiftAppIntentsEmitter().emit(
+        AgentManifest.fromJson(<String, Object?>{
+          'version': 1,
+          'platform': 'apple',
+          'protocolScheme': 'demoapp',
+          'entityTypes': [
+            <String, Object?>{
+              'qualifiedName': 'app_project',
+              'namespace': 'app',
+              'name': 'project',
+              'displayName': 'Project',
+              'description': 'Open project',
+              'titleKey': 'name',
+              'subtitleKey': 'summary',
+              'keywordsKey': 'tags',
+              'defaultQueryLimit': 7,
+            },
+          ],
+          'tools': const <Object?>[],
+        }),
+      );
+
+      expect(swift, contains('import CoreSpotlight'));
+      expect(
+        swift,
+        contains('struct AppProjectEntity: AppEntity, IndexedEntity'),
+      );
+      expect(
+        swift,
+        contains('static var defaultQuery = AppProjectEntityQuery()'),
+      );
+      expect(
+        swift,
+        contains(
+          'struct AppProjectEntityQuery: EntityStringQuery, IndexedEntityQuery',
+        ),
+      );
+      expect(swift, contains('let title: String'));
+      expect(swift, contains('let subtitle: String'));
+      expect(swift, contains('let keywords: [String]'));
+      expect(swift, isNot(contains('ComputedProperty')));
+      expect(swift, isNot(contains('EntityPropertyQuery')));
+      expect(swift, contains('entities(for identifiers: [String])'));
+      expect(swift, contains('func entities(matching string: String)'));
+      expect(swift, contains('@available(iOS 27.0, macOS 27.0, *)'));
+      expect(swift, contains('func reindexAllEntities('));
+      expect(swift, contains('struct AppOpenProjectEntityIntent: OpenIntent'));
+      expect(
+        swift,
+        contains(
+          'IntentCallNativeEntitySnapshotStore.recordOpen(entityType: "app_project", id: target.id)',
+        ),
+      );
+      expect(swift, contains('enum IntentCallNativeEntitySnapshotStore'));
+      expect(
+        swift,
+        contains(
+          'private static let snapshotsKeyPrefix = "intentcall.entity_snapshots."',
+        ),
+      );
+      expect(swift, contains('static func indexAppEntities() async throws'));
+      expect(swift, contains('CSSearchableIndex.default().indexAppEntities'));
+      expect(swift, contains('static func deleteAppEntities('));
+      expect(
+        swift,
+        contains(
+          'IntentCallNativeEntitySnapshotStore.search(entityType: "app_project", query: string, titleKey: "name", subtitleKey: "summary", keywordsKey: "tags", limit: 7)',
+        ),
+      );
+      expect(
+        swift,
+        contains('private static let fallbackScheme: String? = "demoapp"'),
+      );
+      expect(swift, isNot(contains('FlutterEngine')));
+      expect(swift, isNot(contains('FlutterMethodChannel')));
+    });
+
     test('can omit URL fallback when no app scheme is declared', () {
       final swift = const AppleSwiftAppIntentsEmitter().emit(
         AgentManifest.fromJson(<String, Object?>{

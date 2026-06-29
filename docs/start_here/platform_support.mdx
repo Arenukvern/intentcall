@@ -21,7 +21,7 @@ flowchart TB
 |---|---|---|---|---|---|
 | MCP | `McpPublishAdapter` maps registry tools/resources to `dart_mcp`. | Dart `AgentRegistry` handler. | Shared adapter contract tests. | Transport host policy plus registry validation. | Not an LLM backend, RAG system, or Flutter runtime inspector. |
 | WebMCP | Dart-first in-page registration and JS emitter/bootstrap helpers. | Dart registry when bound; optional network fallback only when configured. | Emitter/bootstrap tests. | Deny unavailable runtime by default; network fallback is opt-in. | Live browser-host interoperability needs separate proof. |
-| Apple App Intents / Shortcuts | Generated parameter wrappers and artifacts; explicit `nativeInline` can call app-owned Swift handlers; Apple inline runtimes can generate primitive typed App Intents returns; `dartExtensionInline` has an experimental extension scaffold; Apple 27+ AppIntentsTesting UI-test scaffolds can be generated for live proof. | `openApp` launches or wakes app and dispatches envelope to Dart; `nativeInline` completes in generated Swift/native handler; scaffolded `dartExtensionInline` is not wired by default. | Artifact/project-sync tests, emitter tests, typed return generation tests, Dart extension runtime bridge tests, AppIntentsTesting scaffold tests, and local SDK typechecks. | `IntentCallAuthorizationPolicy` for Dart handoff and Dart extension bridge; native inline handlers must enforce app-owned permission policy. | No stable claim of automatic app-extension target generation, proven app-extension-hosted Dart, or completed live OS invocation in a real app. |
+| Apple App Intents / Shortcuts | Generated parameter wrappers and artifacts; explicit `nativeInline` can call app-owned Swift handlers; Apple inline runtimes can generate primitive typed App Intents returns; additive typed app entity and indexing/donation scaffolds may project Dart-owned snapshots through a durable native cache; `dartExtensionInline` has an experimental extension scaffold; Apple 27+ AppIntentsTesting UI-test scaffolds can be generated for live proof; `PlatformSync` patches/checks Runner target membership and `CFBundleURLTypes` for app-owned fallback schemes. | `openApp` launches or wakes app and dispatches envelope to Dart; `nativeInline` completes in generated Swift/native handler; entity query/indexing code reads native projection cache because Flutter may be cold; scaffolded `dartExtensionInline` is not wired by default. | Artifact/project-sync/configuration tests, emitter tests, typed return generation tests, native cache behavior tests, Dart extension runtime bridge tests, AppIntentsTesting scaffold tests, and local SDK typechecks. | `IntentCallAuthorizationPolicy` for Dart handoff and Dart extension bridge; native inline handlers must enforce app-owned permission policy; native entity caches are projection caches, not product databases. | No stable claim of automatic app-extension target generation, proven app-extension-hosted Dart, app signing, Shortcuts/Spotlight/Siri discovery, accepted donation/indexing, or completed live OS invocation in a real app. |
 | Android shortcuts / deep links | Manifest and shortcut/deep-link metadata. | App receives route and dispatches to Dart. | Manifest generator tests. | Treat plain deep links as untrusted unless generated wrapper or app allowlist marks source trusted. | Android AppFunctions and fuller App Actions capability generation are roadmap. |
 | Windows protocol activation | Protocol activation artifacts. | App route dispatches to Dart when wired by host. | Artifact-level support. | Fallback routes are untrusted by default. | Windows App Actions / Agent Launchers are roadmap. |
 | Linux `x-scheme-handler` | Desktop protocol handler artifacts for the app-owned scheme. | App route dispatches to Dart when wired by host. | Artifact-level support. | Fallback routes are untrusted by default. | No Linux OS-level native intent API claim. |
@@ -35,7 +35,7 @@ runtime. It does not replace support tiers.
 | Mode | Current support claim | Non-claim |
 |---|---|---|
 | `inlineRuntime` | Current where IntentCall has an exposed runtime already bound and authorized: Dart-first WebMCP and Apple `nativeInline` main-app Swift handlers. Apple inline runtimes can declare primitive typed App Intents return values. Apple `dartExtensionInline` is scaffold-only behind an explicit experimental emitter. Apple 27+ live invocation scaffolds can be generated with AppIntentsTesting. | Automatic Apple extension target generation, proven app-extension-hosted Dart, background Flutter/Dart runtime startup, and completed live OS invocation in a real app are not supported. |
-| `openApp` | Apple wrappers can enqueue an envelope and request app wake/open; shortcut and protocol artifacts can route into app-owned dispatch. | Artifact/project-sync proof is not live OS discovery or product runtime proof. |
+| `openApp` | Apple wrappers can enqueue an envelope and request app wake/open; shortcut and protocol artifacts can route into app-owned dispatch; `PlatformSync` can keep the app-owned fallback scheme declared in iOS/macOS `Runner/Info.plist`. | Artifact/project-sync/configuration proof is not app signing, live OS discovery, or product runtime proof. |
 | `queueOnly` | Apple wrappers can enqueue without opening the app or fallback URL. | Diagnostic/fallback queueing is not promoted product proof or durable delivery. |
 
 ## Projection Surfaces
@@ -55,6 +55,24 @@ clears them before Dart execution reports success or failure. Stronger claim,
 ack, fail, retry, or exactly-once semantics require separate implementation and
 proof.
 
+## Actions, Entities, and Indexing
+
+L3 is additive to the registry and dispatch model. Actions remain normal
+`AgentRegistry` entries. Typed app entities come from Dart-owned snapshots of
+app data. Indexing and donation are lifecycle operations that refresh, delete,
+or prune platform projection caches from those snapshots.
+
+Apple is the first projection for this lane. Apple query/indexing code may run
+when Flutter is cold, so it must read durable native cache data instead of
+calling the Dart registry synchronously. That cache is not the product source of
+truth and is not secure storage.
+
+Generated entity schemas, generated App Intents artifacts, native cache rows,
+and indexing/donation storage helpers are artifact proof only. Live
+Spotlight/Siri/Shortcuts discovery, accepted donation or indexing, ranking,
+freshness, deletion behavior, and product UX require a signed consuming app or
+AppIntentsTesting proof where that API covers the scenario.
+
 ## Claim Rule
 
-Use “current” only for behavior covered by repo tests, generated artifacts, documented sync helpers, or local SDK typechecks. Use “experiment” for Apple `dartExtensionInline` scaffolds until a fixture app proves extension target membership, FlutterEngine boot, plugin allowlisting, App Group/shared storage or IPC, timeout/memory limits, and live OS invocation through AppIntentsTesting or Shortcuts. Use “roadmap” or “target” for Android AppFunctions, richer Android App Actions, Windows App Actions / Agent Launchers, AAIF alignment, native background Dart execution, and real OS assistant/launcher discovery.
+Use “current” only for behavior covered by repo tests, generated artifacts, documented sync helpers, configuration checks, or local SDK typechecks. Use “experiment” for Apple `dartExtensionInline` scaffolds until a fixture app proves extension target membership, FlutterEngine boot, plugin allowlisting, App Group/shared storage or IPC, timeout/memory limits, and live OS invocation through AppIntentsTesting or Shortcuts. Use “roadmap” or “target” for Android AppFunctions, richer Android App Actions, Windows App Actions / Agent Launchers, AAIF alignment, native background Dart execution, and real OS assistant/launcher discovery. Apple Info.plist URL-scheme sync proves configuration drift only; live Shortcuts/App Intents proof still belongs to a signed consuming app. Generated entity/indexing artifacts and native cache storage prove projection shape only; live Spotlight, Siri, Shortcuts, donation, indexing, and product proof require a signed consuming app or AppIntentsTesting where applicable.

@@ -19,11 +19,19 @@ Intents returns when `inlineRuntime.result` is declared. App-extension hosted
 Dart execution has an experimental scaffold and Dart runtime bridge, but is not
 a stable support claim.
 
+L3 adds an additive projection direction for actions, typed app entities, and
+indexing lifecycle. Dart remains the source of truth for app behavior and
+entity snapshots. Platform code may store a durable native projection cache so
+query/indexing callbacks can answer while Flutter is cold, but that cache is not
+the product database.
+
 For iOS and macOS, `PlatformSync` also maintains the generated
 `Runner/Generated/IntentCallGenerated.swift` file in the main `Runner` target's
-Sources build phase. That is an artifact/project-sync claim: successful Xcode
-builds, installation, Apple system discovery, and live invocation need proof in
-the consuming app.
+Sources build phase. When a manifest has a `protocolScheme` and open-app Apple
+entries, it also keeps `Runner/Info.plist` `CFBundleURLTypes` registered for
+that app-owned scheme. That is an artifact/project-sync/configuration claim:
+successful Xcode builds, signing, installation, Apple system discovery, and live
+invocation need proof in the consuming app.
 
 Swift Package Manager support is declared for the iOS/macOS Flutter plugin under
 `ios/intentcall_platform/Package.swift` and
@@ -48,11 +56,41 @@ drains pending native envelopes at startup, can drain again on foreground/resume
 coalesces overlapping drains, and emits host events for dispatch observability.
 Plain deep links are not trusted by default; they should normally wake the app so
 the pending native queue can be drained through the same authorization policy.
+Important options are:
+
+- `policy`: required for non-debug trust decisions; compiled builds deny by
+  default without an explicit allowlist or confirmation policy.
+- `registerWebMcp`: registers Dart-first WebMCP when the host page exposes a
+  compatible `window.webMcp` surface.
+- `listenForDeepLinks`: listens for app-owned invoke URLs and drains the native
+  queue instead of trusting URL input directly.
+- `protocolScheme`: required when `listenForDeepLinks` is enabled and should
+  match manifest `protocolScheme` plus Apple `CFBundleURLTypes`.
 
 Current native handoff storage is at-most-once dispatch. The plugin takes and
 clears pending rows before Dart execution reports success or failure. Treat that
 as a bridge contract, not durable delivery, result transport, secure storage, or
 exactly-once execution.
+
+## Actions, entities, and indexing (L3)
+
+This package may project three additive concepts:
+
+- actions: user-facing projections of normal `AgentRegistry` entries,
+- typed app entities: stable ids, display fields, and search/index fields
+  derived from Dart-owned app snapshots,
+- indexing lifecycle: refresh, delete, and prune operations that copy those
+  snapshots into platform caches.
+
+Apple is the first concrete projection. Apple entity query and indexing code
+must read durable native cache data because the Flutter runtime may be cold when
+the system asks for entities or indexed records. The app's Dart layer owns the
+snapshot and refresh lifecycle; native storage owns only the latest projection.
+
+Generated schemas, generated App Intents files, native cache rows, and
+indexing/donation helpers are not live Spotlight, Siri, Shortcuts, donation,
+indexing, or product proof. Claim those only from a signed consuming app or
+AppIntentsTesting proof where the API covers the scenario.
 
 ## Dispatch modes
 
@@ -142,6 +180,13 @@ and fallback artifact projection:
 Apple App Shortcuts default to opt-in (`false`) so apps publish only
 user-facing actions. Android, web, Windows, and Linux projection artifacts
 preserve existing broad defaults and can be opted out with `"include": false`.
+For product/showcase actions, prefer normal registry entries with
+`"dispatchMode": "openApp"` and a curated `"apple.appShortcuts"` opt-in. Publish
+human actions such as "Set greeting in \(.applicationName)" or "Fill form in
+\(.applicationName)", not every diagnostic bridge tool. The current manifest
+surface options preserve unknown keys for future use, but generated Apple
+shortcuts still use the default title/phrase/system image behavior; custom
+`phrases`, `title`, `systemImage`, and `parameterSummary` are follow-up work.
 
 ## Manifest workflow (I4)
 
@@ -153,11 +198,13 @@ Apps that generate protocol fallback artifacts must declare their own URI scheme
 with a top-level `"protocolScheme"` in `agent_manifest.json`, or pass an explicit
 scheme to the sync/emitter API. IntentCall does not reserve a global
 `intentcall://` scheme because each app owns its platform URL declarations.
-Generated protocol artifacts do not guarantee OS registration, default-handler
-selection, or trusted dispatch. Web protocol handlers, Windows protocol
-activation, and Linux `x-scheme-handler` entries are app-owned fallback routes;
-host apps must validate source, scheme, qualified name, payload, and
-authorization before dispatch.
+For iOS and macOS, `PlatformSync` patches/checks `Runner/Info.plist`
+`CFBundleURLTypes` for that scheme when Apple open-app entries are present.
+Generated protocol artifacts do not guarantee default-handler selection, signing
+success, Shortcuts/Spotlight discovery, or trusted dispatch. Web protocol
+handlers, Windows protocol activation, and Linux `x-scheme-handler` entries are
+app-owned fallback routes; host apps must validate source, scheme, qualified
+name, payload, and authorization before dispatch.
 
 The package-owned contract is the manifest, emitter, and sync API. Host CLIs may
 wrap that API for their own product workflow. For example, Flutter MCP Toolkit
@@ -170,8 +217,8 @@ flutter-mcp-toolkit codegen sync \
 ```
 
 Use the same command with `--check` in CI. `--check` reports whether any
-generated artifact or native project membership would change without writing
-files.
+generated artifact, native project membership, or Apple URL-scheme plist
+configuration would change without writing files.
 
 ### One-time hooks
 

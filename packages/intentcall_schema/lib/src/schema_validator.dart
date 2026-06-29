@@ -15,7 +15,10 @@ import 'agent_validation_exception.dart';
 /// `required` / `properties`), `oneOf` / `anyOf`, or type coercion. Properties
 /// without a `type` are skipped. Unknown keys are allowed when
 /// `additionalProperties` is omitted or not `false`.
-void validateAgainstSchema(final InputSchema schema, final AgentArguments arguments) {
+void validateAgainstSchema(
+  final InputSchema schema,
+  final AgentArguments arguments,
+) {
   final rootType = schema['type'];
   if (rootType != 'object') {
     throw AgentValidationException('Root schema type must be "object".');

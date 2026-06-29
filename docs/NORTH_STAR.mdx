@@ -4,9 +4,9 @@
 
 IntentCall is a **transport-agnostic agent intent platform** for Dart/Flutter. It provides a central registry (`AgentRegistry`), a typed invocation model (`AgentCallEntry` / `RegisteredAgentIntent`), and adapters that publish intents to MCP, WebMCP, and platform artifacts.
 
-The north star is **define intent truth once, then project it into the strongest available platform surface**. Dart remains the preferred home for application business logic. Platform projections should publish native metadata, collect supported parameters, wake or route into the app when needed, and dispatch an invocation envelope back to the Dart `AgentRegistry` unless a platform has separately proven native execution support.
+The north star is **define intent truth once, then project it into the strongest available platform surface**. Dart remains the preferred home for application business logic, action handlers, and domain snapshots. Platform projections should publish native metadata, collect supported parameters, wake or route into the app when needed, and dispatch an invocation envelope back to the Dart `AgentRegistry` unless a platform has separately proven native execution support.
 
-Today, the repository implements the registry/runtime foundation, contract-tested MCP/WebMCP adapters, Dart-first invocation primitives, and platform artifact emitters for `web`, `android`, `ios`, `macos`, `linux`, and `windows`. Artifact emitters and sync helpers are not the same as live OS/runtime proof. Full registry-backed generation remains a target state: some platform artifacts, including `agent_manifest.json`, are currently checked in and refreshed by sync tooling rather than generated live from `AgentRegistry`.
+Today, the repository implements the registry/runtime foundation, contract-tested MCP/WebMCP adapters, Dart-first invocation primitives, and platform artifact emitters for `web`, `android`, `ios`, `macos`, `linux`, and `windows`. L3 extends that direction with additive actions, typed app entities, and indexing lifecycle docs: Dart owns the snapshots and source-of-truth, while platform code may keep a durable native projection cache for query/indexing paths that run while Flutter is cold. Artifact emitters, generated schemas, native caches, and sync helpers are not the same as live OS/runtime proof. Full registry-backed generation remains a target state: some platform artifacts, including `agent_manifest.json`, are currently checked in and refreshed by sync tooling rather than generated live from `AgentRegistry`.
 
 IntentCall is also the canonical home for IntentCall philosophy, platform projection semantics, agentic experience (AX), developer experience (DX), and IntentPack direction. Consumer repositories such as `mcp_flutter` prove and document integration, but do not define IntentCall's architecture or platform contract.
 
@@ -20,11 +20,13 @@ flowchart TB
   registry --> assistant["Assistant / shortcut fulfillment"]
   registry --> fallback["Protocol fallback"]
   registry --> ecosystem["Ecosystem alignment"]
+  registry --> entities["Typed entities + indexing lifecycle"]
   native --> nativeNow["Current: MCP, Dart-first WebMCP,\nApple dispatch wrappers + nativeInline"]
   native --> nativeExperiment["Experiment: Apple dartExtensionInline scaffold"]
   native --> nativeLater["Roadmap: Android AppFunctions,\nWindows App Actions / Agent Launchers"]
   assistant --> assistantNow["Current: shortcuts and web/PWA artifacts"]
   fallback --> fallbackNow["Current: app-owned invoke URLs,\nprotocol handler artifacts"]
+  entities --> entitiesNow["Direction: Dart-owned snapshots,\nplatform projection cache"]
 ```
 
 | Tier | Meaning | Current / target surfaces |
@@ -32,9 +34,10 @@ flowchart TB
 | Native semantic | Platform-recognized tool/action models that preserve intent metadata and structured invocation semantics. | Current: MCP adapter, Dart-first WebMCP adapter, Apple App Intents dispatch wrappers plus explicit main-app Swift `nativeInline`. Target: Android AppFunctions, Windows App Actions / Agent Launchers. |
 | Assistant / shortcut fulfillment | Assistant, shortcut, or launcher declarations that can route user-visible actions into app intent handling. | Current: Apple shortcuts artifacts, Android shortcut/deep-link artifacts, web/PWA artifacts. Target: richer Android App Actions capability generation. |
 | Protocol fallback | Stable URI/protocol invocation when no native semantic surface is available or implemented yet. | Current: app-owned `<scheme>://invoke/...`, web protocol handlers, Windows protocol activation artifacts, Linux `x-scheme-handler/<scheme>` artifacts. |
+| Typed entities and indexing lifecycle | App-owned entity snapshots and additive action/entity metadata projected into platform query and indexing systems. Dart remains the source-of-truth; native caches serve cold-start query paths. | First projection: Apple App Intents entity/query and indexing/donation scaffolds. Later: platform-specific equivalents where real APIs and proof exist. |
 | Ecosystem alignment | Compatibility with agent ecosystem conventions without claiming an OS-level integration contract. | Current: MCP conventions. Target: AAIF-hosted ecosystem alignment where relevant. |
 
-Support tiers are explicit on purpose. Apple App Intents are currently parameterized native wrappers that can enqueue an invocation envelope and open/wake the app for Dart execution, or call app-owned Swift code through explicit `nativeInline`; `dartExtensionInline` is scaffold-only until a fixture extension proves live runtime behavior. Linux is currently protocol-fallback first. Windows currently has protocol activation artifacts, while native Windows App Actions / Agent Launcher support remains roadmap. Android currently has shortcut/deep-link artifacts, while AppFunctions and fuller App Actions capability generation remain roadmap.
+Support tiers are explicit on purpose. Apple App Intents are currently parameterized native wrappers that can enqueue an invocation envelope and open/wake the app for Dart execution, or call app-owned Swift code through explicit `nativeInline`; Apple is also the first typed-entity/indexing projection. `dartExtensionInline` is scaffold-only until a fixture extension proves live runtime behavior. Linux is currently protocol-fallback first. Windows currently has protocol activation artifacts, while native Windows App Actions / Agent Launcher support remains roadmap. Android currently has shortcut/deep-link artifacts, while AppFunctions and fuller App Actions capability generation remain roadmap.
 
 ---
 
@@ -62,8 +65,9 @@ Support tiers are explicit on purpose. Apple App Intents are currently parameter
 2. The `intentcall_schema` wire contract is stable enough that adapters can evolve independently without breaking consumers.
 3. Platform support is documented by tier: native semantic, assistant / shortcut fulfillment, protocol fallback, or roadmap.
 4. `<app-scheme>://invoke/...` remains the canonical fallback invocation shape across platforms that lack implemented native semantic support; each app owns its scheme declaration, and fallback routes are untrusted unless a generated wrapper or app allowlist marks the source as trusted.
-5. `just test && just analyze && just publish-dry-run` stays green on every PR.
-6. A new adapter author can read `intentcall_core` + one existing adapter and ship a working adapter in a single session.
+5. Typed entity and indexing projections can be refreshed from Dart-owned snapshots, with native query code reading durable projection caches rather than assuming Flutter is warm.
+6. `just test && just analyze && just publish-dry-run` stays green on every PR.
+7. A new adapter author can read `intentcall_core` + one existing adapter and ship a working adapter in a single session.
 
 ---
 

@@ -9,6 +9,7 @@ import '../emitters/linux_desktop_entry_emitter.dart';
 import '../emitters/web_manifest_emitter.dart';
 import '../emitters/web_mcp_js_emitter.dart';
 import '../emitters/windows_protocol_emitter.dart';
+import 'apple_info_plist_protocol_sync.dart';
 import 'apple_xcode_project_sync.dart';
 
 /// Supported `codegen sync --platform` values.
@@ -34,6 +35,8 @@ final class PlatformSyncResult {
     this.macosGeneratedSwiftPath,
     this.iosXcodeProjectPath,
     this.macosXcodeProjectPath,
+    this.iosInfoPlistPath,
+    this.macosInfoPlistPath,
     this.linuxDesktopPath,
     this.windowsProtocolPath,
     this.windowsMsixFragmentPath,
@@ -44,6 +47,8 @@ final class PlatformSyncResult {
     this.wroteMacosGenerated = false,
     this.wroteIosXcodeProject = false,
     this.wroteMacosXcodeProject = false,
+    this.wroteIosInfoPlist = false,
+    this.wroteMacosInfoPlist = false,
     this.wroteLinuxDesktop = false,
     this.wroteWindowsProtocol = false,
     this.wroteWindowsMsixFragment = false,
@@ -59,6 +64,8 @@ final class PlatformSyncResult {
   final String? macosGeneratedSwiftPath;
   final String? iosXcodeProjectPath;
   final String? macosXcodeProjectPath;
+  final String? iosInfoPlistPath;
+  final String? macosInfoPlistPath;
   final String? linuxDesktopPath;
   final String? windowsProtocolPath;
   final String? windowsMsixFragmentPath;
@@ -69,6 +76,8 @@ final class PlatformSyncResult {
   final bool wroteMacosGenerated;
   final bool wroteIosXcodeProject;
   final bool wroteMacosXcodeProject;
+  final bool wroteIosInfoPlist;
+  final bool wroteMacosInfoPlist;
   final bool wroteLinuxDesktop;
   final bool wroteWindowsProtocol;
   final bool wroteWindowsMsixFragment;
@@ -487,6 +496,14 @@ final class PlatformSync {
         !outFile.existsSync() || outFile.readAsStringSync() != next;
     final projectSync = _appleXcodeProjectSync();
     final xcodePreview = projectSync.sync(appleRoot: appleRoot, dryRun: true);
+    final protocolScheme = _appleOpenAppProtocolScheme(manifest);
+    final plistPreview = protocolScheme == null
+        ? null
+        : _appleInfoPlistProtocolSync().sync(
+            appleRoot: appleRoot,
+            protocolScheme: protocolScheme,
+            dryRun: true,
+          );
     if (!dryRun) {
       generatedDir.createSync(recursive: true);
       _deleteStaleAppleGeneratedFiles(generatedDir);
@@ -494,35 +511,54 @@ final class PlatformSync {
         outFile.writeAsStringSync(next);
       }
     }
+    final plistResult = !dryRun && plistPreview != null && plistPreview.changed
+        ? _appleInfoPlistProtocolSync().sync(
+            appleRoot: appleRoot,
+            protocolScheme: protocolScheme!,
+          )
+        : plistPreview;
     final xcodeResult = !dryRun && xcodePreview.changed
         ? projectSync.sync(appleRoot: appleRoot)
         : xcodePreview;
+    final target = isMacos ? 'macos' : 'ios';
     return PlatformSyncResult(
       manifestPath: _resolveManifestFile(projectRoot).path,
       dryRun: dryRun,
       artifacts: <PlatformSyncArtifact>[
         PlatformSyncArtifact(
-          target: isMacos ? 'macos' : 'ios',
+          target: target,
           kind: 'apple-generated-swift',
           path: outFile.path,
           changed: generatedChanged,
         ),
         PlatformSyncArtifact(
-          target: isMacos ? 'macos' : 'ios',
+          target: target,
           kind: 'xcode-project',
           path: xcodeResult.projectPath,
           changed: xcodeResult.changed,
           operation: 'target-membership',
         ),
+        if (plistResult != null)
+          PlatformSyncArtifact(
+            target: target,
+            kind: 'info-plist-url-scheme',
+            path: plistResult.infoPlistPath,
+            changed: plistResult.changed,
+            operation: 'protocol-scheme',
+          ),
       ],
       iosGeneratedSwiftPath: isMacos ? null : outFile.path,
       macosGeneratedSwiftPath: isMacos ? outFile.path : null,
       iosXcodeProjectPath: isMacos ? null : xcodeResult.projectPath,
       macosXcodeProjectPath: isMacos ? xcodeResult.projectPath : null,
+      iosInfoPlistPath: isMacos ? null : plistResult?.infoPlistPath,
+      macosInfoPlistPath: isMacos ? plistResult?.infoPlistPath : null,
       wroteIosGenerated: !isMacos && generatedChanged,
       wroteMacosGenerated: isMacos && generatedChanged,
       wroteIosXcodeProject: !isMacos && xcodeResult.changed,
       wroteMacosXcodeProject: isMacos && xcodeResult.changed,
+      wroteIosInfoPlist: !isMacos && (plistResult?.changed ?? false),
+      wroteMacosInfoPlist: isMacos && (plistResult?.changed ?? false),
     );
   }
 
@@ -543,12 +579,35 @@ final class PlatformSync {
     if (!file.existsSync()) {
       return false;
     }
+    final protocolScheme = _appleOpenAppProtocolScheme(manifest);
+    final appleProjectRoot = p.join(projectRoot, appleRoot);
     return file.readAsStringSync() == '${appleSwiftEmitter.emit(manifest)}\n' &&
-        _appleXcodeProjectSync().check(p.join(projectRoot, appleRoot));
+        _appleXcodeProjectSync().check(appleProjectRoot) &&
+        (protocolScheme == null ||
+            _appleInfoPlistProtocolSync().check(
+              appleRoot: appleProjectRoot,
+              protocolScheme: protocolScheme,
+            ));
   }
 
   AppleXcodeProjectSync _appleXcodeProjectSync() =>
       AppleXcodeProjectSync(generatedFileName: appleGeneratedFileName);
+
+  AppleInfoPlistProtocolSync _appleInfoPlistProtocolSync() =>
+      const AppleInfoPlistProtocolSync();
+
+  String? _appleOpenAppProtocolScheme(final AgentManifest manifest) {
+    final hasOpenAppTool = manifest.tools.any(
+      (final tool) => tool.dispatchMode == AgentManifestDispatchMode.openApp,
+    );
+    if (!hasOpenAppTool) {
+      return null;
+    }
+    final protocolScheme = manifest.protocolScheme?.trim();
+    return protocolScheme == null || protocolScheme.isEmpty
+        ? null
+        : protocolScheme;
+  }
 
   void _deleteStaleAppleGeneratedFiles(final Directory generatedDir) {
     for (final name in _staleAppleGeneratedFileNames()) {
@@ -597,6 +656,8 @@ final class PlatformSync {
     iosXcodeProjectPath: right.iosXcodeProjectPath ?? left.iosXcodeProjectPath,
     macosXcodeProjectPath:
         right.macosXcodeProjectPath ?? left.macosXcodeProjectPath,
+    iosInfoPlistPath: right.iosInfoPlistPath ?? left.iosInfoPlistPath,
+    macosInfoPlistPath: right.macosInfoPlistPath ?? left.macosInfoPlistPath,
     linuxDesktopPath: right.linuxDesktopPath ?? left.linuxDesktopPath,
     windowsProtocolPath: right.windowsProtocolPath ?? left.windowsProtocolPath,
     windowsMsixFragmentPath:
@@ -611,6 +672,8 @@ final class PlatformSync {
         left.wroteIosXcodeProject || right.wroteIosXcodeProject,
     wroteMacosXcodeProject:
         left.wroteMacosXcodeProject || right.wroteMacosXcodeProject,
+    wroteIosInfoPlist: left.wroteIosInfoPlist || right.wroteIosInfoPlist,
+    wroteMacosInfoPlist: left.wroteMacosInfoPlist || right.wroteMacosInfoPlist,
     wroteLinuxDesktop: left.wroteLinuxDesktop || right.wroteLinuxDesktop,
     wroteWindowsProtocol:
         left.wroteWindowsProtocol || right.wroteWindowsProtocol,

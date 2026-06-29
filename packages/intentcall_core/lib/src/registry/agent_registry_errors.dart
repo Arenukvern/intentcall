@@ -13,3 +13,11 @@ final class AgentIntentNotFoundError implements Exception {
   @override
   String toString() => 'AgentIntentNotFoundError: $qualifiedName';
 }
+
+final class AgentEntityTypeCollisionError implements Exception {
+  AgentEntityTypeCollisionError(this.message);
+  final String message;
+
+  @override
+  String toString() => 'AgentEntityTypeCollisionError: $message';
+}
