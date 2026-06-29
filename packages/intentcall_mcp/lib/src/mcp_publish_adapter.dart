@@ -77,6 +77,8 @@ final class McpPublishAdapter implements AgentAdapter {
           }
         case IntentUnregistered(:final qualifiedName):
           _unpublishTransportKey(qualifiedName);
+        case EntityTypeRegistered() || EntityTypeUnregistered():
+          break;
       }
     });
   }

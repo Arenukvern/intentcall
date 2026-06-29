@@ -1,5 +1,6 @@
 library;
 
+export 'src/agent_entity_model.dart';
 export 'src/agent_result.dart';
 export 'src/agent_result_envelope.dart';
 export 'src/agent_validation_exception.dart';

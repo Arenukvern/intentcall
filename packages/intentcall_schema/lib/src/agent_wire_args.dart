@@ -18,14 +18,10 @@ extension type const AgentWireArgs(AgentWireMap _raw) {
     if (normalized == null) {
       return null;
     }
-    if (normalized == '1' ||
-        normalized == 'true' ||
-        normalized == 'yes') {
+    if (normalized == '1' || normalized == 'true' || normalized == 'yes') {
       return true;
     }
-    if (normalized == '0' ||
-        normalized == 'false' ||
-        normalized == 'no') {
+    if (normalized == '0' || normalized == 'false' || normalized == 'no') {
       return false;
     }
     return null;
@@ -33,8 +29,7 @@ extension type const AgentWireArgs(AgentWireMap _raw) {
 
   int? int_(final String key) => int.tryParse(_raw[key]?.trim() ?? '');
 
-  double? double_(final String key) =>
-      double.tryParse(_raw[key]?.trim() ?? '');
+  double? double_(final String key) => double.tryParse(_raw[key]?.trim() ?? '');
 
   Map<String, Object?>? jsonObject(final String key) {
     final raw = string(key);
@@ -51,6 +46,5 @@ extension type const AgentWireArgs(AgentWireMap _raw) {
     return null;
   }
 
-  AgentArguments toAgentArguments() =>
-      Map<String, Object?>.from(_raw);
+  AgentArguments toAgentArguments() => Map<String, Object?>.from(_raw);
 }

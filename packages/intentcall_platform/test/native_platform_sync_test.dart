@@ -37,6 +37,8 @@ void main() {
     Directory(p.join(temp.path, 'macos', 'Runner')).createSync(recursive: true);
     _writeMinimalXcodeProject(p.join(temp.path, 'ios'));
     _writeMinimalXcodeProject(p.join(temp.path, 'macos'));
+    _writeMinimalInfoPlist(p.join(temp.path, 'ios'));
+    _writeMinimalInfoPlist(p.join(temp.path, 'macos'));
     Directory(p.join(temp.path, 'linux')).createSync();
     Directory(p.join(temp.path, 'windows')).createSync();
 
@@ -51,6 +53,8 @@ void main() {
     expect(result.wroteMacosGenerated, isTrue);
     expect(result.wroteIosXcodeProject, isTrue);
     expect(result.wroteMacosXcodeProject, isTrue);
+    expect(result.wroteIosInfoPlist, isTrue);
+    expect(result.wroteMacosInfoPlist, isTrue);
     expect(result.wroteLinuxDesktop, isTrue);
     expect(result.wroteWindowsProtocol, isTrue);
     expect(result.changed, isTrue);
@@ -58,6 +62,8 @@ void main() {
       'android',
       'ios',
       'ios',
+      'ios',
+      'macos',
       'macos',
       'macos',
       'linux',
@@ -67,6 +73,10 @@ void main() {
     expect(
       result.artifacts.map((final artifact) => artifact.operation),
       contains('target-membership'),
+    );
+    expect(
+      result.artifacts.map((final artifact) => artifact.operation),
+      contains('protocol-scheme'),
     );
 
     expect(
@@ -91,6 +101,7 @@ void main() {
       p.join(temp.path, 'ios', 'Runner', 'Generated'),
     ).createSync(recursive: true);
     _writeMinimalXcodeProject(p.join(temp.path, 'ios'));
+    _writeMinimalInfoPlist(p.join(temp.path, 'ios'));
 
     const sync = PlatformSync();
     final manifest = sync.readManifest(temp.path);
@@ -117,7 +128,9 @@ void main() {
     ).writeAsStringSync(manifestJson);
     Directory(p.join(temp.path, 'ios', 'Runner')).createSync(recursive: true);
     final projectFile = _writeMinimalXcodeProject(p.join(temp.path, 'ios'));
+    final infoPlist = _writeMinimalInfoPlist(p.join(temp.path, 'ios'));
     final before = projectFile.readAsStringSync();
+    final plistBefore = infoPlist.readAsStringSync();
 
     const sync = PlatformSync();
     final result = sync.syncIos(projectRoot: temp.path, dryRun: true);
@@ -126,6 +139,7 @@ void main() {
     expect(result.changed, isTrue);
     expect(result.wroteIosGenerated, isTrue);
     expect(result.wroteIosXcodeProject, isTrue);
+    expect(result.wroteIosInfoPlist, isTrue);
     expect(
       File(
         p.join(
@@ -139,6 +153,7 @@ void main() {
       isFalse,
     );
     expect(projectFile.readAsStringSync(), before);
+    expect(infoPlist.readAsStringSync(), plistBefore);
   });
 
   test('Apple sync target-members custom generated file names', () {
@@ -149,6 +164,7 @@ void main() {
     ).writeAsStringSync(manifestJson);
     Directory(p.join(temp.path, 'ios', 'Runner')).createSync(recursive: true);
     final projectFile = _writeMinimalXcodeProject(p.join(temp.path, 'ios'));
+    _writeMinimalInfoPlist(p.join(temp.path, 'ios'));
 
     const sync = PlatformSync(appleGeneratedFileName: 'CustomIntentCall.swift');
     final result = sync.syncIos(projectRoot: temp.path);
@@ -169,6 +185,7 @@ void main() {
     ).writeAsStringSync(manifestJson);
     Directory(p.join(temp.path, 'ios', 'Runner')).createSync(recursive: true);
     final projectFile = _writeMinimalXcodeProject(p.join(temp.path, 'ios'));
+    _writeMinimalInfoPlist(p.join(temp.path, 'ios'));
 
     const PlatformSync().syncIos(projectRoot: temp.path);
     final sync = const PlatformSync(
@@ -216,6 +233,7 @@ void main() {
         p.join(temp.path, 'agent_manifest.json'),
       ).writeAsStringSync(manifestJson);
       Directory(p.join(temp.path, 'ios', 'Runner')).createSync(recursive: true);
+      _writeMinimalInfoPlist(p.join(temp.path, 'ios'));
       Directory(p.join(temp.path, 'ios', 'Runner.xcodeproj')).createSync();
       File(
         p.join(temp.path, 'ios', 'Runner.xcodeproj', 'project.pbxproj'),
@@ -239,7 +257,107 @@ void main() {
       );
     },
   );
+
+  test('Apple sync adds protocol scheme to Info.plist idempotently', () {
+    final temp = Directory.systemTemp.createTempSync('intentcall_native_sync_');
+    addTearDown(() => temp.deleteSync(recursive: true));
+    File(
+      p.join(temp.path, 'agent_manifest.json'),
+    ).writeAsStringSync(manifestJson);
+    Directory(p.join(temp.path, 'ios', 'Runner')).createSync(recursive: true);
+    _writeMinimalXcodeProject(p.join(temp.path, 'ios'));
+    final infoPlist = _writeMinimalInfoPlist(p.join(temp.path, 'ios'));
+
+    const sync = PlatformSync();
+    final result = sync.syncIos(projectRoot: temp.path);
+    final content = infoPlist.readAsStringSync();
+
+    expect(result.iosInfoPlistPath, infoPlist.path);
+    expect(result.wroteIosInfoPlist, isTrue);
+    expect(content, contains('<key>CFBundleURLTypes</key>'));
+    expect(content, contains('<key>CFBundleURLSchemes</key>'));
+    expect(content, contains('<string>demoapp</string>'));
+    expect(sync.checkIos(temp.path), isTrue);
+    expect(sync.syncIos(projectRoot: temp.path, dryRun: true).changed, isFalse);
+  });
+
+  test('Apple check fails when Info.plist is missing protocol scheme', () {
+    final temp = Directory.systemTemp.createTempSync('intentcall_native_sync_');
+    addTearDown(() => temp.deleteSync(recursive: true));
+    File(
+      p.join(temp.path, 'agent_manifest.json'),
+    ).writeAsStringSync(manifestJson);
+    Directory(p.join(temp.path, 'ios', 'Runner')).createSync(recursive: true);
+    _writeMinimalXcodeProject(p.join(temp.path, 'ios'));
+    final infoPlist = _writeMinimalInfoPlist(p.join(temp.path, 'ios'));
+
+    final sync = const PlatformSync()..syncIos(projectRoot: temp.path);
+    infoPlist.writeAsStringSync(_minimalInfoPlistXml());
+
+    expect(sync.checkIos(temp.path), isFalse);
+  });
+
+  test('Apple sync preserves existing URL types', () {
+    final temp = Directory.systemTemp.createTempSync('intentcall_native_sync_');
+    addTearDown(() => temp.deleteSync(recursive: true));
+    File(
+      p.join(temp.path, 'agent_manifest.json'),
+    ).writeAsStringSync(manifestJson);
+    Directory(p.join(temp.path, 'ios', 'Runner')).createSync(recursive: true);
+    _writeMinimalXcodeProject(p.join(temp.path, 'ios'));
+    final infoPlist = _writeMinimalInfoPlist(
+      p.join(temp.path, 'ios'),
+      extraContent: '''
+\t<key>CFBundleURLTypes</key>
+\t<array>
+\t\t<dict>
+\t\t\t<key>CFBundleTypeRole</key>
+\t\t\t<string>Editor</string>
+\t\t\t<key>CFBundleURLName</key>
+\t\t\t<string>existingapp</string>
+\t\t\t<key>CFBundleURLSchemes</key>
+\t\t\t<array>
+\t\t\t\t<string>existingapp</string>
+\t\t\t</array>
+\t\t</dict>
+\t</array>
+''',
+    );
+
+    final sync = const PlatformSync()..syncIos(projectRoot: temp.path);
+    final content = infoPlist.readAsStringSync();
+
+    expect(content, contains('<string>existingapp</string>'));
+    expect(content, contains('<string>demoapp</string>'));
+    expect(
+      RegExp(r'<key>\s*CFBundleURLTypes\s*</key>').allMatches(content),
+      hasLength(1),
+    );
+    expect(sync.checkIos(temp.path), isTrue);
+  });
 }
+
+File _writeMinimalInfoPlist(
+  final String appleRoot, {
+  final String extraContent = '',
+}) {
+  final runnerDir = Directory(p.join(appleRoot, 'Runner'))
+    ..createSync(recursive: true);
+  return File(p.join(runnerDir.path, 'Info.plist'))
+    ..writeAsStringSync(_minimalInfoPlistXml(extraContent: extraContent));
+}
+
+String _minimalInfoPlistXml({final String extraContent = ''}) =>
+    '''
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+\t<key>CFBundleName</key>
+\t<string>Runner</string>
+$extraContent</dict>
+</plist>
+''';
 
 File _writeMinimalXcodeProject(final String appleRoot) {
   final projectDir = Directory(p.join(appleRoot, 'Runner.xcodeproj'))

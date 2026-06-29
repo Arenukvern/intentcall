@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Features
+
+- Add portable typed entity descriptors, property descriptors, providers, index
+  interfaces, and registry events so applications can describe entities and
+  indexing lifecycle without Apple-specific vocabulary in core.
+
 ## [0.4.0](https://github.com/Arenukvern/intentcall/compare/intentcall_core-v0.3.1...intentcall_core-v0.4.0) (2026-06-28)
 
 

@@ -31,18 +31,19 @@ final class AgentResult {
     final String message = 'ok',
     final Map<String, Object?> data = const {},
     final List<AgentArtifact> artifacts = const [],
-  }) => AgentResult._(ok: true, message: message, data: data, artifacts: artifacts);
+  }) => AgentResult._(
+    ok: true,
+    message: message,
+    data: data,
+    artifacts: artifacts,
+  );
 
   factory AgentResult.failure({
     required final String code,
     required final String message,
     final Map<String, Object?> details = const {},
-  }) => AgentResult._(
-    ok: false,
-    code: code,
-    message: message,
-    details: details,
-  );
+  }) =>
+      AgentResult._(ok: false, code: code, message: message, details: details);
 
   final bool ok;
   final String message;

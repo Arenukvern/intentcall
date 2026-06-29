@@ -8,6 +8,8 @@ import 'package:intentcall_schema/intentcall_schema.dart';
   name: 'demo_ping',
   description: 'Returns pong for a message',
 )
-Future<AgentResult> demoPing(@AgentParam('Message to echo') String message) async {
+Future<AgentResult> demoPing(
+  @AgentParam('Message to echo') String message,
+) async {
   return AgentResult.success(data: {'pong': message});
 }

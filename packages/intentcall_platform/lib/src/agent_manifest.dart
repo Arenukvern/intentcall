@@ -224,12 +224,124 @@ final class AgentManifestEntry {
   );
 }
 
+/// One entity type row from the top-level `entityTypes` manifest section.
+///
+/// This stays platform-neutral: emitters decide how to project these snapshot
+/// keys into native concepts such as indexed entities or search metadata.
+final class AgentManifestEntityType {
+  const AgentManifestEntityType({
+    required this.qualifiedName,
+    required this.namespace,
+    required this.name,
+    required this.displayName,
+    required this.description,
+    this.pluralDisplayName,
+    this.idKey = 'id',
+    this.titleKey = 'title',
+    this.subtitleKey = 'subtitle',
+    this.keywordsKey = 'keywords',
+    this.urlKey = 'url',
+    this.defaultQueryLimit = 20,
+    this.snapshotSchema = const <String, Object?>{},
+  });
+
+  factory AgentManifestEntityType.fromJson(final Map<String, Object?> json) {
+    final namespace = '${json['namespace'] ?? ''}'.trim();
+    final name = '${json['name'] ?? ''}'.trim();
+    final qualifiedName = '${json['qualifiedName'] ?? ''}'.trim().isNotEmpty
+        ? '${json['qualifiedName']}'.trim()
+        : qualifyName(namespace: namespace, name: name);
+    _validateQualifiedName(qualifiedName);
+    final displayName = '${json['displayName'] ?? _humanizeName(name)}'.trim();
+    if (displayName.isEmpty) {
+      throw const FormatException(
+        'entityTypes[].displayName must not be empty.',
+      );
+    }
+    final pluralDisplayName =
+        '${json['pluralDisplayName'] ?? ''}'.trim().isEmpty
+        ? null
+        : '${json['pluralDisplayName']}'.trim();
+    final defaultQueryLimit = _readPositiveInt(
+      json['defaultQueryLimit'],
+      field: 'entityTypes[].defaultQueryLimit',
+      defaultValue: 20,
+    );
+    return AgentManifestEntityType(
+      qualifiedName: qualifiedName,
+      namespace: namespace,
+      name: name,
+      displayName: displayName,
+      description: '${json['description'] ?? ''}'.trim(),
+      pluralDisplayName: pluralDisplayName,
+      idKey: _readSnapshotKey(
+        json['idKey'],
+        field: 'entityTypes[].idKey',
+        defaultValue: 'id',
+      ),
+      titleKey: _readSnapshotKey(
+        json['titleKey'],
+        field: 'entityTypes[].titleKey',
+        defaultValue: 'title',
+      ),
+      subtitleKey: _readSnapshotKey(
+        json['subtitleKey'],
+        field: 'entityTypes[].subtitleKey',
+        defaultValue: 'subtitle',
+      ),
+      keywordsKey: _readSnapshotKey(
+        json['keywordsKey'],
+        field: 'entityTypes[].keywordsKey',
+        defaultValue: 'keywords',
+      ),
+      urlKey: _readSnapshotKey(
+        json['urlKey'],
+        field: 'entityTypes[].urlKey',
+        defaultValue: 'url',
+      ),
+      defaultQueryLimit: defaultQueryLimit,
+      snapshotSchema: _readOptionalObject(json['snapshotSchema']),
+    );
+  }
+
+  final String qualifiedName;
+  final String namespace;
+  final String name;
+  final String displayName;
+  final String description;
+  final String? pluralDisplayName;
+  final String idKey;
+  final String titleKey;
+  final String subtitleKey;
+  final String keywordsKey;
+  final String urlKey;
+  final int defaultQueryLimit;
+  final Map<String, Object?> snapshotSchema;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'qualifiedName': qualifiedName,
+    'namespace': namespace,
+    'name': name,
+    'displayName': displayName,
+    'description': description,
+    if (pluralDisplayName != null) 'pluralDisplayName': pluralDisplayName,
+    'idKey': idKey,
+    'titleKey': titleKey,
+    'subtitleKey': subtitleKey,
+    'keywordsKey': keywordsKey,
+    'urlKey': urlKey,
+    'defaultQueryLimit': defaultQueryLimit,
+    if (snapshotSchema.isNotEmpty) 'snapshotSchema': snapshotSchema,
+  };
+}
+
 /// Parsed canonical [agent_manifest.json].
 final class AgentManifest {
   const AgentManifest({
     required this.version,
     required this.platform,
     required this.entries,
+    this.entityTypes = const <AgentManifestEntityType>[],
     this.protocolScheme,
   });
 
@@ -251,6 +363,7 @@ final class AgentManifest {
       version: version.toInt(),
       platform: '${json['platform'] ?? 'unknown'}',
       entries: entries,
+      entityTypes: _readEntityTypes(json['entityTypes']),
       protocolScheme: _readOptionalProtocolScheme(json['protocolScheme']),
     );
   }
@@ -261,10 +374,37 @@ final class AgentManifest {
   final int version;
   final String platform;
   final List<AgentManifestEntry> entries;
+  final List<AgentManifestEntityType> entityTypes;
   final String? protocolScheme;
 
   Iterable<AgentManifestEntry> get tools =>
       entries.where((final entry) => entry.kind == AgentIntentKind.tool);
+}
+
+List<AgentManifestEntityType> _readEntityTypes(final Object? value) {
+  if (value == null) {
+    return const <AgentManifestEntityType>[];
+  }
+  if (value is! List) {
+    throw const FormatException('entityTypes must be an array.');
+  }
+  final out = <AgentManifestEntityType>[];
+  final seen = <String>{};
+  for (final row in value) {
+    final map = switch (row) {
+      final Map<String, Object?> typed => typed,
+      final Map raw => raw.cast<String, Object?>(),
+      _ => throw const FormatException('entityTypes entries must be objects.'),
+    };
+    final entityType = AgentManifestEntityType.fromJson(map);
+    if (!seen.add(entityType.qualifiedName)) {
+      throw FormatException(
+        'Duplicate entityTypes qualifiedName "${entityType.qualifiedName}".',
+      );
+    }
+    out.add(entityType);
+  }
+  return List<AgentManifestEntityType>.unmodifiable(out);
 }
 
 Iterable<Map<String, Object?>> _entryRows(
@@ -295,6 +435,64 @@ Map<String, Object?> _readInputSchema(final Object? value) {
     return value.cast<String, Object?>();
   }
   return const <String, Object?>{'type': 'object'};
+}
+
+Map<String, Object?> _readOptionalObject(final Object? value) {
+  if (value == null) {
+    return const <String, Object?>{};
+  }
+  if (value is Map<String, Object?>) {
+    return value;
+  }
+  if (value is Map) {
+    return value.cast<String, Object?>();
+  }
+  throw const FormatException('Expected an object.');
+}
+
+String _humanizeName(final String name) {
+  final parts = name
+      .split(RegExp(r'[_\s-]+'))
+      .where((final part) => part.trim().isNotEmpty);
+  if (parts.isEmpty) {
+    return '';
+  }
+  return parts
+      .map((final part) => '${part[0].toUpperCase()}${part.substring(1)}')
+      .join(' ');
+}
+
+int _readPositiveInt(
+  final Object? value, {
+  required final String field,
+  required final int defaultValue,
+}) {
+  if (value == null) {
+    return defaultValue;
+  }
+  final parsed = switch (value) {
+    final int integer => integer,
+    final num number => number.toInt(),
+    _ => throw FormatException('$field must be a positive integer.'),
+  };
+  if (parsed <= 0) {
+    throw FormatException('$field must be a positive integer.');
+  }
+  return parsed;
+}
+
+String _readSnapshotKey(
+  final Object? value, {
+  required final String field,
+  required final String defaultValue,
+}) {
+  final key = '${value ?? defaultValue}'.trim();
+  if (!RegExp(r'^[A-Za-z_][A-Za-z0-9_]*$').hasMatch(key)) {
+    throw FormatException(
+      'Invalid $field "$key"; expected a snapshot field identifier.',
+    );
+  }
+  return key;
 }
 
 AgentManifestDispatchMode _readDispatchMode(final Object? value) {

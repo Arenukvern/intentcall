@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Fixes
+
+- Keep shared adapter contract tests compatible with typed entity registry
+  events that adapters may intentionally ignore.
+
 ## [0.4.0](https://github.com/Arenukvern/intentcall/compare/intentcall_testing-v0.3.1...intentcall_testing-v0.4.0) (2026-06-28)
 
 

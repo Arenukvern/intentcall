@@ -12,3 +12,18 @@ final class IntentUnregistered extends AgentRegistryEvent {
   IntentUnregistered({required super.timestamp, required this.qualifiedName});
   final String qualifiedName;
 }
+
+final class EntityTypeRegistered extends AgentRegistryEvent {
+  EntityTypeRegistered({required super.timestamp, required this.qualifiedName});
+
+  final String qualifiedName;
+}
+
+final class EntityTypeUnregistered extends AgentRegistryEvent {
+  EntityTypeUnregistered({
+    required super.timestamp,
+    required this.qualifiedName,
+  });
+
+  final String qualifiedName;
+}

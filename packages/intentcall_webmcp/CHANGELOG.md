@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Fixes
+
+- Ignore typed entity registry events in the WebMCP publish adapter until WebMCP
+  gets an explicit entity projection surface.
+
 ## [0.4.0](https://github.com/Arenukvern/intentcall/compare/intentcall_webmcp-v0.3.1...intentcall_webmcp-v0.4.0) (2026-06-28)
 
 

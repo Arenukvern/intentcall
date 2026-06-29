@@ -30,4 +30,68 @@ void main() {
     expect(intents, hasLength(2));
     expect((intents[1] as Map)['resourceUri'], isNotNull);
   });
+
+  test('generateAppleAgentManifest includes raw entityTypes section', () {
+    final json = generateAppleAgentManifest(
+      <AgentIntentDescriptor>[],
+      entityTypes: [
+        <String, Object?>{
+          'qualifiedName': 'app_project',
+          'namespace': 'app',
+          'name': 'project',
+          'displayName': 'Project',
+          'titleKey': 'name',
+        },
+      ],
+    );
+
+    final map = jsonDecode(json) as Map<String, Object?>;
+    expect(map['platform'], 'apple');
+    final entityTypes = map['entityTypes']! as List;
+    expect(entityTypes, hasLength(1));
+    expect((entityTypes.first as Map)['titleKey'], 'name');
+  });
+
+  test('generateAppleAgentManifest projects core entity descriptors', () {
+    final json = generateAppleAgentManifest(
+      <AgentIntentDescriptor>[],
+      entityTypeDescriptors: [
+        AgentEntityTypeDescriptor(
+          namespace: 'app',
+          name: 'project',
+          identifierName: 'project_id',
+          displayName: 'Project',
+          properties: [
+            AgentEntityPropertyDescriptor(
+              name: 'name',
+              valueType: AgentEntityPropertyValueType.string,
+              isDisplay: true,
+              isSearchable: true,
+              isIndexed: true,
+            ),
+            AgentEntityPropertyDescriptor(
+              name: 'summary',
+              valueType: AgentEntityPropertyValueType.string,
+              isSearchable: true,
+            ),
+            AgentEntityPropertyDescriptor(
+              name: 'tags',
+              valueType: AgentEntityPropertyValueType.array,
+              isSearchable: true,
+            ),
+          ],
+        ),
+      ],
+    );
+
+    final map = jsonDecode(json) as Map<String, Object?>;
+    final entityTypes = map['entityTypes']! as List;
+    final entityType = entityTypes.first as Map;
+    expect(entityType['qualifiedName'], 'app_project');
+    expect(entityType['idKey'], 'project_id');
+    expect(entityType['titleKey'], 'name');
+    expect(entityType['subtitleKey'], 'summary');
+    expect(entityType['keywordsKey'], 'tags');
+    expect((entityType['snapshotSchema']! as Map)['required'], ['project_id']);
+  });
 }

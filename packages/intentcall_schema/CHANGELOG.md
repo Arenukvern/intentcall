@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Features
+
+- Add neutral `AgentEntityRef` and `AgentEntitySnapshot` schema models for
+  app-owned typed entity snapshots, including display, keyword, link, freshness,
+  version, and deletion metadata.
+
 ## [0.4.0](https://github.com/Arenukvern/intentcall/compare/intentcall_schema-v0.3.1...intentcall_schema-v0.4.0) (2026-06-28)
 
 

@@ -1,5 +1,6 @@
 import 'package:intentcall_schema/intentcall_schema.dart';
 
+import '../entity/agent_entity_type_descriptor.dart';
 import '../intent/agent_intent_descriptor.dart';
 import '../intent/registered_agent_intent.dart';
 import 'registry_events.dart';
@@ -28,6 +29,16 @@ abstract interface class AgentRegistry {
   Iterable<AgentRegistryEntry> listEntries({final String? namespace});
 
   Iterable<AgentIntentDescriptor> listDescriptors({final String? namespace});
+
+  void registerEntityType(final AgentEntityTypeDescriptor descriptor);
+
+  void unregisterEntityType(final String qualifiedName);
+
+  AgentEntityTypeDescriptor? getEntityType(final String qualifiedName);
+
+  Iterable<AgentEntityTypeDescriptor> listEntityTypes({
+    final String? namespace,
+  });
 
   Future<AgentResult> invoke(
     final String qualifiedName,

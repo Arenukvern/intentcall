@@ -62,6 +62,8 @@ final class WebMcpPublishAdapter implements AgentAdapter {
           }
         case IntentUnregistered(:final qualifiedName):
           _unpublish(qualifiedName);
+        case EntityTypeRegistered() || EntityTypeUnregistered():
+          break;
       }
     });
   }

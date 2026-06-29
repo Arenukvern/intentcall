@@ -339,6 +339,19 @@ The target is to project one pack into MCP tool registrations, WebMCP manifest m
 
 No. Handwritten entries remain first-class. Code generation should reduce repetition for stable surfaces, especially build-time artifacts such as manifests, web assets, native metadata, or generated skill snapshots; it should not become mandatory ceremony for local development, tests, CLI tools, or dynamic hosts.
 
+**Q: How should I think about typed app entities and indexing?**
+
+Treat them as additive projection metadata, not as a replacement for your app
+model. Your Dart app owns the real data and emits snapshots with stable ids,
+display fields, search/index fields, and enough routing payload to invoke later
+actions. Platform code may cache that projection so native query or indexing
+callbacks can answer while Flutter is cold.
+
+Generated entity schemas, App Intents artifacts, native cache rows, and indexing
+or donation helpers are not live Spotlight, Siri, Shortcuts, or product proof.
+For Apple, claim donation/indexing only after a signed consuming app or
+AppIntentsTesting proves the system path you are describing.
+
 ---
 
 ## 🧬 Codegen (`@AgentTool`)
@@ -404,6 +417,49 @@ final manager = IntentSessionManager(
 make check-intentcall-integration
 # (defaults INTENTCALL_ROOT=../agentkit when cloned as siblings)
 ```
+
+**Q: What should a Flutter host check after moving to the current hosted IntentCall train?**
+
+Use hosted `intentcall_*` packages from the same train, then bind the app
+registry once through `IntentCallFlutterHost.bindRegistry(...)`. Pass an
+explicit production policy, enable `registerWebMcp` only for pages that expose a
+compatible WebMCP host, enable `listenForDeepLinks` only with an app-owned
+`protocolScheme`, and drain on startup plus foreground/resume for open-app
+native handoff.
+
+For iOS and macOS open-app App Intents, the readiness checklist is:
+
+1. `agent_manifest.json` has the app-owned `protocolScheme`.
+2. Apple entries that should appear in Shortcuts use `"dispatchMode": "openApp"`
+   and curated `"surfaces": { "apple.appShortcuts": { "include": true } }`.
+3. `codegen sync --platform ios,macos --check` passes, proving generated Swift,
+   Runner target membership, and `Runner/Info.plist` `CFBundleURLTypes` drift.
+4. The app is signed and installed before claiming Shortcuts or Spotlight proof.
+5. Live proof uses Shortcuts, Spotlight, or AppIntentsTesting and verifies that
+   Flutter consumed the pending invocation, not merely that Swift compiled.
+6. Any typed entity or indexing path refreshes a Dart-owned snapshot into a
+   durable native cache, and Apple query/indexing code reads that cache instead
+   of assuming Flutter is already running.
+
+For web runtime checks, prefer local Flutter web resources when the consumer
+fixture does not check in `web/canvaskit/`. In Flutter CLI terms, launch with
+`--no-web-resources-cdn` rather than pointing at a missing local CanvasKit
+override.
+
+**Q: Which app actions should become Apple App Shortcuts?**
+
+Publish product verbs, not bridge diagnostics. A Flutter showcase can expose
+normal registry entries such as `mcpfluttertest_enable_switch`,
+`mcpfluttertest_set_greeting`, `mcpfluttertest_fill_form`, and
+`mcpfluttertest_write_text` with `"dispatchMode": "openApp"` plus curated
+`apple.appShortcuts` opt-ins. Human phrases should describe the app action, for
+example "Set greeting in \(.applicationName)", rather than exposing every tool
+or using transport-oriented wording.
+
+Current generated shortcuts still use default title, phrase, and system-image
+behavior. Manifest surface options are preserved for future expansion, but
+custom Apple `phrases`, `title`, `systemImage`, and `parameterSummary` are not a
+supported claim yet.
 
 ---
 

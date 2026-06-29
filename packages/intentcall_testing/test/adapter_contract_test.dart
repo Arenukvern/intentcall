@@ -96,6 +96,8 @@ final class _MapAdapter implements AgentAdapter {
           }
         case IntentUnregistered(:final qualifiedName):
           _published.remove(qualifiedName);
+        case EntityTypeRegistered() || EntityTypeUnregistered():
+          break;
       }
     });
   }
