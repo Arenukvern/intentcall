@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:args/args.dart';
 import 'package:path/path.dart' as p;
 
+import 'release_train.dart' as release_train;
+
 const publishOrder = [
   'intentcall_schema',
   'intentcall_core',
@@ -21,6 +23,22 @@ void main(List<String> arguments) async {
   final parser = ArgParser()
     ..addCommand('doctor')
     ..addCommand('validate')
+    ..addCommand('check-release-train')
+    ..addCommand(
+      'sync-release-train',
+      ArgParser()
+        ..addOption(
+          'version',
+          abbr: 'v',
+          help:
+              'Train version to sync. Defaults to .release-please-manifest.json or package versions.',
+        )
+        ..addFlag(
+          'check',
+          negatable: false,
+          help: 'Report whether sync would edit files without writing them.',
+        ),
+    )
     ..addCommand('check-path-deps')
     ..addCommand('check-doc-versions')
     ..addCommand(
@@ -103,6 +121,19 @@ void main(List<String> arguments) async {
 
     case 'validate':
       final code = await runValidate(repoRoot);
+      exit(code);
+
+    case 'check-release-train':
+      final code = await release_train.runReleaseTrainCheck(repoRoot);
+      exit(code);
+
+    case 'sync-release-train':
+      final cmdResults = results.command!;
+      final code = await release_train.runReleaseTrainSync(
+        repoRoot,
+        version: cmdResults['version'] as String?,
+        checkOnly: cmdResults['check'] as bool? ?? false,
+      );
       exit(code);
 
     case 'check-path-deps':
@@ -192,6 +223,12 @@ void printUsage(ArgParser parser) {
   print('  doctor                Check developer environment health.');
   print(
     '  validate              Validate path dependencies and version consistency.',
+  );
+  print(
+    '  check-release-train   Verify train versions, internal floors, and podspecs.',
+  );
+  print(
+    '  sync-release-train    Rewrite train versions, internal floors, and podspecs.',
   );
   print(
     '  check-path-deps       Scan workspace for invalid path dependencies.',

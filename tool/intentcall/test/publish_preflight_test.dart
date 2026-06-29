@@ -4,6 +4,7 @@ import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
 import '../bin/intentcall.dart' as intentcall_cli;
+import '../bin/release_train.dart' as release_train;
 
 void main() {
   group('publish args', () {
@@ -190,6 +191,61 @@ Use intentcall_core-v<version> for release tag examples.
     });
   });
 
+  group('release train sync', () {
+    test('checks and synchronizes dependency floors and podspecs', () async {
+      final repo = await _createReleaseTrainFixture();
+      addTearDown(() => repo.deleteSync(recursive: true));
+
+      expect(await release_train.runReleaseTrainCheck(repo), 1);
+
+      final syncCode = await release_train.runReleaseTrainSync(repo);
+
+      expect(syncCode, 0);
+      expect(await release_train.runReleaseTrainCheck(repo), 0);
+      expect(
+        File(
+          p.join(repo.path, 'packages', 'intentcall_session', 'pubspec.yaml'),
+        ).readAsStringSync(),
+        contains('  intentcall_schema: ^0.6.0'),
+      );
+      expect(
+        File(
+          p.join(repo.path, 'packages', 'intentcall_gemma', 'pubspec.yaml'),
+        ).readAsStringSync(),
+        contains('  intentcall_testing: ^0.6.0'),
+      );
+      expect(
+        File(
+          p.join(
+            repo.path,
+            'packages',
+            'intentcall_platform',
+            'ios',
+            'intentcall_platform.podspec',
+          ),
+        ).readAsStringSync(),
+        contains("s.version          = '0.6.0'"),
+      );
+    });
+
+    test('check-only sync reports stale metadata without writing', () async {
+      final repo = await _createReleaseTrainFixture();
+      addTearDown(() => repo.deleteSync(recursive: true));
+      final pubspec = File(
+        p.join(repo.path, 'packages', 'intentcall_core', 'pubspec.yaml'),
+      );
+      final before = pubspec.readAsStringSync();
+
+      final syncCode = await release_train.runReleaseTrainSync(
+        repo,
+        checkOnly: true,
+      );
+
+      expect(syncCode, 1);
+      expect(pubspec.readAsStringSync(), before);
+    });
+  });
+
   group('runReleaseGitCleanCheck', () {
     test('passes when release-critical files are clean', () async {
       final repo = await _createGitRepo();
@@ -278,6 +334,101 @@ Future<Directory> _createGitRepo() async {
     throw StateError('git init failed: ${result.stderr}');
   }
   return repo;
+}
+
+Future<Directory> _createReleaseTrainFixture() async {
+  final repo = await Directory.systemTemp.createTemp(
+    'intentcall_release_train_',
+  );
+  File(p.join(repo.path, 'pubspec.yaml'))
+    ..createSync(recursive: true)
+    ..writeAsStringSync('name: intentcall_workspace\npublish_to: none\n');
+  File(p.join(repo.path, '.release-please-manifest.json')).writeAsStringSync('''
+{
+  "packages/intentcall_schema": "0.6.0",
+  "packages/intentcall_core": "0.6.0",
+  "packages/intentcall_session": "0.6.0",
+  "packages/intentcall_mcp": "0.6.0",
+  "packages/intentcall_webmcp": "0.6.0",
+  "packages/intentcall_apple": "0.6.0",
+  "packages/intentcall_android": "0.6.0",
+  "packages/intentcall_codegen": "0.6.0",
+  "packages/intentcall_platform": "0.6.0",
+  "packages/intentcall_testing": "0.6.0"
+}
+''');
+
+  for (final packageName in release_train.publishablePackages) {
+    final deps = switch (packageName) {
+      'intentcall_schema' => '',
+      'intentcall_core' => '  intentcall_schema: ^0.5.0\n',
+      'intentcall_session' =>
+        '  intentcall_core: ^0.5.0\n  intentcall_schema: ^0.5.0\n',
+      'intentcall_mcp' =>
+        '  intentcall_core: ^0.5.0\n  intentcall_schema: ^0.5.0\n',
+      'intentcall_webmcp' =>
+        '  intentcall_core: ^0.5.0\n  intentcall_testing: ^0.5.0\n',
+      'intentcall_apple' => '  intentcall_core: ^0.5.0\n',
+      'intentcall_android' => '  intentcall_core: ^0.5.0\n',
+      'intentcall_codegen' =>
+        '  intentcall_core: ^0.5.0\n  intentcall_schema: ^0.5.0\n',
+      'intentcall_platform' =>
+        '  intentcall_core: ^0.5.0\n  intentcall_schema: ^0.5.0\n',
+      'intentcall_testing' =>
+        '  intentcall_core: ^0.5.0\n  intentcall_schema: ^0.5.0\n',
+      _ => '',
+    };
+    _writePubspec(repo, packageName, version: '0.6.0', dependencies: deps);
+  }
+
+  _writePubspec(
+    repo,
+    'intentcall_gemma',
+    version: '0.1.0',
+    publishToNone: true,
+    dependencies:
+        '  intentcall_core: ^0.5.0\n'
+        '  intentcall_schema: ^0.5.0\n'
+        '  intentcall_testing: ^0.5.0\n',
+  );
+
+  for (final platform in ['ios', 'macos']) {
+    final podspec = File(
+      p.join(
+        repo.path,
+        'packages',
+        'intentcall_platform',
+        platform,
+        'intentcall_platform.podspec',
+      ),
+    )..createSync(recursive: true);
+    podspec.writeAsStringSync('''
+Pod::Spec.new do |s|
+  s.name             = 'intentcall_platform'
+  s.version          = '0.5.0'
+end
+''');
+  }
+
+  return repo;
+}
+
+void _writePubspec(
+  Directory repo,
+  String packageName, {
+  required String version,
+  String dependencies = '',
+  bool publishToNone = false,
+}) {
+  final file = File(p.join(repo.path, 'packages', packageName, 'pubspec.yaml'))
+    ..createSync(recursive: true);
+  file.writeAsStringSync('''
+name: $packageName
+${publishToNone ? 'publish_to: none\n' : ''}version: $version
+environment:
+  sdk: ^3.9.0
+dependencies:
+$dependencies''');
 }
 
 Future<void> _runGit(Directory repo, List<String> args) async {
