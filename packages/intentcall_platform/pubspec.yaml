@@ -1,6 +1,6 @@
 name: intentcall_platform
 description: "PRE-RELEASE — Platform emitters and sync for intentcall: web manifests, WebMCP JS, native handoff, and Apple App Intents scaffolds."
-version: 0.5.0
+version: 0.6.0
 license: MIT
 repository: https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_platform
 issue_tracker: https://github.com/Arenukvern/intentcall/issues

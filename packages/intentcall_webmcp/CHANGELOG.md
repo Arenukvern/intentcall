@@ -7,6 +7,13 @@
 - Ignore typed entity registry events in the WebMCP publish adapter until WebMCP
   gets an explicit entity projection surface.
 
+## [0.6.0](https://github.com/Arenukvern/intentcall/compare/intentcall_webmcp-v0.5.0...intentcall_webmcp-v0.6.0) (2026-06-29)
+
+
+### Miscellaneous Chores
+
+* **intentcall_webmcp:** Synchronize intentcall package train versions
+
 ## [0.5.0](https://github.com/Arenukvern/intentcall/compare/intentcall_webmcp-v0.4.0...intentcall_webmcp-v0.5.0) (2026-06-29)
 
 

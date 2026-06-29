@@ -7,6 +7,13 @@
 - Allow Apple manifest generation to include neutral typed entity descriptors
   and snapshot field metadata for downstream App Intents projection.
 
+## [0.6.0](https://github.com/Arenukvern/intentcall/compare/intentcall_apple-v0.5.0...intentcall_apple-v0.6.0) (2026-06-29)
+
+
+### Miscellaneous Chores
+
+* **intentcall_apple:** Synchronize intentcall package train versions
+
 ## [0.5.0](https://github.com/Arenukvern/intentcall/compare/intentcall_apple-v0.4.0...intentcall_apple-v0.5.0) (2026-06-29)
 
 
