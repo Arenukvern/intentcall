@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/Arenukvern/intentcall/compare/intentcall_session-v0.4.0...intentcall_session-v0.5.0) (2026-06-29)
+
+
+### Miscellaneous Chores
+
+* **intentcall_session:** Synchronize intentcall package train versions
+
 ## [0.4.0](https://github.com/Arenukvern/intentcall/compare/intentcall_session-v0.3.1...intentcall_session-v0.4.0) (2026-06-28)
 
 
