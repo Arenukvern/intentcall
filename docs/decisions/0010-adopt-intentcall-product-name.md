@@ -17,10 +17,10 @@ In October 2025, **OpenAI announced [AgentKit](https://openai.com/index/introduc
 The maintainer ecosystem also includes:
 
 - **[mcp_flutter](https://github.com/Arenukvern/mcp_flutter)** — product **harness** (`mcp_toolkit`, `flutter-mcp-toolkit` CLI).
-- **[Skill Steward](https://github.com/Arenukvern/skill_steward)** (`~/mcp/agent_guild`) — meta-layer for Agent Skills ([ADR 0008](https://github.com/Arenukvern/skill_steward/blob/main/docs/decisions/0008-adopt-skill-steward-product-name.md)).
+- **[Skill Steward](https://github.com/Arenukvern/skill_steward)** — meta-layer for Agent Skills ([ADR 0008](https://github.com/Arenukvern/skill_steward/blob/main/docs/decisions/0008-adopt-skill-steward-product-name.md)).
 - **flutter_harness**, **flutter_visual_reconstruct** — sibling specs and path overrides.
 
-We need one **public name** that states *register intents, invoke everywhere* without colliding with OpenAI or crowded “intent kit / mux” products, while allowing incremental migration (local folder `~/mcp/agentkit` may lag GitHub rename).
+We need one **public name** that states *register intents, invoke everywhere* without colliding with OpenAI or crowded “intent kit / mux” products, while allowing incremental repository and folder migration.
 
 ## Decision Drivers
 
@@ -58,7 +58,7 @@ Chosen option: **IntentCall** as the **public product name**.
 
 **Workspace root pubspec:** `intentcall_workspace`.
 
-**On-disk sibling path (until GitHub rename):** `~/mcp/agentkit` — consumers use `../agentkit/packages/intentcall_*` in path deps.
+**Sibling checkout path:** consumers can use repo-relative `../agentkit/packages/intentcall_*` path dependencies during local development.
 
 ### Consequences
 
@@ -72,10 +72,10 @@ Chosen option: **IntentCall** as the **public product name**.
 
 | Item | Action |
 |------|--------|
-| GitHub repo | Done — `Arenukvern/intentcall`; local clone may remain `~/mcp/agentkit` until folder rename |
+| GitHub repo | Done — `Arenukvern/intentcall`; local clone folders may keep their existing names until maintainers choose to rename them |
 | pub.dev | Publish `intentcall_*` packages; deprecate `agentkit_*` if ever published |
 | Skill Steward / bios | Update ecosystem docs to say IntentCall |
-| Local folder | Optional: `mv ~/mcp/agentkit ~/mcp/intentcall` after GitHub rename |
+| Local folder | Optional: rename local checkout folders after the GitHub rename |
 
 ## Links
 

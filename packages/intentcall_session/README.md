@@ -54,7 +54,7 @@ await manager.load();
 final result = await manager.startSession(
   const IntentSessionStartRequest(
     mode: IntentSessionConnectionMode.uri,
-    uri: 'ws://127.0.0.1:8181/ws',
+    uri: 'wss://runtime.example.com/ws',
     sessionId: 'debug',
   ),
 );

@@ -62,7 +62,7 @@ templates when the host provides a template publisher. This keeps resources
 visible in `resources/list` while allowing reads such as:
 
 ```text
-visual://localhost/view/details?uri=ws%3A%2F%2F127.0.0.1%2Fws
+visual://runtime.example.com/view/details?uri=wss%3A%2F%2Fruntime.example.com%2Fws
 ```
 
 The adapter de-duplicates resource templates by URI pattern. This matters for

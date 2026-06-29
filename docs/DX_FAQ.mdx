@@ -207,7 +207,7 @@ await sessions.load();
 final start = await sessions.startSession(
   const IntentSessionStartRequest(
     mode: IntentSessionConnectionMode.uri,
-    uri: 'ws://127.0.0.1:8181/ws',
+    uri: 'wss://runtime.example.com/ws',
     sessionId: 'debug',
   ),
 );
@@ -561,7 +561,7 @@ is marked `publish_to: none` and is not part of the pub.dev release train.
 
 Normal consumers should use hosted `intentcall_*` packages from pub.dev. Use
 path overrides only for local IntentCall development before a release is
-published. When cloned as siblings (`~/mcp/agentkit` and `~/mcp/mcp_flutter`),
+published. When cloned as sibling repositories (`agentkit` and `mcp_flutter`),
 a temporary local-development override looks like:
 
 ```yaml
@@ -575,5 +575,5 @@ If your checkout uses a different local folder name, update the path or use
 `INTENTCALL_ROOT` for local source validation:
 
 ```bash
-INTENTCALL_ROOT=~/mcp/agentkit make check-intentcall-integration
+INTENTCALL_ROOT="$(pwd)/../agentkit" make check-intentcall-integration
 ```
