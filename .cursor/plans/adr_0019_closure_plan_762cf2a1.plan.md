@@ -4,22 +4,22 @@ overview: "Close all MoE-identified gaps for ADR 0019: fix intentcall_codegen li
 todos:
   - id: ws-a-codegen-layout
     content: "Subagent A: Migrate intentcall_codegen to pure library; create example/ mini-host + CLI codegen_dart_project fixture; default generators to lib/** only"
-    status: pending
+    status: completed
   - id: ws-b-manifest-exporter
     content: "Subagent B: ManifestExporter; catalog row EntryProjection; @AgentProjection in catalog builder; yaml defaults-only; delete projection yaml paths; remove agent_manifest builder"
-    status: pending
+    status: completed
   - id: ws-c-surface-catalog-legacy
     content: "Subagent C: Hybrid surface aliases + fail loud; remove CatalogLoader manifest fallback; delete legacy generateWebAgentManifest + migrate tests"
-    status: pending
+    status: completed
   - id: ws-d-harness-ci
     content: "Subagent D: Add manifest-export-check + adr-gates to just/steward/CI; fix command_runner_test setUp; strengthen parity tests; fix intentcall.validate schema path"
-    status: pending
+    status: completed
   - id: ws-e-docs
     content: "Subagent E: Update DX_FAQ, codegen README, hook PATH note; document mcp_flutter follow-up"
-    status: pending
+    status: completed
   - id: ws-integrate-verify
     content: "Parent: Merge subagents, run just adr-gates + just test + steward probe --profile quick; MoE re-audit"
-    status: pending
+    status: completed
 isProject: false
 ---
 

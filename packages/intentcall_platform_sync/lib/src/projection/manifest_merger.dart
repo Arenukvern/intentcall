@@ -9,6 +9,21 @@ import '../agent_manifest.dart';
 import '../catalog/agent_registry_catalog.dart';
 import 'projection_policy.dart';
 
+/// Inputs for [ManifestMerger.mergeManifest] loaded from host config.
+final class ManifestExportContext {
+  const ManifestExportContext({
+    required this.policy,
+    required this.platform,
+    required this.manifestRelativePath,
+    this.protocolScheme,
+  });
+
+  final ProjectionPolicy policy;
+  final String? protocolScheme;
+  final String platform;
+  final String manifestRelativePath;
+}
+
 /// Merges registry catalog rows and projection policy into [agent_manifest.json].
 final class ManifestMerger {
   const ManifestMerger();
@@ -25,7 +40,7 @@ final class ManifestMerger {
     final entries = <AgentManifestEntry>[];
     for (final row in catalog) {
       final descriptor = row.resolveDescriptor();
-      final overlay = policy.overlayFor(row.qualifiedName);
+      final overlay = row.projection ?? policy.overlayFor(row.qualifiedName);
       final dispatchMode = overlay?.dispatchMode ?? policy.defaultDispatchMode;
       final inlineRuntime = overlay?.inlineRuntime;
       if (dispatchMode == AgentManifestDispatchMode.inlineRuntime &&
@@ -71,27 +86,6 @@ final class ManifestMerger {
   String encodeManifest(final AgentManifest manifest) =>
       '${manifest.encode()}\n';
 
-  /// Loads `.intentcall/projection.yaml` or path from [overlayPath].
-  Map<String, EntryProjection> loadOverlayFile(final String overlayPath) {
-    final file = File(overlayPath);
-    if (!file.existsSync()) {
-      return const <String, EntryProjection>{};
-    }
-    final doc = loadYaml(file.readAsStringSync());
-    if (doc is! YamlMap) {
-      return const <String, EntryProjection>{};
-    }
-    final out = <String, EntryProjection>{};
-    for (final entry in doc.entries) {
-      final key = entry.key.toString();
-      final value = entry.value;
-      if (value is YamlMap) {
-        out[key] = EntryProjection.fromYamlMap(value);
-      }
-    }
-    return out;
-  }
-
   ProjectionPolicy loadProjectionPolicy({
     required final String projectRoot,
     final String configFileName = 'intentcall.yaml',
@@ -104,20 +98,49 @@ final class ManifestMerger {
     if (doc is! YamlMap) {
       return const ProjectionPolicy();
     }
-    var policy = ProjectionPolicy.fromYamlMap(doc);
-    final overlayRel = doc['projectionOverlay']?.toString();
-    if (overlayRel != null && overlayRel.isNotEmpty) {
-      final overlayPath = p.isAbsolute(overlayRel)
-          ? overlayRel
-          : p.join(projectRoot, overlayRel);
-      policy = policy.mergeOverlays(loadOverlayFile(overlayPath));
-    }
-    final protocolScheme = doc['protocolScheme']?.toString();
-    if (protocolScheme != null && protocolScheme.isNotEmpty) {
-      // Caller applies protocolScheme when merging.
-    }
-    return policy;
+    return ProjectionPolicy.fromYamlMap(doc);
   }
+
+  String readPlatformLabel(final String projectRoot) {
+    final configFile = File(p.join(projectRoot, 'intentcall.yaml'));
+    if (!configFile.existsSync()) {
+      return 'unified';
+    }
+    final doc = loadYaml(configFile.readAsStringSync());
+    if (doc is! YamlMap) {
+      return 'unified';
+    }
+    final host = doc['host']?.toString().trim();
+    return host == 'jaspr' ? 'web' : 'unified';
+  }
+
+  String readManifestRelativePath(final String projectRoot) {
+    final configFile = File(p.join(projectRoot, 'intentcall.yaml'));
+    if (!configFile.existsSync()) {
+      return 'web/agent_manifest.json';
+    }
+    final doc = loadYaml(configFile.readAsStringSync());
+    if (doc is! YamlMap) {
+      return 'web/agent_manifest.json';
+    }
+    final layout = doc['layout'];
+    if (layout is YamlMap) {
+      final manifest = layout['manifest']?.toString().trim();
+      if (manifest != null && manifest.isNotEmpty) {
+        return manifest;
+      }
+    }
+    return 'web/agent_manifest.json';
+  }
+
+  ManifestExportContext loadExportContext({
+    required final String projectRoot,
+  }) => ManifestExportContext(
+    policy: loadProjectionPolicy(projectRoot: projectRoot),
+    protocolScheme: readProtocolScheme(projectRoot),
+    platform: readPlatformLabel(projectRoot),
+    manifestRelativePath: readManifestRelativePath(projectRoot),
+  );
 
   String? readProtocolScheme(final String projectRoot) {
     final configFile = File(p.join(projectRoot, 'intentcall.yaml'));

@@ -137,6 +137,39 @@ actions:
     evidence:
       redaction: steward/redaction/v1
       summary_fields: [exit_code, duration_ms, output_digest]
+  intentcall.manifest-export-check:
+    kind: command
+    desc: Verify committed agent_manifest.json matches merge(catalog, projection) after build_runner.
+    command:
+      argv: [just, manifest-export-check]
+      shell: false
+    cwd: .
+    effects:
+      fs_read:
+        - justfile
+        - packages/intentcall_codegen/**
+        - packages/intentcall_cli/**
+      fs_write: []
+      git: false
+      network: false
+      secrets: false
+      destructive: false
+    safety:
+      class: bounded_local
+      default_policy: auto
+      requires_confirmation: false
+    limits:
+      timeout_ms: 10000
+      max_output_bytes: 400000
+    outputs:
+      - id: stdout
+        kind: stream
+        required: true
+        retention: summary
+        format: text
+    evidence:
+      redaction: steward/redaction/v1
+      summary_fields: [exit_code, duration_ms, output_digest]
   intentcall.manifest-parity:
     kind: command
     desc: Verify manifest fixture rows are present in a matching registry snapshot.
@@ -242,7 +275,7 @@ actions:
 probes:
   quick:
     profile: quick
-    actions: [intentcall.validate, intentcall.adapter-contract-test, intentcall.manifest-parity, intentcall.platform-sync-check]
+    actions: [intentcall.validate, intentcall.adapter-contract-test, intentcall.manifest-export-check, intentcall.manifest-parity, intentcall.platform-sync-check]
 diagnostics:
   cases: {}
 unknown_cases:

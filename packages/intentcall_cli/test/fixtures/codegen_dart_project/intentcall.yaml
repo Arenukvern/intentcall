@@ -1,0 +1,10 @@
+host: dart
+protocolScheme: codegenfixture
+layout:
+  manifest: web/agent_manifest.json
+  webDir: web
+platforms:
+  enabled:
+    - web
+defaults:
+  dispatchMode: openApp

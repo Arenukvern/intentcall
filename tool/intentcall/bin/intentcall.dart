@@ -278,18 +278,24 @@ void main(List<String> arguments) async {
 }
 
 Directory findRepoRoot() {
-  var dir = Directory(p.dirname(Platform.script.toFilePath()));
+  var dir = Directory.current;
   while (dir.path != dir.parent.path) {
     final pubspec = File(p.join(dir.path, 'pubspec.yaml'));
-    if (pubspec.existsSync()) {
-      final content = pubspec.readAsStringSync();
-      if (content.contains('name: intentcall_workspace')) {
-        return dir;
-      }
+    if (pubspec.existsSync() &&
+        pubspec.readAsStringSync().contains('name: intentcall_workspace')) {
+      return dir;
     }
     dir = dir.parent;
   }
-  // Fallback to current directory
+  dir = Directory(p.dirname(Platform.script.toFilePath()));
+  while (dir.path != dir.parent.path) {
+    final pubspec = File(p.join(dir.path, 'pubspec.yaml'));
+    if (pubspec.existsSync() &&
+        pubspec.readAsStringSync().contains('name: intentcall_workspace')) {
+      return dir;
+    }
+    dir = dir.parent;
+  }
   return Directory.current;
 }
 

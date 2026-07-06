@@ -2,7 +2,6 @@ import 'package:build/build.dart';
 import 'package:source_gen/source_gen.dart';
 
 import 'src/generators/agent_catalog_generator.dart';
-import 'src/generators/agent_manifest_generator.dart';
 import 'src/generators/agent_tool_generator.dart';
 
 /// build_runner builder for `@AgentTool` → `.g.dart` registration factories.
@@ -17,8 +16,4 @@ Builder agentToolBuilder(final BuilderOptions options) => PartBuilder(
 
 /// Aggregates all `@AgentTool` registrations into `lib/generated/agent_catalog.g.dart`.
 Builder agentCatalogBuilder(final BuilderOptions options) =>
-    AgentCatalogGenerator();
-
-/// Writes `web/agent_manifest.json` from catalog + `@AgentProjection` metadata.
-Builder agentManifestBuilder(final BuilderOptions options) =>
-    AgentManifestAssetGenerator(options);
+    AgentCatalogGenerator(options);

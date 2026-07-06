@@ -2,15 +2,9 @@ targets:
   $default:
     builders:
       intentcall_codegen|agent_tool:
-        generate_for:
-          - example/**
+        enabled: false
       intentcall_codegen|agent_catalog:
-        generate_for:
-          - lib/**
-          - example/**
-      intentcall_codegen|agent_manifest:
-        generate_for:
-          - $package$
+        enabled: false
 
 builders:
   agent_tool:
@@ -23,11 +17,5 @@ builders:
     import: "package:intentcall_codegen/builder.dart"
     builder_factories: ["agentCatalogBuilder"]
     build_extensions: {r'$lib$': ['generated/agent_catalog.g.dart']}
-    auto_apply: dependents
-    build_to: source
-  agent_manifest:
-    import: "package:intentcall_codegen/builder.dart"
-    builder_factories: ["agentManifestBuilder"]
-    build_extensions: {r'$package$': ['web/agent_manifest.json']}
     auto_apply: dependents
     build_to: source

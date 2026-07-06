@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:intentcall_core/intentcall_core.dart';
 import 'package:intentcall_platform_sync/intentcall_platform_sync.dart';
 import 'package:test/test.dart';
 
@@ -305,9 +304,10 @@ void main() {
       );
     });
 
-    test('generateWebAgentManifest passes through raw entityTypes', () {
-      final json = generateWebAgentManifest(
-        <AgentIntentDescriptor>[],
+    test('mergeManifest passes through raw entityTypes', () {
+      final manifest = const ManifestMerger().mergeManifest(
+        catalog: const <AgentRegistryCatalogEntry>[],
+        policy: const ProjectionPolicy(),
         entityTypes: [
           <String, Object?>{
             'qualifiedName': 'app_project',
@@ -316,13 +316,12 @@ void main() {
             'displayName': 'Project',
           },
         ],
+        platform: 'web',
       );
 
-      final map = jsonDecode(json) as Map<String, Object?>;
-      expect(map['platform'], 'web');
-      final entityTypes = map['entityTypes']! as List;
-      expect(entityTypes, hasLength(1));
-      expect((entityTypes.first as Map)['qualifiedName'], 'app_project');
+      expect(manifest.platform, 'web');
+      expect(manifest.entityTypes, hasLength(1));
+      expect(manifest.entityTypes.single.qualifiedName, 'app_project');
     });
 
     test('reads shortcuts and intents arrays', () {

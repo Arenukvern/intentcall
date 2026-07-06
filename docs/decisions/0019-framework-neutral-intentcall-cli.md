@@ -54,14 +54,15 @@ contracts.
 2. **Authoring surface:**
    - Semantic truth: `AgentCallEntry` / `@AgentTool` (namespace, name,
      description, schema, handler).
-   - Projection policy: `@AgentProjection` on annotated tools OR keyed
-     `.intentcall/projection.yaml` overlay for handwritten entries
-     (`dispatchMode`, `surfaces`, `inlineRuntime` only — no schema duplication).
-3. **`intentcall_codegen` gains two builders:**
+   - Projection policy: `@AgentProjection` on annotated tools, or
+     `EntryProjection` on handwritten `AgentRegistryCatalogEntry` rows.
+     Global defaults in `intentcall.yaml` `defaults` only — **no per-tool YAML**.
+3. **`intentcall_codegen` gains one aggregate builder:**
    - `AgentCatalogBuilder` → `lib/generated/agent_catalog.g.dart` (aggregates
-     all registrations).
-   - `AgentManifestBuilder` → path from `intentcall.yaml` (default
-     `web/agent_manifest.json`).
+     registrations and optional per-row projection from `@AgentProjection`).
+   - **`agent_manifest.json` is written by `intentcall manifest export`** (shared
+     `ManifestExporter` in `intentcall_platform_sync`) — not a second build_runner
+     builder.
 4. **`ManifestMerger`** in `intentcall_platform_sync` merges catalog entries,
      projection policy, and entity types into one canonical manifest.
 

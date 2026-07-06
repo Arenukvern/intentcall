@@ -743,9 +743,21 @@ extension AgentManifestSurfaceKey on AgentManifestSurface {
 AgentManifestSurface? lookupAgentManifestSurface(final String key) {
   final trimmed = key.trim();
   for (final surface in AgentManifestSurface.values) {
-    if (surface.manifestKey == trimmed) {
+    if (surface.manifestKey == trimmed || surface.name == trimmed) {
       return surface;
     }
   }
   return null;
+}
+
+/// Resolves a surface key or throws with valid key hints.
+AgentManifestSurface resolveAgentManifestSurface(final String key) {
+  final surface = lookupAgentManifestSurface(key);
+  if (surface != null) {
+    return surface;
+  }
+  final valid = AgentManifestSurface.values
+      .map((final s) => '${s.manifestKey} (${s.name})')
+      .join(', ');
+  throw FormatException('Unknown surface key "$key". Valid keys: $valid');
 }

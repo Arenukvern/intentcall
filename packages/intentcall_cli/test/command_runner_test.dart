@@ -1,10 +1,7 @@
 import 'dart:io';
 
-import 'package:intentcall_cli/src/catalog/catalog_loader.dart';
 import 'package:intentcall_cli/src/command_runner.dart';
 import 'package:intentcall_cli/src/config/intentcall_config.dart';
-import 'package:intentcall_cli/src/utils/cli_utils.dart';
-import 'package:intentcall_platform_sync/intentcall_platform_sync.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
@@ -12,11 +9,9 @@ void main() {
   late Directory flutterFixture;
   late Directory jasprFixture;
 
-  setUpAll(() async {
+  setUpAll(() {
     flutterFixture = _fixtureRoot('flutter_project');
     jasprFixture = _fixtureRoot('jaspr_web_project');
-    await _prepareFixture(flutterFixture.path);
-    await _prepareFixture(jasprFixture.path);
   });
 
   group('IntentCallCommandRunner', () {
@@ -134,36 +129,8 @@ Directory _fixtureRoot(final String name) {
   for (final candidate in candidates) {
     final root = Directory(candidate);
     if (root.existsSync()) {
-      return root;
+      return Directory(p.normalize(p.absolute(candidate)));
     }
   }
   throw StateError('Missing fixture directory for $name');
-}
-
-Future<void> _prepareFixture(final String projectRoot) async {
-  _ensureSyncedWebArtifacts(projectRoot);
-  await _normalizeManifest(projectRoot);
-}
-
-void _ensureSyncedWebArtifacts(final String projectRoot) {
-  const sync = PlatformSync();
-  sync.syncWeb(projectRoot: projectRoot);
-}
-
-Future<void> _normalizeManifest(final String projectRoot) async {
-  final config = loadIntentCallConfig(projectRoot);
-  final outPath = resolveManifestOutput(projectRoot, config: config);
-  final merger = ManifestMerger();
-  final policy = merger.loadProjectionPolicy(projectRoot: projectRoot);
-  final catalog = await const CatalogLoader().load(
-    projectRoot: projectRoot,
-    manifestOut: outPath,
-  );
-  final manifest = merger.mergeManifest(
-    catalog: catalog,
-    policy: policy,
-    protocolScheme: config?.protocolScheme ?? merger.readProtocolScheme(projectRoot),
-    platform: config?.host == IntentCallHost.jaspr ? 'web' : 'unified',
-  );
-  outPath.writeAsStringSync(merger.encodeManifest(manifest));
 }

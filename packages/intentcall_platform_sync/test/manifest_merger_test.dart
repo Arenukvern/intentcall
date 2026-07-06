@@ -3,26 +3,23 @@ import 'package:intentcall_platform_sync/intentcall_platform_sync.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('ManifestMerger applies defaults and overlays', () {
+  test('ManifestMerger applies defaults and catalog row projection', () {
     const merger = ManifestMerger();
-    const policy = ProjectionPolicy(
-      overlays: {
-        'app_ping': EntryProjection(
-          dispatchMode: AgentManifestDispatchMode.queueOnly,
-          surfaces: {AgentManifestSurface.webMcp: false},
-        ),
-      },
-    );
+    const policy = ProjectionPolicy();
     final manifest = merger.mergeManifest(
       catalog: [
         AgentRegistryCatalogEntry(
-          registryKey: 'app.ping',
+          registryKey: 'app_ping',
           descriptor: AgentIntentDescriptor(
             namespace: 'app',
             name: 'ping',
             description: 'Ping',
             kind: AgentIntentKind.tool,
             inputSchema: const <String, Object?>{'type': 'object'},
+          ),
+          projection: const EntryProjection(
+            dispatchMode: AgentManifestDispatchMode.queueOnly,
+            surfaces: {AgentManifestSurface.webMcp: false},
           ),
         ),
       ],

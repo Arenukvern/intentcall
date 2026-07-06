@@ -1,0 +1,9 @@
+targets:
+  $default:
+    builders:
+      intentcall_codegen|agent_tool:
+        generate_for:
+          - lib/**
+      intentcall_codegen|agent_catalog:
+        generate_for:
+          - lib/**

@@ -375,7 +375,15 @@ Then annotate your intent class with `@AgentTool` and run:
 
 ```bash
 dart run build_runner build --delete-conflicting-outputs
+intentcall manifest export --check
 ```
+
+`build_runner` writes `lib/generated/agent_catalog.g.dart`. `manifest export`
+merges the catalog with `intentcall.yaml` defaults (and optional `@AgentProjection`
+per tool) into committed `web/agent_manifest.json`.
+
+Per-tool projection is **Dart-only** (`@AgentProjection` or `EntryProjection` on
+catalog rows). `intentcall.yaml` carries host wiring and global `defaults` only.
 
 **Q: Is codegen required?**
 

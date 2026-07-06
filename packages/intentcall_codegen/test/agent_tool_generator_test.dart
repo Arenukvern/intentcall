@@ -2,7 +2,7 @@ import 'package:intentcall_core/intentcall_core.dart';
 import 'package:intentcall_schema/intentcall_schema.dart';
 import 'package:test/test.dart';
 
-import '../example/demo_ping_tool.dart';
+import '../example/lib/tools/demo_ping_tool.dart';
 
 void main() {
   test('generated demoPingRegistration validates before execute', () {

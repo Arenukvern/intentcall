@@ -41,13 +41,37 @@ Future<AgentResult> demoPing(@AgentParam('Message') String message) async {
 dart run build_runner build --delete-conflicting-outputs
 ```
 
-4. Register generated intent:
+This emits `lib/generated/agent_catalog.g.dart` (all `@AgentTool` registrations)
+and per-file `*.g.dart` part files.
+
+4. Export the platform manifest (host project with `intentcall.yaml`):
+
+```bash
+dart run intentcall_cli:intentcall manifest export --check
+```
+
+5. Register generated intents:
 
 ```dart
 registry.register(demoPingRegistration);
 // or
 registerAll(registry, {demoPingCallEntry});
 ```
+
+## Runnable example
+
+See [`example/`](example/) for a self-contained Dart host (`lib/tools/`,
+`lib/generated/agent_catalog.g.dart`, `web/agent_manifest.json`):
+
+```bash
+cd example
+dart pub get
+dart run build_runner build
+dart run intentcall_cli:intentcall manifest export --check --project-dir .
+```
+
+The library package root intentionally has **no** committed catalog or manifest —
+only annotations and builders.
 
 ## Generated output
 

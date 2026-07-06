@@ -22,7 +22,8 @@
       "type": "object",
       "properties": {
         "query": {
-          "type": "string"
+          "type": "string",
+          "description": "Query"
         }
       },
       "required": [

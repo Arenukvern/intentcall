@@ -22,9 +22,13 @@
       "type": "object",
       "properties": {
         "currency": {
-          "type": "string"
+          "type": "string",
+          "description": "Currency code"
         }
-      }
+      },
+      "required": [
+        "currency"
+      ]
     }
   }
 ];

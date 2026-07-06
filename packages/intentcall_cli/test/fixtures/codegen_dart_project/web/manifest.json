@@ -1,0 +1,22 @@
+{
+  "name": "codegen_dart_project",
+  "start_url": ".",
+  "shortcuts": [
+    {
+      "name": "Demo Ping",
+      "short_name": "Demo Ping",
+      "description": "Returns pong for a message",
+      "url": "/agent/invoke?name=app_demo_ping"
+    }
+  ],
+  "protocol_handlers": [
+    {
+      "protocol": "web+intentcall",
+      "url": "/agent/invoke?protocol=%s"
+    },
+    {
+      "protocol": "web+intentcall",
+      "url": "/agent/invoke?name=app_demo_ping&payload=%s"
+    }
+  ]
+}

@@ -118,7 +118,7 @@ final class _DoctorCommand extends Command<int> {
     } else {
       stdout.writeln('== IntentCall Doctor ==');
       for (final check in checks) {
-        final mark = (check['ok'] as bool) ? '✓' : '✗';
+        final mark = (check['ok']! as bool) ? '✓' : '✗';
         stdout.writeln('$mark ${check['id']}: ${check['detail']}');
       }
       stdout.writeln('\nStatus: ${healthy ? 'HEALTHY' : 'UNHEALTHY'}');
@@ -261,22 +261,13 @@ final class _ManifestExportCommand extends Command<int> {
         : resolveProjectPath(projectRoot, '${results['out']}');
     final checkOnly = results['check'] as bool? ?? false;
 
-    final merger = ManifestMerger();
-    final policy = merger.loadProjectionPolicy(projectRoot: projectRoot);
-    final protocolScheme =
-        config?.protocolScheme ?? merger.readProtocolScheme(projectRoot);
-    final catalog = await const CatalogLoader().load(
-      projectRoot: projectRoot,
-      manifestOut: outPath,
-    );
+    const exporter = ManifestExporter();
+    final context = exporter.loadExportContext(projectRoot: projectRoot);
+    final catalog = await const CatalogLoader().load(projectRoot: projectRoot);
 
-    final manifest = merger.mergeManifest(
-      catalog: catalog,
-      policy: policy,
-      protocolScheme: protocolScheme,
-      platform: _platformLabel(config),
+    final encoded = exporter.encodeManifest(
+      exporter.buildManifest(catalog: catalog, context: context),
     );
-    final encoded = merger.encodeManifest(manifest);
 
     if (checkOnly) {
       if (!outPath.existsSync()) {
@@ -310,14 +301,6 @@ final class _ManifestExportCommand extends Command<int> {
       ..addFlag('json', negatable: false);
     return parser;
   }
-}
-
-String _platformLabel(final IntentCallConfig? config) {
-  return switch (config?.host) {
-    IntentCallHost.jaspr => 'web',
-    IntentCallHost.flutter => 'unified',
-    _ => 'unified',
-  };
 }
 
 final class _PlatformCommand extends Command<int> {

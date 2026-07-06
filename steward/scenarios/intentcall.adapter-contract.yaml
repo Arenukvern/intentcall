@@ -10,6 +10,9 @@ safe_first_probe: intentcall.validate
 required_actions:
   - intentcall.validate
   - intentcall.adapter-contract-test
+  - intentcall.manifest-export-check
+  - intentcall.manifest-parity
+  - intentcall.platform-sync-check
 artifacts:
   - id: steward_contract
     kind: yaml

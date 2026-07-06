@@ -1,66 +1,58 @@
-import 'dart:convert';
 import 'dart:io';
 
-import 'package:intentcall_core/intentcall_core.dart';
+import 'package:intentcall_cli/src/catalog/catalog_loader.dart';
 import 'package:intentcall_platform_sync/intentcall_platform_sync.dart';
-import 'package:intentcall_schema/intentcall_schema.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
-String fixtureRoot() {
+String fixtureRoot(final String name) {
   final candidates = <String>[
-    p.join('packages', 'intentcall_cli', 'test', 'fixtures', 'flutter_project'),
-    p.join('test', 'fixtures', 'flutter_project'),
+    p.join('packages', 'intentcall_cli', 'test', 'fixtures', name),
+    p.join('test', 'fixtures', name),
   ];
   for (final candidate in candidates) {
-    if (File(p.join(candidate, 'web', 'agent_manifest.json')).existsSync()) {
-      return candidate;
+    final dir = Directory(candidate);
+    if (dir.existsSync()) {
+      return p.normalize(p.absolute(candidate));
     }
   }
   throw StateError(
-    'flutter_project fixture not found from ${Directory.current.path}',
+    'fixture $name not found from ${Directory.current.path}',
   );
 }
 
 void main() {
-  test('manifest tools are subset of fixture registry descriptors', () {
-    final fixtureRootPath = fixtureRoot();
-    final manifestFile = File(
-      p.join(fixtureRootPath, 'web', 'agent_manifest.json'),
-    );
+  test('catalog and manifest qualified names match bidirectionally', () async {
+    final projectRoot = fixtureRoot('codegen_dart_project');
+    final manifestFile = File(p.join(projectRoot, 'web', 'agent_manifest.json'));
     final manifest = AgentManifest.parse(manifestFile.readAsStringSync());
-    final registry = InMemoryAgentRegistry();
-    registry.register(
-      AgentCallEntry.tool(
-        namespace: 'app',
-        name: 'cart_total',
-        description: 'Return cart total',
-        inputSchema: const <String, Object?>{'type': 'object'},
-        handler: (_) async => AgentResult.success(),
-      ).toRegistration(),
-    );
+    final catalog = await const CatalogLoader().load(projectRoot: projectRoot);
 
-    final registryKeys = registry.listEntries().map((final e) => e.key).toSet();
-    for (final entry in manifest.tools) {
-      expect(
-        registryKeys.contains(entry.qualifiedName),
-        isTrue,
-        reason: 'manifest tool ${entry.qualifiedName} missing from registry',
-      );
-    }
+    final catalogNames = catalog.map((final row) => row.qualifiedName).toSet();
+    final manifestNames = manifest.tools.map((final t) => t.qualifiedName).toSet();
+
+    expect(catalogNames, isNotEmpty);
+    expect(manifestNames.difference(catalogNames), isEmpty);
+    expect(catalogNames.difference(manifestNames), isEmpty);
+  });
+
+  test('flutter fixture catalog matches manifest tools', () async {
+    final projectRoot = fixtureRoot('flutter_project');
+    final manifestFile = File(p.join(projectRoot, 'web', 'agent_manifest.json'));
+    final manifest = AgentManifest.parse(manifestFile.readAsStringSync());
+    final catalog = await const CatalogLoader().load(projectRoot: projectRoot);
+
+    final catalogNames = catalog.map((final row) => row.qualifiedName).toSet();
+    final manifestNames = manifest.tools.map((final t) => t.qualifiedName).toSet();
+
+    expect(catalogNames, manifestNames);
   });
 
   test('manifest export --check fixture is valid JSON manifest', () {
-    final fixtureRootPath = fixtureRoot();
-    final manifestFile = File(
-      p.join(fixtureRootPath, 'web', 'agent_manifest.json'),
-    );
-    final json =
-        jsonDecode(manifestFile.readAsStringSync()) as Map<String, Object?>;
-    expect(json['version'], 1);
-    expect(
-      AgentManifest.parse(manifestFile.readAsStringSync()).tools,
-      isNotEmpty,
-    );
+    final projectRoot = fixtureRoot('flutter_project');
+    final manifestFile = File(p.join(projectRoot, 'web', 'agent_manifest.json'));
+    final parsed = AgentManifest.parse(manifestFile.readAsStringSync());
+    expect(parsed.version, 1);
+    expect(parsed.tools, isNotEmpty);
   });
 }

@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "platform": "unified",
+  "tools": [
+    {
+      "qualifiedName": "app_demo_ping",
+      "namespace": "app",
+      "name": "demo_ping",
+      "description": "Returns pong for a message",
+      "kind": "tool",
+      "dispatchMode": "openApp",
+      "surfaces": {
+        "apple.appShortcuts": {
+          "include": false
+        },
+        "android.shortcuts": {
+          "include": true
+        },
+        "web.manifestShortcuts": {
+          "include": true
+        },
+        "web.protocolHandlers": {
+          "include": true
+        },
+        "web.webMcp": {
+          "include": true
+        },
+        "windows.protocolActivation": {
+          "include": true
+        },
+        "windows.msixProtocol": {
+          "include": true
+        },
+        "linux.schemeHandler": {
+          "include": true
+        }
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Message to echo"
+          }
+        },
+        "required": [
+          "message"
+        ]
+      }
+    }
+  ],
+  "protocolScheme": "codegenfixture"
+}

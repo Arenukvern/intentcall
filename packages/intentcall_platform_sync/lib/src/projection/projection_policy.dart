@@ -30,10 +30,11 @@ final class EntryProjection {
     final surfacesRaw = yaml['surfaces'];
     if (surfacesRaw is Map) {
       for (final entry in surfacesRaw.entries) {
-        final surface = lookupAgentManifestSurface(entry.key.toString());
-        if (surface != null && entry.value is bool) {
-          surfaces[surface] = entry.value as bool;
+        if (entry.value is! bool) {
+          continue;
         }
+        surfaces[resolveAgentManifestSurface(entry.key.toString())] =
+            entry.value as bool;
       }
     }
     return EntryProjection(
@@ -90,26 +91,19 @@ final class ProjectionPolicy {
         final overrides =
             <AgentManifestSurface, AgentManifestSurfaceExposure>{};
         for (final entry in surfacesRaw.entries) {
-          final surface = lookupAgentManifestSurface(entry.key.toString());
-          if (surface != null && entry.value is bool) {
-            overrides[surface] = AgentManifestSurfaceExposure(
-              include: entry.value as bool,
-            );
+          if (entry.value is! bool) {
+            continue;
           }
+          overrides[resolveAgentManifestSurface(entry.key.toString())] =
+              AgentManifestSurfaceExposure(include: entry.value as bool);
         }
         defaultSurfaces = AgentManifestSurfacePolicy(overrides);
       }
     }
 
-    final overlays = <String, EntryProjection>{};
-    final overlayPath = yaml['projectionOverlay']?.toString();
-    if (overlayPath != null && overlayPath.isNotEmpty) {
-      // Overlay file parsed separately by [ProjectionPolicy.loadOverlayFile].
-    }
     return ProjectionPolicy(
       defaultDispatchMode: dispatchMode,
       defaultSurfaces: defaultSurfaces,
-      overlays: overlays,
     );
   }
 

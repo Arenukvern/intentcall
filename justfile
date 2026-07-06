@@ -8,10 +8,28 @@ default:
 test:
     dart test packages/intentcall_schema packages/intentcall_core packages/intentcall_session packages/intentcall_mcp packages/intentcall_webmcp packages/intentcall_gemma packages/intentcall_apple packages/intentcall_android packages/intentcall_platform_sync packages/intentcall_codegen packages/intentcall_cli packages/intentcall_platform packages/intentcall_testing tool/intentcall
 
+# Manifest freshness gate (build_runner catalog + export --check)
+manifest-export-check:
+    cd packages/intentcall_codegen/example && dart pub get && dart run build_runner build
+    dart run intentcall_cli:intentcall manifest export --check --project-dir packages/intentcall_codegen/example
+    cd packages/intentcall_cli/test/fixtures/codegen_dart_project && dart pub get && dart run build_runner build
+    dart run intentcall_cli:intentcall manifest export --check --project-dir packages/intentcall_cli/test/fixtures/codegen_dart_project
+    cd packages/intentcall_cli/test/fixtures/flutter_project && dart pub get && dart run build_runner build
+    dart run intentcall_cli:intentcall manifest export --check --project-dir packages/intentcall_cli/test/fixtures/flutter_project
+    cd packages/intentcall_cli/test/fixtures/jaspr_web_project && dart pub get && dart run build_runner build
+    dart run intentcall_cli:intentcall manifest export --check --project-dir packages/intentcall_cli/test/fixtures/jaspr_web_project
+
+# ADR 0019 validation gates
+adr-gates:
+    just manifest-export-check
+    just manifest-parity
+    just platform-sync-check
+
 # Verify platform artifact sync on fixture projects
 platform-sync-check:
     dart run intentcall_cli:intentcall platform sync --project-dir packages/intentcall_cli/test/fixtures/flutter_project --platform web --check
     dart run intentcall_cli:intentcall platform sync --project-dir packages/intentcall_cli/test/fixtures/jaspr_web_project --platform web --check
+    dart run intentcall_cli:intentcall platform sync --project-dir packages/intentcall_cli/test/fixtures/codegen_dart_project --platform web --check
 
 # Manifest/registry parity gate
 manifest-parity:

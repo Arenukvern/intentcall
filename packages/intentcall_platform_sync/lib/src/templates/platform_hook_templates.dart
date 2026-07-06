@@ -48,6 +48,10 @@ intentcall platform sync --platform ios,macos || exit 1
 ''';
 
 /// Jaspr / web-only hook snippet for CI or custom build steps.
+///
+/// Hooks call bare `intentcall` on PATH; for local development use
+/// `dart run intentcall_cli:intentcall` or `dart pub global activate intentcall_cli`.
+/// mcp_flutter delegation: see ADR 0019.
 const kJasprWebCodegenHook = '''
 # intentcall-platform: begin
 dart run build_runner build --delete-conflicting-outputs
