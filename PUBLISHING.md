@@ -72,8 +72,9 @@ uses GitHub OIDC through `dart-lang/setup-dart`.
 2. `intentcall_core`
 3. `intentcall_session`
 4. `intentcall_mcp`, `intentcall_webmcp`, `intentcall_apple`, `intentcall_android`, `intentcall_codegen`
-5. `intentcall_platform` (Flutter plugin — may need `flutter pub publish`)
-6. `intentcall_testing`
+5. `intentcall_platform_sync`, `intentcall_cli`
+6. `intentcall_platform` (Flutter plugin — may need `flutter pub publish`)
+7. `intentcall_testing`
 
 ## Commands
 

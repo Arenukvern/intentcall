@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "platform": "unified",
+  "tools": [
+    {
+      "qualifiedName": "app_cart_total",
+      "namespace": "app",
+      "name": "cart_total",
+      "description": "Return cart total",
+      "kind": "tool",
+      "dispatchMode": "openApp",
+      "surfaces": {
+        "apple.appShortcuts": {
+          "include": false
+        },
+        "android.shortcuts": {
+          "include": true
+        },
+        "web.manifestShortcuts": {
+          "include": true
+        },
+        "web.protocolHandlers": {
+          "include": true
+        },
+        "web.webMcp": {
+          "include": true
+        },
+        "windows.protocolActivation": {
+          "include": true
+        },
+        "windows.msixProtocol": {
+          "include": true
+        },
+        "linux.schemeHandler": {
+          "include": true
+        }
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  ],
+  "protocolScheme": "demoapp"
+}

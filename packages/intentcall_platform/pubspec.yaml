@@ -11,7 +11,7 @@ topics:
   - agents
 
 environment:
-  sdk: ">=3.11.0 <4.0.0"
+  sdk: ">=3.12.0 <4.0.0"
   flutter: ">=3.24.0"
 resolution: workspace
 
@@ -20,8 +20,9 @@ dependencies:
   flutter:
     sdk: flutter
   intentcall_core: ^0.6.0
+  intentcall_platform_sync: ^0.6.0
   intentcall_schema: ^0.6.0
-  meta: ^1.17.0
+  meta: ^1.18.0
   path: ^1.9.1
   web: ^1.1.1
 

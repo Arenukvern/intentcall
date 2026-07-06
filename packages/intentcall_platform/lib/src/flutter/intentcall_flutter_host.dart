@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:intentcall_core/intentcall_core.dart';
 import 'package:intentcall_schema/intentcall_schema.dart';
 
-import '../bootstrap/agent_web_mcp_bootstrap.dart';
-import '../invocation/intentcall_invocation.dart';
+import 'package:intentcall_platform_sync/intentcall_platform_sync.dart';
+
 import 'intentcall_host_events.dart';
 import 'intentcall_invoke_link_stub.dart'
     if (dart.library.ui) 'intentcall_invoke_link.dart';

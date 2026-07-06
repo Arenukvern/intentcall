@@ -1,10 +1,10 @@
-name: intentcall_cli
+name: intentcall_workspace_tool
 description: CLI tool for IntentCall repository maintenance.
 publish_to: none
 version: 0.1.0
 
 environment:
-  sdk: ">=3.11.0 <4.0.0"
+  sdk: ">=3.12.0 <4.0.0"
 
 resolution: workspace
 

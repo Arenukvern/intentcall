@@ -3,7 +3,7 @@
 Architecture Decision Records (ADRs) for IntentCall.
 Format: [MADR](https://adr.github.io/madr/) — see any existing ADR for the template.
 
-Next ADR number: **0019**
+Next ADR number: **0020**
 
 ---
 
@@ -20,6 +20,7 @@ Next ADR number: **0019**
 | [0016](0016-dispatch-mode-handoff-contract.md) | accepted | Dispatch Mode Handoff Contract | 2026-06-28 |
 | [0017](0017-apple-inline-runtime-tracks.md) | accepted | Apple Inline Runtime Tracks | 2026-06-28 |
 | [0018](0018-additive-actions-typed-entities-indexing-lifecycle.md) | accepted | Additive Actions, Typed Entities, and Indexing Lifecycle | 2026-06-29 |
+| [0019](0019-framework-neutral-intentcall-cli.md) | accepted | Framework-Neutral IntentCall CLI and Registry-Backed Manifest Generation | 2026-07-07 |
 
 ---
 

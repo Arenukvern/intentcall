@@ -3,7 +3,7 @@ publish_to: none
 description: Standalone intentcall monorepo
 
 environment:
-  sdk: ^3.11.0
+  sdk: ^3.12.0
 
 workspace:
   - packages/intentcall_schema
@@ -14,7 +14,9 @@ workspace:
   - packages/intentcall_gemma
   - packages/intentcall_apple
   - packages/intentcall_android
+  - packages/intentcall_platform_sync
   - packages/intentcall_platform
+  - packages/intentcall_cli
   - packages/intentcall_testing
   - packages/intentcall_session
   - tool/intentcall

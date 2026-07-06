@@ -41,7 +41,8 @@ class AgentToolGenerator extends GeneratorForAnnotation<AgentTool> {
     final registrationGetter = '${_toCamelCase(name)}Registration';
     final entryGetter = '${_toCamelCase(name)}CallEntry';
 
-    final schema = _buildInputSchema(element);
+    final schemaMap = inputSchemaMapFor(element);
+    final schema = _formatInputSchema(schemaMap);
     final handlerArgs = _buildHandlerArgs(element);
 
     return '''
@@ -74,8 +75,11 @@ $handlerArgs
     return inner.getDisplayString() == 'AgentResult';
   }
 
-  String _buildInputSchema(final TopLevelFunctionElement element) {
-    final properties = <String>[];
+  /// Builds JSON-schema-shaped input metadata for manifest and registration.
+  Map<String, Object?> inputSchemaMapFor(
+    final TopLevelFunctionElement element,
+  ) {
+    final properties = <String, Object?>{};
     final required = <String>[];
 
     for (final param in element.formalParameters) {
@@ -102,24 +106,40 @@ $handlerArgs
           element: param,
         );
       }
-      properties.add('''
-    ${_literalString(paramName)}: <String, Object?>{
-      'type': ${_literalString(jsonType)},
-      'description': ${_literalString(description)},
-    },''');
+      properties[paramName] = <String, Object?>{
+        'type': jsonType,
+        'description': description,
+      };
 
       if (isRequired) {
-        required.add(_literalString(paramName));
+        required.add(paramName);
       }
     }
 
+    return <String, Object?>{
+      'type': 'object',
+      'properties': properties,
+      'required': required,
+    };
+  }
+
+  String _formatInputSchema(final Map<String, Object?> schema) {
+    final properties = schema['properties']! as Map<String, Object?>;
+    final required = (schema['required']! as List<Object?>).cast<String>();
+    final propertyLines = properties.entries
+        .map(
+          (final entry) =>
+              "    ${_literalString(entry.key)}: <String, Object?>{'type': ${_literalString((entry.value! as Map)['type'] as String)}, 'description': ${_literalString((entry.value! as Map)['description'] as String)}},",
+        )
+        .join('\n');
+    final requiredLines = required.map(_literalString).join(', ');
     return '''
 {
   'type': 'object',
   'properties': <String, Object?>{
-${properties.join('\n')}
+$propertyLines
   },
-  'required': <String>[${required.join(', ')}],
+  'required': <String>[$requiredLines],
 }''';
   }
 

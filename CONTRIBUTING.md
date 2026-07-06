@@ -4,7 +4,7 @@ Thanks for your interest! IntentCall is a pre-release platform library. Contribu
 
 ## Prerequisites
 
-- [Dart SDK](https://dart.dev/get-dart) `^3.11.0`
+- [Dart SDK](https://dart.dev/get-dart) `^3.12.0`
 - [Flutter SDK](https://flutter.dev/docs/get-started/install) (stable) — required for `intentcall_platform`
 - [just](https://github.com/casey/just) task runner (recommended)
 - [Node.js](https://nodejs.org/) `>=18` and [pnpm](https://pnpm.io/) `>=9` — for `just docs-check` (docs.page link validation)

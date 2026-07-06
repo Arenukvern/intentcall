@@ -15,6 +15,8 @@
         "intentcall_apple",
         "intentcall_android",
         "intentcall_codegen",
+        "intentcall_platform_sync",
+        "intentcall_cli",
         "intentcall_platform",
         "intentcall_testing"
       ]
@@ -55,6 +57,16 @@
       "release-type": "dart",
       "package-name": "intentcall_codegen",
       "component": "intentcall_codegen"
+    },
+    "packages/intentcall_platform_sync": {
+      "release-type": "dart",
+      "package-name": "intentcall_platform_sync",
+      "component": "intentcall_platform_sync"
+    },
+    "packages/intentcall_cli": {
+      "release-type": "dart",
+      "package-name": "intentcall_cli",
+      "component": "intentcall_cli"
     },
     "packages/intentcall_platform": {
       "release-type": "dart",

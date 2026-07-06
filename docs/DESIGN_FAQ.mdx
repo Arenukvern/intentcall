@@ -50,6 +50,12 @@ A: Test helpers have `test` as a dependency, which must not bleed into productio
 **Q: Why is there an `intentcall_codegen` package?**
 A: Codegen is strictly optional — many adopters will register intents by hand. Keeping it separate means the core registry has zero `build_runner` dependency, and users who opt in to `@AgentTool` get a clean code-generation surface without it affecting tree-shaking for others.
 
+**Q: Why `intentcall_cli` instead of `flutter-mcp-toolkit` for platform sync?**
+A: Platform projection (`agent_manifest.json`, native emitters, `PlatformSync`) is framework-agnostic. `intentcall_cli` owns that contract; [mcp_flutter](https://github.com/Arenukvern/mcp_flutter) delegates to it. See [ADR 0019](decisions/0019-framework-neutral-intentcall-cli.md).
+
+**Q: Why is `agent_manifest.json` generated rather than hand-edited?**
+A: Manifest rows are a projection cache for platform emitters, not a second runtime catalog. Semantic truth lives in `AgentRegistry`; projection policy lives in `@AgentProjection` or `.intentcall/projection.yaml`. CI proves manifest freshness with `intentcall manifest export --check`.
+
 **Q: Why is IntentPack direction separate from today's registry API?**
 A: `AgentRegistry`, `AgentCallEntry`, and `RegisteredAgentIntent` are the current shipped authoring/runtime model. IntentPack is the proposed portable packaging layer above them: one app-level unit that can carry entries, schemas, examples, side-effect metadata, safety policy, platform projection hints, adapter hints, and compatibility metadata. Keeping that distinction explicit lets the repo document the destination without pretending the stable public API already exists.
 

@@ -436,7 +436,7 @@ For iOS and macOS open-app App Intents, the readiness checklist is:
 1. `agent_manifest.json` has the app-owned `protocolScheme`.
 2. Apple entries that should appear in Shortcuts use `"dispatchMode": "openApp"`
    and curated `"surfaces": { "apple.appShortcuts": { "include": true } }`.
-3. `codegen sync --platform ios,macos --check` passes, proving generated Swift,
+3. `intentcall platform sync --platform ios,macos --check` passes, proving generated Swift,
    Runner target membership, and `Runner/Info.plist` `CFBundleURLTypes` drift.
 4. The app is signed and installed before claiming manual Shortcuts or Spotlight
    product proof.
@@ -468,12 +468,12 @@ Generate the XCTest UI-test source from the same `agent_manifest.json` that
 drives platform sync:
 
 ```bash
-dart run tool/intentcall/bin/intentcall.dart apple-appintents-testing generate-fixtures \
+dart run intentcall_cli:intentcall apple-appintents-testing generate-fixtures \
   --manifest path/to/agent_manifest.json \
   --sample-arguments-output path/to/appintents_arguments.json \
   --entity-fixtures-output path/to/appintents_entities.json
 
-dart run tool/intentcall/bin/intentcall.dart apple-appintents-testing generate-tests \
+dart run intentcall_cli:intentcall apple-appintents-testing generate-tests \
   --manifest path/to/agent_manifest.json \
   --bundle-id com.example.app \
   --sample-arguments path/to/appintents_arguments.json \

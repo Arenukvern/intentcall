@@ -111,9 +111,76 @@ actions:
         - packages/intentcall_mcp/**
         - packages/intentcall_webmcp/**
         - packages/intentcall_gemma/**
+        - packages/intentcall_platform_sync/**
+        - packages/intentcall_cli/**
         - packages/intentcall_platform/**
         - pubspec.yaml
         - pubspec.lock
+      fs_write: []
+      git: false
+      network: false
+      secrets: false
+      destructive: false
+    safety:
+      class: bounded_local
+      default_policy: auto
+      requires_confirmation: false
+    limits:
+      timeout_ms: 10000
+      max_output_bytes: 200000
+    outputs:
+      - id: stdout
+        kind: stream
+        required: true
+        retention: summary
+        format: text
+    evidence:
+      redaction: steward/redaction/v1
+      summary_fields: [exit_code, duration_ms, output_digest]
+  intentcall.manifest-parity:
+    kind: command
+    desc: Verify manifest fixture rows are present in a matching registry snapshot.
+    command:
+      argv: [just, manifest-parity]
+      shell: false
+    cwd: .
+    effects:
+      fs_read:
+        - justfile
+        - packages/intentcall_cli/**
+      fs_write: []
+      git: false
+      network: false
+      secrets: false
+      destructive: false
+    safety:
+      class: bounded_local
+      default_policy: auto
+      requires_confirmation: false
+    limits:
+      timeout_ms: 10000
+      max_output_bytes: 200000
+    outputs:
+      - id: stdout
+        kind: stream
+        required: true
+        retention: summary
+        format: text
+    evidence:
+      redaction: steward/redaction/v1
+      summary_fields: [exit_code, duration_ms, output_digest]
+  intentcall.platform-sync-check:
+    kind: command
+    desc: Verify generated platform artifacts match emitters on fixture projects.
+    command:
+      argv: [just, platform-sync-check]
+      shell: false
+    cwd: .
+    effects:
+      fs_read:
+        - justfile
+        - packages/intentcall_cli/**
+        - packages/intentcall_platform_sync/**
       fs_write: []
       git: false
       network: false
@@ -175,7 +242,7 @@ actions:
 probes:
   quick:
     profile: quick
-    actions: [intentcall.validate, intentcall.adapter-contract-test]
+    actions: [intentcall.validate, intentcall.adapter-contract-test, intentcall.manifest-parity, intentcall.platform-sync-check]
 diagnostics:
   cases: {}
 unknown_cases:

@@ -18,6 +18,11 @@ artifacts:
     durability: input
   - id: intentcall_cli
     kind: dart
+    path: packages/intentcall_cli/bin/intentcall.dart
+    required: true
+    durability: input
+  - id: intentcall_workspace_tool
+    kind: dart
     path: tool/intentcall/bin/intentcall.dart
     required: true
     durability: input
@@ -43,22 +48,22 @@ artifacts:
     durability: behavior
   - id: platform_invocation_policy_test
     kind: dart
-    path: packages/intentcall_platform/test/intentcall_invocation_test.dart
+    path: packages/intentcall_platform_sync/test/intentcall_invocation_test.dart
     required: true
     durability: behavior
   - id: platform_webmcp_emitter_test
     kind: dart
-    path: packages/intentcall_platform/test/web_emitters_test.dart
+    path: packages/intentcall_platform_sync/test/web_emitters_test.dart
     required: true
     durability: behavior
   - id: platform_webmcp_bootstrap_test
     kind: dart
-    path: packages/intentcall_platform/test/agent_web_mcp_bootstrap_test.dart
+    path: packages/intentcall_platform_sync/test/agent_web_mcp_bootstrap_test.dart
     required: true
     durability: behavior
   - id: platform_native_emitter_test
     kind: dart
-    path: packages/intentcall_platform/test/native_emitters_test.dart
+    path: packages/intentcall_platform_sync/test/native_emitters_test.dart
     required: true
     durability: behavior
   - id: platform_flutter_host_test

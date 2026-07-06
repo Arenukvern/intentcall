@@ -257,23 +257,25 @@ wrap that API for their own product workflow. For example, Flutter MCP Toolkit
 consumers can run:
 
 ```bash
-flutter-mcp-toolkit codegen sync \
+intentcall platform sync \
   --platform web,android,ios,macos,linux,windows \
   --project-dir <app>
 ```
 
-Use the same command with `--check` in CI. `--check` reports whether any
-generated artifact, native project membership, or Apple URL-scheme plist
-configuration would change without writing files.
+Use the same command with `--check` in CI.
+
+Flutter MCP Toolkit consumers may delegate:
+
+```bash
+flutter-mcp-toolkit codegen sync --platform web,ios,macos --project-dir <app>
+```
 
 ### One-time hooks
 
-Flutter MCP Toolkit consumer example:
-
 ```bash
-flutter-mcp-toolkit init intentcall-platform --project-dir <flutter_app>
+intentcall platform hooks init --host flutter --project-dir <flutter_app>
 ```
 
-### Future
+### Manifest generation
 
-Registry-backed `generateWebAgentManifest` is deferred — edit `agent_manifest.json`, then `codegen sync`.
+Run `dart run build_runner build`, then `intentcall manifest export --check`. Do not hand-edit descriptor rows in `agent_manifest.json`.

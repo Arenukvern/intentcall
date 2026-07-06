@@ -561,6 +561,8 @@ Future<Directory> _createReleaseTrainFixture() async {
   "packages/intentcall_apple": "0.6.0",
   "packages/intentcall_android": "0.6.0",
   "packages/intentcall_codegen": "0.6.0",
+  "packages/intentcall_platform_sync": "0.6.0",
+  "packages/intentcall_cli": "0.6.0",
   "packages/intentcall_platform": "0.6.0",
   "packages/intentcall_testing": "0.6.0"
 }

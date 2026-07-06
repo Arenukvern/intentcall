@@ -2,6 +2,7 @@
 
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:args/args.dart';
 import 'package:intentcall_platform/intentcall_platform.dart';
 import 'package:path/path.dart' as p;
@@ -17,6 +18,8 @@ const publishOrder = [
   'intentcall_apple',
   'intentcall_android',
   'intentcall_codegen',
+  'intentcall_platform_sync',
+  'intentcall_cli',
   'intentcall_platform',
   'intentcall_testing',
 ];
@@ -235,8 +238,10 @@ void main(List<String> arguments) async {
       exit(0);
 
     case 'apple-appintents-testing':
-      final code = await runAppleAppIntentsTesting(repoRoot, results.command!);
-      exit(code);
+      stderr.writeln(
+        'Moved to intentcall_cli. Run: dart run intentcall_cli:intentcall apple-appintents-testing ...',
+      );
+      exit(64);
 
     case 'publish-all':
       final cmdResults = results.command!;

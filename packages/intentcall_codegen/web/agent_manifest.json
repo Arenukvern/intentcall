@@ -1,0 +1,149 @@
+{
+  "version": 1,
+  "platform": "unified",
+  "tools": [
+    {
+      "qualifiedName": "app_demo_ping",
+      "namespace": "app",
+      "name": "demo_ping",
+      "description": "Returns pong for a message",
+      "kind": "tool",
+      "dispatchMode": "openApp",
+      "surfaces": {
+        "apple.appShortcuts": {
+          "include": false
+        },
+        "android.shortcuts": {
+          "include": true
+        },
+        "web.manifestShortcuts": {
+          "include": true
+        },
+        "web.protocolHandlers": {
+          "include": true
+        },
+        "web.webMcp": {
+          "include": true
+        },
+        "windows.protocolActivation": {
+          "include": true
+        },
+        "windows.msixProtocol": {
+          "include": true
+        },
+        "linux.schemeHandler": {
+          "include": true
+        }
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Message to echo"
+          }
+        },
+        "required": [
+          "message"
+        ]
+      }
+    },
+    {
+      "qualifiedName": "app_demo_cart",
+      "namespace": "app",
+      "name": "demo_cart",
+      "description": "Returns a cart total",
+      "kind": "tool",
+      "dispatchMode": "openApp",
+      "surfaces": {
+        "apple.appShortcuts": {
+          "include": false
+        },
+        "android.shortcuts": {
+          "include": true
+        },
+        "web.manifestShortcuts": {
+          "include": true
+        },
+        "web.protocolHandlers": {
+          "include": true
+        },
+        "web.webMcp": {
+          "include": true
+        },
+        "windows.protocolActivation": {
+          "include": true
+        },
+        "windows.msixProtocol": {
+          "include": true
+        },
+        "linux.schemeHandler": {
+          "include": true
+        }
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": "string",
+            "description": "Currency code"
+          },
+          "includeTax": {
+            "type": "boolean",
+            "description": "Include tax"
+          }
+        },
+        "required": [
+          "currency"
+        ]
+      }
+    },
+    {
+      "qualifiedName": "app_demo_required_named",
+      "namespace": "app",
+      "name": "demo_required_named",
+      "description": "Returns a required named parameter",
+      "kind": "tool",
+      "dispatchMode": "openApp",
+      "surfaces": {
+        "apple.appShortcuts": {
+          "include": false
+        },
+        "android.shortcuts": {
+          "include": true
+        },
+        "web.manifestShortcuts": {
+          "include": true
+        },
+        "web.protocolHandlers": {
+          "include": true
+        },
+        "web.webMcp": {
+          "include": true
+        },
+        "windows.protocolActivation": {
+          "include": true
+        },
+        "windows.msixProtocol": {
+          "include": true
+        },
+        "linux.schemeHandler": {
+          "include": true
+        }
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "description": "Mode"
+          }
+        },
+        "required": [
+          "mode"
+        ]
+      }
+    }
+  ],
+  "protocolScheme": "intentcallcodegen"
+}

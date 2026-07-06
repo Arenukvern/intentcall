@@ -1,6 +1,6 @@
 import 'package:flutter/services.dart';
 
-import '../invocation/intentcall_invocation.dart';
+import 'package:intentcall_platform_sync/intentcall_platform_sync.dart';
 
 final class IntentCallPendingInvocations {
   const IntentCallPendingInvocations({
