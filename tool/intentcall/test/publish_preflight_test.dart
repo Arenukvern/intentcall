@@ -139,6 +139,34 @@ Use intentcall_core-v<version> for release tag examples.
       expect(findings, isEmpty);
     });
 
+    test('detects local-only docs references', () {
+      final findings = intentcall_cli.localDocumentationReferenceFindings('''
+Clone path: ~/mcp/agentkit
+Absolute path: /Users/alice/work/agentkit
+File URL: file:///Users/alice/work/agentkit/docs
+Temp path: /var/folders/example/screenshot.png
+Loopback URL: ws://127.0.0.1:8181/ws
+Custom loopback URI: visual://localhost/view/details
+''');
+
+      expect(findings, contains(contains('home-relative path')));
+      expect(findings, contains(contains('user-home absolute path')));
+      expect(findings, contains(contains('file URL')));
+      expect(findings, contains(contains('machine-local absolute path')));
+      expect(findings, contains(contains('loopback endpoint')));
+    });
+
+    test('allows repo-relative and public docs references', () {
+      final findings = intentcall_cli.localDocumentationReferenceFindings('''
+[North Star](/NORTH_STAR)
+Use ../agentkit/packages/intentcall_core during local development.
+Use wss://runtime.example.com/ws for placeholder runtime docs.
+INTENTCALL_ROOT="\$(pwd)/../agentkit" make check-intentcall-integration
+''');
+
+      expect(findings, isEmpty);
+    });
+
     test('reads CocoaPods podspec versions', () {
       expect(
         intentcall_cli.podspecVersion(

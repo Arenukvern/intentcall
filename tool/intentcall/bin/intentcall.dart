@@ -841,7 +841,13 @@ Future<int> runValidate(Directory repoRoot) async {
     return docVersionCode;
   }
 
-  // 6. Run plan hygiene check
+  // 6. Check public docs avoid local-only paths and endpoints
+  final docLocalReferenceCode = await runDocLocalReferenceCheck(repoRoot);
+  if (docLocalReferenceCode != 0) {
+    return docLocalReferenceCode;
+  }
+
+  // 7. Run plan hygiene check
   print('\nChecking plan hygiene (active plan files)...');
   final activePlans = <String>[];
   final taskFile = File(p.join(repoRoot.path, 'task.md'));
@@ -1077,6 +1083,35 @@ Future<int> runDocVersionReferenceCheck(
   return 0;
 }
 
+Future<int> runDocLocalReferenceCheck(Directory repoRoot) async {
+  print('\nChecking docs for local-only paths and endpoints...');
+  final mismatches = <String>[];
+  for (final relativePath in docLocalReferenceCheckPaths(repoRoot)) {
+    final file = File(p.join(repoRoot.path, relativePath));
+    if (!file.existsSync()) {
+      continue;
+    }
+    final content = await file.readAsString();
+    final findings = localDocumentationReferenceFindings(content);
+    for (final finding in findings) {
+      mismatches.add('$relativePath: $finding');
+    }
+  }
+
+  if (mismatches.isNotEmpty) {
+    stderr.writeln('FAIL: Docs contain local-only paths or endpoints.');
+    stderr.writeln(
+      'Use repo-relative paths or neutral placeholder endpoints instead.',
+    );
+    for (final mismatch in mismatches) {
+      stderr.writeln('  - $mismatch');
+    }
+    return 1;
+  }
+  print('OK: docs avoid local-only paths and endpoints.');
+  return 0;
+}
+
 String majorMinorTrain(String version) {
   final parts = version.split('.');
   if (parts.length < 2) {
@@ -1123,6 +1158,32 @@ List<String> docVersionCheckPaths(Directory repoRoot) {
   return paths;
 }
 
+List<String> docLocalReferenceCheckPaths(Directory repoRoot) {
+  final paths = <String>{...docVersionCheckPaths(repoRoot)};
+
+  for (final entity in repoRoot.listSync()) {
+    if (entity is File && p.extension(entity.path).toLowerCase() == '.md') {
+      paths.add(p.relative(entity.path, from: repoRoot.path));
+    }
+  }
+
+  final docsDir = Directory(p.join(repoRoot.path, 'docs'));
+  if (docsDir.existsSync()) {
+    for (final entity in docsDir.listSync(recursive: true)) {
+      if (entity is! File) {
+        continue;
+      }
+      final extension = p.extension(entity.path).toLowerCase();
+      if (extension == '.md' || extension == '.mdx') {
+        paths.add(p.relative(entity.path, from: repoRoot.path));
+      }
+    }
+  }
+
+  final sorted = paths.toList()..sort();
+  return sorted;
+}
+
 List<String> hardcodedDocVersionFindings(
   String content, {
   required String version,
@@ -1149,6 +1210,34 @@ List<String> hardcodedDocVersionFindings(
   for (final entry in checks.entries) {
     if (entry.value.hasMatch(content)) {
       findings.add(entry.key);
+    }
+  }
+  return findings;
+}
+
+List<String> localDocumentationReferenceFindings(String content) {
+  final findings = <String>[];
+  final checks = <String, RegExp>{
+    'home-relative path': RegExp(r'~\/[^\s)`\]]+'),
+    'user-home absolute path': RegExp(r'\/Users\/[^\s)`\]]+'),
+    'file URL': RegExp(r'file:\/\/[^\s)`\]]+'),
+    'machine-local absolute path': RegExp(
+      r'\/(?:private\/|var\/folders\/|tmp\/|Volumes\/)[^\s)`\]]+',
+    ),
+    'loopback endpoint': RegExp(
+      r'\b(?:[a-z][a-z0-9+.-]*:\/\/)?(?:localhost|127\.0\.0\.1|0\.0\.0\.0)(?::\d+)?(?:\/[^\s)`\]]*)?',
+      caseSensitive: false,
+    ),
+  };
+
+  final lines = content.split('\n');
+  for (var index = 0; index < lines.length; index += 1) {
+    final line = lines[index];
+    for (final entry in checks.entries) {
+      final match = entry.value.firstMatch(line);
+      if (match != null) {
+        findings.add('line ${index + 1}: ${entry.key} `${match.group(0)}`');
+      }
     }
   }
   return findings;
