@@ -6,7 +6,7 @@ void main() {
     expect(
       resourceUri(
         protocolScheme: 'demoapp',
-        resourceName: 'spark_runtime_snapshot',
+        resourceName: 'cool_runtime_snapshot',
       ),
       'demoapp://resource/spark/runtime/snapshot',
     );

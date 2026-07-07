@@ -30,26 +30,65 @@
     {
       "group": "Start Here",
       "pages": [
-        { "title": "Overview", "href": "/" },
-        { "title": "How it works", "href": "/start_here/how_it_works" },
-        { "title": "Choose your path", "href": "/start_here/choose_your_path" },
-        { "title": "Platform support", "href": "/start_here/platform_support" },
-        { "title": "Roadmap", "href": "/start_here/roadmap" },
-        { "title": "North Star", "href": "/NORTH_STAR" },
-        { "title": "Docs map", "href": "/start_here/docs_map" }
+        {
+          "title": "Overview",
+          "href": "/"
+        },
+        {
+          "title": "How it works",
+          "href": "/start_here/how_it_works"
+        },
+        {
+          "title": "Choose your path",
+          "href": "/start_here/choose_your_path"
+        },
+        {
+          "title": "Platform support",
+          "href": "/start_here/platform_support"
+        },
+        {
+          "title": "Roadmap",
+          "href": "/start_here/roadmap"
+        },
+        {
+          "title": "North Star",
+          "href": "/NORTH_STAR"
+        },
+        {
+          "title": "Docs map",
+          "href": "/start_here/docs_map"
+        }
+      ]
+    },
+    {
+      "group": "Packages",
+      "pages": [
+        {
+          "title": "intentcall_schema",
+          "href": "/packages/intentcall_schema"
+        }
       ]
     },
     {
       "group": "FAQs",
       "pages": [
-        { "title": "Design FAQ", "href": "/DESIGN_FAQ" },
-        { "title": "DX FAQ", "href": "/DX_FAQ" }
+        {
+          "title": "Design FAQ",
+          "href": "/DESIGN_FAQ"
+        },
+        {
+          "title": "DX FAQ",
+          "href": "/DX_FAQ"
+        }
       ]
     },
     {
       "group": "Decisions",
       "pages": [
-        { "title": "Index", "href": "/decisions/README" },
+        {
+          "title": "Index",
+          "href": "/decisions/README"
+        },
         {
           "title": "0010 — IntentCall product name",
           "href": "/decisions/0010-adopt-intentcall-product-name"

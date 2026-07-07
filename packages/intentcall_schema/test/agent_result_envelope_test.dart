@@ -5,7 +5,7 @@ void main() {
   test('resourceEnvelope builds app-owned resource uri', () {
     final result = AgentResultEnvelope.resourceEnvelope(
       protocolScheme: 'demoapp',
-      resourceName: 'spark_runtime_snapshot',
+      resourceName: 'cool_runtime_snapshot',
       snapshot: {'phase': 'playing'},
     );
     expect(result.ok, isTrue);

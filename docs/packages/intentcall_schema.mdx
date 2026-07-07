@@ -1,19 +1,16 @@
-> ⚠️ **Pre-release train** — Highly experimental. APIs may change without notice. Not for production. [Details](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md).
-
-
 # intentcall_schema
 
-[![pub package](https://img.shields.io/pub/v/intentcall_schema.svg?include_prereleases)](https://pub.dev/packages/intentcall_schema)
-[![pub points](https://img.shields.io/pub/points/intentcall_schema.svg)](https://pub.dev/packages/intentcall_schema/score)
-[![repository](https://img.shields.io/badge/repo-intentcall-blue)](https://github.com/Arenukvern/intentcall)
+> ⚠️ **Pre-release train** — Highly experimental. APIs may change without notice. Not for production. [Details](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md).
 
 Transport-agnostic **wire contract** for IntentCall: result envelopes, argument validation, entity snapshots, and VM-service wire parsing. Pure Dart — no Flutter dependency.
 
-Registry and invocation live in [`intentcall_core`](../intentcall_core). Adapters (`intentcall_mcp`, `intentcall_webmcp`, platform sync) translate between transports and these types.
+Registry and invocation live in [`intentcall_core`](https://pub.dev/packages/intentcall_core). Adapters (`intentcall_mcp`, `intentcall_webmcp`, platform sync) translate between transports and these types.
 
 ```bash
 dart pub add intentcall_schema
 ```
+
+Package source: [packages/intentcall_schema](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_schema) · [pub.dev](https://pub.dev/packages/intentcall_schema)
 
 ## Who this is for
 
@@ -73,7 +70,7 @@ validateAgainstSchema(schema, args);
 // args == {'count': 3, 'label': 'demo'}
 ```
 
-On failure, `validateAgainstSchema` throws [`AgentValidationException`](lib/src/agent_validation_exception.dart) with a human-readable `message` (safe to surface to agents).
+On failure, `validateAgainstSchema` throws `AgentValidationException` with a human-readable `message` (safe to surface to agents).
 
 ### Snapshot envelope (tools and resources)
 
@@ -101,7 +98,7 @@ final snapshot = AgentEntitySnapshot(
   ),
   title: 'Inbox note',
   keywords: const ['work', 'today'],
-  deepLink: 'intentcall://notes/note-1',
+  deepLink: 'cool_runtime_snapshot://notes/note-1',
   properties: const {
     'pinned': true,
     'rank': 3,
@@ -190,15 +187,24 @@ AgentRegistry.invoke ← validateAgainstSchema(coerceArgumentsForSchema(...))
 Adapter (MCP / WebMCP / platform) ← wire maps, entity snapshots
 ```
 
+See also [How it works](/start_here/how_it_works) for the full registry and adapter flow.
+
 ## Related packages
 
-- [`intentcall_core`](../intentcall_core) — registry, `AgentCallEntry`, adapters composition
-- [`intentcall_mcp`](../intentcall_mcp) — MCP `CallToolResult` mapping from `AgentResult`
-- [`intentcall_platform`](../intentcall_platform) — Flutter entity index and native snapshot store
-- [`intentcall_platform_sync`](../intentcall_platform_sync) — manifest projection and entity export
+| Package | Role |
+|---------|------|
+| [`intentcall_core`](https://pub.dev/packages/intentcall_core) | Registry, `AgentCallEntry`, adapter composition |
+| [`intentcall_mcp`](https://pub.dev/packages/intentcall_mcp) | MCP `CallToolResult` mapping from `AgentResult` |
+| [`intentcall_platform`](https://pub.dev/packages/intentcall_platform) | Flutter entity index and native snapshot store |
+| [`intentcall_platform_sync`](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_platform_sync) | Manifest projection and entity export |
 
-Canonical design docs: [North Star](https://docs.page/Arenukvern/intentcall/NORTH_STAR), [Design FAQ](https://docs.page/Arenukvern/intentcall/DESIGN_FAQ), and [DX FAQ](https://docs.page/Arenukvern/intentcall/DX_FAQ). Published package guide: [intentcall_schema on docs.page](https://docs.page/Arenukvern/intentcall/packages/intentcall_schema).
+## Further reading
+
+- [North Star](/NORTH_STAR) — charter and package boundaries
+- [Design FAQ](/DESIGN_FAQ) — why wire types live in this package
+- [DX FAQ](/DX_FAQ) — commands, adapters, publishing order
+- [Choose your path](/start_here/choose_your_path) — when to add `intentcall_schema` to your dependency graph
 
 ## API reference
 
-Run `dart doc` in this package, or browse [pub.dev documentation](https://pub.dev/documentation/intentcall_schema/latest/) after publish.
+Run `dart doc` in the package, or browse [pub.dev documentation](https://pub.dev/documentation/intentcall_schema/latest/) after publish.
