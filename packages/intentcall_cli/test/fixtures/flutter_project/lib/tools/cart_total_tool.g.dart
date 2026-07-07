@@ -6,7 +6,7 @@
 part of 'cart_total_tool.dart';
 
 // **************************************************************************
-// AgentToolGenerator
+// _AgentToolPartGenerator
 // **************************************************************************
 
 const _cart_totalInputSchema = <String, Object?>{

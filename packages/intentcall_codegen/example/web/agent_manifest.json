@@ -3,6 +3,52 @@
   "platform": "unified",
   "tools": [
     {
+      "qualifiedName": "app_demo_host_status",
+      "namespace": "app",
+      "name": "demo_host_status",
+      "description": "Codegen instance-method host tool",
+      "kind": "tool",
+      "dispatchMode": "openApp",
+      "surfaces": {
+        "apple.appShortcuts": {
+          "include": false
+        },
+        "android.shortcuts": {
+          "include": true
+        },
+        "web.manifestShortcuts": {
+          "include": true
+        },
+        "web.protocolHandlers": {
+          "include": true
+        },
+        "web.webMcp": {
+          "include": true
+        },
+        "windows.protocolActivation": {
+          "include": true
+        },
+        "windows.msixProtocol": {
+          "include": true
+        },
+        "linux.schemeHandler": {
+          "include": true
+        }
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "description": "Host label"
+          }
+        },
+        "required": [
+          "label"
+        ]
+      }
+    },
+    {
       "qualifiedName": "app_demo_ping",
       "namespace": "app",
       "name": "demo_ping",
@@ -69,7 +115,7 @@
           "include": true
         },
         "web.webMcp": {
-          "include": true
+          "include": false
         },
         "windows.protocolActivation": {
           "include": true
@@ -141,6 +187,98 @@
         },
         "required": [
           "mode"
+        ]
+      }
+    },
+    {
+      "qualifiedName": "app_demo_inbox",
+      "namespace": "app",
+      "name": "demo_inbox",
+      "description": "Read inbox folder",
+      "kind": "tool",
+      "dispatchMode": "openApp",
+      "surfaces": {
+        "apple.appShortcuts": {
+          "include": false
+        },
+        "android.shortcuts": {
+          "include": true
+        },
+        "web.manifestShortcuts": {
+          "include": true
+        },
+        "web.protocolHandlers": {
+          "include": true
+        },
+        "web.webMcp": {
+          "include": true
+        },
+        "windows.protocolActivation": {
+          "include": true
+        },
+        "windows.msixProtocol": {
+          "include": true
+        },
+        "linux.schemeHandler": {
+          "include": true
+        }
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "folder": {
+            "type": "string",
+            "description": "Inbox folder name"
+          }
+        },
+        "required": [
+          "folder"
+        ]
+      }
+    },
+    {
+      "qualifiedName": "app_demo_handwritten",
+      "namespace": "app",
+      "name": "demo_handwritten",
+      "description": "Handwritten instance-bound tool",
+      "kind": "tool",
+      "dispatchMode": "openApp",
+      "surfaces": {
+        "apple.appShortcuts": {
+          "include": false
+        },
+        "android.shortcuts": {
+          "include": true
+        },
+        "web.manifestShortcuts": {
+          "include": true
+        },
+        "web.protocolHandlers": {
+          "include": true
+        },
+        "web.webMcp": {
+          "include": true
+        },
+        "windows.protocolActivation": {
+          "include": true
+        },
+        "windows.msixProtocol": {
+          "include": true
+        },
+        "linux.schemeHandler": {
+          "include": true
+        }
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "note": {
+            "type": "string",
+            "description": "Note to echo"
+          }
+        },
+        "required": [
+          "note"
         ]
       }
     }

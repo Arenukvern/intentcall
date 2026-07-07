@@ -6,7 +6,7 @@
 part of 'demo_ping_tool.dart';
 
 // **************************************************************************
-// AgentToolGenerator
+// _AgentToolPartGenerator
 // **************************************************************************
 
 const _demo_pingInputSchema = <String, Object?>{

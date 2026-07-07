@@ -6,7 +6,7 @@
 part of 'shop_search_tool.dart';
 
 // **************************************************************************
-// AgentToolGenerator
+// _AgentToolPartGenerator
 // **************************************************************************
 
 const _searchInputSchema = <String, Object?>{

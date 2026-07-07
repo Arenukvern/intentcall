@@ -20,6 +20,9 @@ Future<AgentResult> demoPing(
   name: 'demo_cart',
   description: 'Returns a cart total',
 )
+@AgentProjection(
+  surfaces: {'web.webMcp': false},
+)
 Future<AgentResult> demoCart(
   @AgentParam('Currency code') String currency, {
   @AgentParam('Include tax', required: false) bool includeTax = false,

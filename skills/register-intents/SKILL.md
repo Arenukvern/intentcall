@@ -46,7 +46,72 @@ void main() {
 
 ---
 
-## 2. Code Generation (`@AgentTool`)
+## 2. Instance-bound tools and catalog merge
+
+Use this when a handler needs host state but you are not using `@AgentTool`
+codegen for that tool (dynamic hosts, instance services, or tools that must close
+over `this`).
+
+**Pattern (same as the mcp_flutter harness):**
+
+1. Put behavior on a host class with `static final shared`.
+2. Expose each intent as an instance `AgentCallEntry` getter; the handler calls
+   instance methods on `this`.
+3. List catalog rows in `lib/catalog/handwritten_entries.dart` as
+   `handwrittenCatalogEntries`.
+4. Run `build_runner` so `lib/generated/agent_catalog.g.dart` merges annotated
+   tools and `...handwrittenCatalogEntries`.
+
+```dart
+final class InboxHost {
+  InboxHost();
+  static final InboxHost shared = InboxHost();
+
+  Future<AgentResult> readInbox(final String folder) async { /* … */ }
+
+  AgentCallEntry get readInboxCallEntry => AgentCallEntry.tool(
+    namespace: 'app',
+    name: 'read_inbox',
+    description: 'Read inbox folder',
+    inputSchema: const <String, Object?>{ /* … */ },
+    handler: (final args) async => readInbox(args['folder'] as String),
+  );
+}
+```
+
+```dart
+// lib/catalog/handwritten_entries.dart
+import 'package:intentcall_platform_sync/intentcall_platform_sync.dart';
+import '../hosts/inbox_host.dart';
+
+final List<AgentRegistryCatalogEntry> handwrittenCatalogEntries =
+    <AgentRegistryCatalogEntry>[
+  AgentRegistryCatalogEntry(
+    registryKey: 'app_read_inbox',
+    entry: InboxHost.shared.readInboxCallEntry,
+  ),
+];
+```
+
+Reference implementation:
+[`packages/intentcall_codegen/example/lib/tools/demo_host_tools.dart`](../../packages/intentcall_codegen/example/lib/tools/demo_host_tools.dart).
+
+Then run `intentcall manifest export --check` so committed
+`agent_manifest.json` stays in sync with the merged catalog (see
+[ADR 0019](../../docs/decisions/0019-framework-neutral-intentcall-cli.md)).
+
+**Probe anchor:** Catalog rows must use compile-time expressions such as
+`InboxHost.shared.readInboxCallEntry` — manifest export evaluates `entry:` in a
+subprocess and strips handlers. Runtime may use a different instance when
+descriptors match.
+
+**Descriptor-only rows:** Use `descriptor:` on `AgentRegistryCatalogEntry` when
+manifest metadata is needed without a probe-time handler; register handlers at
+runtime and keep `qualifiedName` aligned.
+
+---
+
+## 3. Code Generation (`@AgentTool`)
 
 We can automate registration using the code generator package `intentcall_codegen`.
 
@@ -102,9 +167,17 @@ Transport adapters, WebMCP, and native bridge wrappers should execute this Dart
 registry entry rather than copying the business logic into JS, Swift, Kotlin, or
 another host language.
 
+### Optional: instance-method codegen
+
+For host-bound tools you may annotate instance methods instead of writing
+getters by hand. The host class needs a static binding field (default name
+`shared`). Codegen emits an extension with `AgentCallEntry` getters; catalog rows
+reference `Host.shared.<getter>CallEntry`. Handwritten getters in section 2
+remain the canonical path when you need full control.
+
 ---
 
-## 3. After Changing Registrations
+## 4. After Changing Registrations
 
 Run the package tests that cover the registered handler. When changing this
 repository rather than only a downstream app, also run:

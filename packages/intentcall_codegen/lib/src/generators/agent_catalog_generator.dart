@@ -1,3 +1,5 @@
+import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:build/build.dart';
 import 'package:glob/glob.dart';
 import 'package:path/path.dart' as p;
@@ -14,6 +16,11 @@ class AgentCatalogGenerator implements Builder {
 
   static const _toolChecker = TypeChecker.typeNamed(AgentTool);
   static const _projectionChecker = TypeChecker.typeNamed(AgentProjection);
+  static const _defaultHostBindingField = 'shared';
+  static const _handwrittenCatalogPath = 'lib/catalog/handwritten_entries.dart';
+  static const _handwrittenCatalogImport =
+      '../catalog/handwritten_entries.dart';
+  static const _handwrittenCatalogSymbol = 'handwrittenCatalogEntries';
 
   @override
   Map<String, List<String>> get buildExtensions => const {
@@ -22,43 +29,42 @@ class AgentCatalogGenerator implements Builder {
 
   bool get _scanExample => options.config['scan_example'] as bool? ?? false;
 
+  String get _hostBindingField =>
+      options.config['host_binding_field'] as String? ??
+      _defaultHostBindingField;
+
   @override
   Future<void> build(final BuildStep buildStep) async {
     final outputPath = buildStep.allowedOutputs.single.path;
     final imports = <String>{};
     final entries = <String>[];
+    final codegenRegistryKeys = <String>{};
 
     await for (final input in _toolSources(buildStep)) {
       final library = await buildStep.resolver.libraryFor(input);
       final fileEntries = <String>[];
 
       for (final element in library.topLevelFunctions) {
-        ConstantReader? toolReader;
-        ConstantReader? projectionReader;
-        for (final annotation in element.metadata.annotations) {
-          final reader = ConstantReader(annotation.computeConstantValue());
-          if (!reader.isNull && reader.instanceOf(_toolChecker)) {
-            toolReader = reader;
+        final entry = _catalogEntryForToolElement(element, codegenRegistryKeys);
+        if (entry != null) {
+          fileEntries.add(entry);
+        }
+      }
+
+      final libraryReader = LibraryReader(library);
+      for (final classElement in libraryReader.classes) {
+        for (final method in classElement.methods) {
+          if (method.isStatic) {
+            continue;
           }
-          if (!reader.isNull && reader.instanceOf(_projectionChecker)) {
-            projectionReader = reader;
+          final entry = _catalogEntryForToolElement(
+            method,
+            codegenRegistryKeys,
+          );
+          if (entry != null) {
+            fileEntries.add(entry);
           }
         }
-        if (toolReader == null) {
-          continue;
-        }
-        final namespace = toolReader.read('namespace').stringValue;
-        final name = toolReader.read('name').stringValue;
-        final registryKey = '${namespace}_$name';
-        final entryGetter = '${_toCamelCase(name)}CallEntry';
-        final projectionLiteral = projectionReader == null
-            ? null
-            : _projectionLiteral(projectionReader);
-        fileEntries.add(
-          projectionLiteral == null
-              ? "  AgentRegistryCatalogEntry(registryKey: '$registryKey', entry: $entryGetter),"
-              : "  AgentRegistryCatalogEntry(registryKey: '$registryKey', entry: $entryGetter, projection: $projectionLiteral),",
-        );
       }
 
       if (fileEntries.isEmpty) {
@@ -72,6 +78,33 @@ class AgentCatalogGenerator implements Builder {
       entries.addAll(fileEntries);
     }
 
+    final handwrittenAsset = AssetId(
+      buildStep.inputId.package,
+      _handwrittenCatalogPath,
+    );
+    final hasHandwritten = await buildStep.canRead(handwrittenAsset);
+    if (hasHandwritten) {
+      imports.add("import '$_handwrittenCatalogImport';");
+      final handwrittenKeys = await _readHandwrittenRegistryKeys(
+        buildStep,
+        handwrittenAsset,
+      );
+      final seenHandwrittenKeys = <String>{};
+      for (final key in handwrittenKeys) {
+        if (codegenRegistryKeys.contains(key)) {
+          throw InvalidGenerationSourceError(
+            "Duplicate registryKey '$key' in agent catalog — declared in "
+            'both @AgentTool codegen and handwritten catalog entries.',
+          );
+        }
+        if (!seenHandwrittenKeys.add(key)) {
+          throw InvalidGenerationSourceError(
+            "Duplicate registryKey '$key' in handwritten catalog entries.",
+          );
+        }
+      }
+    }
+
     final header =
         '''
 // GENERATED CODE - DO NOT MODIFY BY HAND
@@ -80,7 +113,7 @@ import 'package:intentcall_platform_sync/intentcall_platform_sync.dart';
 ${imports.join('\n')}
 ''';
 
-    if (entries.isEmpty) {
+    if (entries.isEmpty && !hasHandwritten) {
       await buildStep.writeAsString(buildStep.allowedOutputs.single, '''
 $header
 /// Empty catalog — add @AgentTool functions under lib/.
@@ -90,13 +123,180 @@ final List<AgentRegistryCatalogEntry> agentCatalogEntries =
       return;
     }
 
+    final catalogRows = _catalogRows(entries, hasHandwritten: hasHandwritten);
     await buildStep.writeAsString(buildStep.allowedOutputs.single, '''
 $header
 final List<AgentRegistryCatalogEntry> agentCatalogEntries =
     <AgentRegistryCatalogEntry>[
-${entries.join('\n')}
+$catalogRows
 ];
 ''');
+  }
+
+  String? _catalogEntryForToolElement(
+    final Element element,
+    final Set<String> codegenRegistryKeys,
+  ) {
+    ConstantReader? toolReader;
+    ConstantReader? projectionReader;
+    for (final annotation in element.metadata.annotations) {
+      final reader = ConstantReader(annotation.computeConstantValue());
+      if (!reader.isNull && reader.instanceOf(_toolChecker)) {
+        toolReader = reader;
+      }
+      if (!reader.isNull && reader.instanceOf(_projectionChecker)) {
+        projectionReader = reader;
+      }
+    }
+    if (toolReader == null) {
+      return null;
+    }
+
+    if (element is MethodElement) {
+      if (element.isStatic) {
+        return null;
+      }
+      final enclosing = element.enclosingElement;
+      if (enclosing is! ClassElement) {
+        return null;
+      }
+    } else if (element is! TopLevelFunctionElement) {
+      return null;
+    }
+
+    final namespace = toolReader.read('namespace').stringValue;
+    final name = toolReader.read('name').stringValue;
+    final registryKey = '${namespace}_$name';
+    if (!codegenRegistryKeys.add(registryKey)) {
+      throw InvalidGenerationSourceError(
+        "Duplicate registryKey '$registryKey' from @AgentTool declarations.",
+        element: element,
+      );
+    }
+    final entryGetter = '${_toCamelCase(name)}CallEntry';
+    final entryReference = element is MethodElement
+        ? '${(element.enclosingElement! as ClassElement).name}.$_hostBindingField.$entryGetter'
+        : entryGetter;
+    final projectionLiteral = projectionReader == null
+        ? null
+        : _projectionLiteral(projectionReader);
+    return projectionLiteral == null
+        ? "  AgentRegistryCatalogEntry(registryKey: '$registryKey', entry: $entryReference),"
+        : "  AgentRegistryCatalogEntry(registryKey: '$registryKey', entry: $entryReference, projection: $projectionLiteral),";
+  }
+
+  String _catalogRows(
+    final List<String> entries, {
+    required final bool hasHandwritten,
+  }) {
+    if (entries.isEmpty) {
+      return '  ...$_handwrittenCatalogSymbol,';
+    }
+    if (!hasHandwritten) {
+      return entries.join('\n');
+    }
+    return '${entries.join('\n')}\n  ...$_handwrittenCatalogSymbol,';
+  }
+
+  Future<List<String>> _readHandwrittenRegistryKeys(
+    final BuildStep buildStep,
+    final AssetId assetId,
+  ) async {
+    final library = await buildStep.resolver.libraryFor(assetId);
+    TopLevelVariableElement? variable;
+    for (final element in library.topLevelVariables) {
+      if (element.name == _handwrittenCatalogSymbol) {
+        variable = element;
+        break;
+      }
+    }
+    if (variable == null) {
+      throw InvalidGenerationSourceError(
+        '$_handwrittenCatalogPath must export $_handwrittenCatalogSymbol '
+        'as List<AgentRegistryCatalogEntry>.',
+      );
+    }
+
+    final constant = variable.computeConstantValue();
+    if (constant != null) {
+      final list = constant.toListValue();
+      if (list != null) {
+        final keys = <String>[];
+        for (final item in list) {
+          final key = item.getField('registryKey')?.toStringValue();
+          if (key != null) {
+            keys.add(key);
+          }
+        }
+        return keys;
+      }
+    }
+
+    final unit = await buildStep.resolver.compilationUnitFor(assetId);
+    final keys = <String>[];
+    for (final declaration in unit.declarations) {
+      if (declaration is! TopLevelVariableDeclaration) {
+        continue;
+      }
+      for (final variableDeclaration in declaration.variables.variables) {
+        if (variableDeclaration.name.lexeme != _handwrittenCatalogSymbol) {
+          continue;
+        }
+        final initializer = variableDeclaration.initializer;
+        if (initializer != null) {
+          _collectRegistryKeysFromExpression(initializer, keys);
+        }
+      }
+    }
+    if (keys.isEmpty) {
+      throw InvalidGenerationSourceError(
+        'Could not read registryKey values from $_handwrittenCatalogSymbol '
+        'in $_handwrittenCatalogPath.',
+        element: variable,
+      );
+    }
+    return keys;
+  }
+
+  void _collectRegistryKeysFromExpression(
+    final Expression expression,
+    final List<String> keys,
+  ) {
+    if (expression is ListLiteral) {
+      for (final element in expression.elements) {
+        if (element is! Expression) {
+          continue;
+        }
+        _collectRegistryKeyFromEntryExpression(element, keys);
+      }
+      return;
+    }
+    _collectRegistryKeyFromEntryExpression(expression, keys);
+  }
+
+  void _collectRegistryKeyFromEntryExpression(
+    final Expression expression,
+    final List<String> keys,
+  ) {
+    final ArgumentList? argumentList = switch (expression) {
+      InstanceCreationExpression(:final argumentList) => argumentList,
+      MethodInvocation(:final argumentList) => argumentList,
+      _ => null,
+    };
+    if (argumentList == null) {
+      return;
+    }
+    for (final argument in argumentList.arguments) {
+      if (argument is! NamedExpression ||
+          argument.name.label.name != 'registryKey') {
+        continue;
+      }
+      final value = argument.expression;
+      if (value is! StringLiteral || value.stringValue == null) {
+        continue;
+      }
+      keys.add(value.stringValue!);
+    }
   }
 
   Stream<AssetId> _toolSources(final BuildStep buildStep) async* {

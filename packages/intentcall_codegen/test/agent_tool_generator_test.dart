@@ -2,6 +2,7 @@ import 'package:intentcall_core/intentcall_core.dart';
 import 'package:intentcall_schema/intentcall_schema.dart';
 import 'package:test/test.dart';
 
+import '../example/lib/tools/demo_host_tools.dart';
 import '../example/lib/tools/demo_ping_tool.dart';
 
 void main() {
@@ -80,5 +81,18 @@ void main() {
 
     expect(result.ok, isTrue);
     expect(result.data['mode'], 'slow');
+  });
+
+  test('generated instance hostStatusCallEntry invokes shared host method', () async {
+    final result = await demoHostStatusRegistration.execute(
+      AgentInvocation(
+        descriptor: demoHostStatusRegistration.descriptor,
+        arguments: const <String, Object?>{'label': 'primary'},
+      ),
+    );
+
+    expect(result.ok, isTrue);
+    expect(result.data['label'], 'primary');
+    expect(result.data['source'], 'codegen_instance');
   });
 }

@@ -389,6 +389,35 @@ catalog rows). `intentcall.yaml` carries host wiring and global `defaults` only.
 
 No. You can register `AgentCallEntry` objects manually. Codegen is a convenience layer.
 
+**Q: How do instance-bound or handwritten tools join the generated catalog and manifest?**
+
+Put instance methods and `AgentCallEntry` getters on a host class (typically
+`static final shared`), list rows in `lib/catalog/handwritten_entries.dart` as
+`handwrittenCatalogEntries`, and run `build_runner`. The aggregate catalog at
+`lib/generated/agent_catalog.g.dart` spreads those rows next to `@AgentTool`
+entries; `intentcall manifest export --check` then merges catalog + projection
+into committed `agent_manifest.json`. Per-row projection uses `EntryProjection`
+on catalog rows — same policy surface as `@AgentProjection` on annotated tools.
+See [ADR 0019](decisions/0019-framework-neutral-intentcall-cli.md) and the
+[`intentcall_codegen` example](../packages/intentcall_codegen/example/lib/tools/demo_host_tools.dart).
+
+**Probe anchor:** `intentcall manifest export` runs a subprocess that evaluates
+each row's `entry:` and calls `resolveDescriptor()` — handlers are stripped
+before merge. Use `Host.shared.<getter>CallEntry` or top-level `*CallEntry`
+getters so the catalog compiles at export time. Runtime may register a different
+instance when descriptors match.
+
+**Descriptor-only rows:** When a tool should appear in the manifest but should
+not materialize an `AgentCallEntry` at probe time, set `descriptor:` on
+`AgentRegistryCatalogEntry` and register the handler in app setup; keep
+`qualifiedName` aligned for parity gates.
+
+**Optional instance `@AgentTool` codegen:** Annotate instance methods on a host
+class with a static binding field (default name `shared`). Codegen emits an
+extension with `AgentCallEntry` getters whose handlers call instance methods on
+`this`; the catalog references `Host.shared.<getter>CallEntry`. Handwritten
+getters remain the canonical path when you need full control.
+
 ---
 
 ## 🧪 Testing
