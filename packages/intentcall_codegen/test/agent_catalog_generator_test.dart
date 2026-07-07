@@ -32,6 +32,11 @@ void main() {
     expect(keys, contains('app_demo_handwritten'));
   });
 
+  test('merges @AgentEntity descriptor rows from example', () {
+    expect(agentEntityTypeDescriptors, hasLength(1));
+    expect(agentEntityTypeDescriptors.single.qualifiedName, 'app_project');
+  });
+
   test('example agent_catalog has no duplicate registry keys', () {
     final keys = agentCatalogEntries
         .map((final row) => row.registryKey)

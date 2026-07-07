@@ -1,5 +1,6 @@
 import 'package:intentcall_core/intentcall_core.dart';
 
+import 'entity_snapshot_seed.dart';
 import 'generated/agent_catalog.g.dart';
 import 'tools/demo_host_tools.dart';
 
@@ -9,6 +10,7 @@ import 'tools/demo_host_tools.dart';
 ///
 /// ```text
 /// @AgentTool          →  tool implementation + (usually) catalog row
+/// @AgentEntity         →  entity type descriptor + EntityFields constants
 /// handwritten getter  →  tool implementation only
 /// catalog row         →  @AgentCatalog list
 /// agent_catalog.g.dart →  merge of all three sources
@@ -76,5 +78,34 @@ Future<void> main() async {
     throw StateError(
       'demo_host_status smoke failed: expected codegen_instance source',
     );
+  }
+
+  for (final descriptor in agentEntityTypeDescriptors) {
+    registry.registerEntityType(descriptor);
+  }
+  if (agentEntityTypeDescriptors.isNotEmpty) {
+    final row = demoProjectSnapshotRow();
+    if (row['projectId'] != 'project-1') {
+      throw StateError('entity smoke failed: expected projectId project-1');
+    }
+    if (row['name'] != 'Codegen project') {
+      throw StateError(
+        'entity smoke failed: expected descriptor title key name',
+      );
+    }
+    if (row['summary'] != 'Entity snapshot seed') {
+      throw StateError(
+        'entity smoke failed: expected descriptor subtitle key summary',
+      );
+    }
+    final tags = row['tags'];
+    if (tags is! List ||
+        tags.length != 2 ||
+        tags[0] != 'demo' ||
+        tags[1] != 'codegen') {
+      throw StateError(
+        'entity smoke failed: expected descriptor keywords tags',
+      );
+    }
   }
 }

@@ -98,8 +98,10 @@ void main() {
     expect(manifest.entityTypes.single.titleKey, 'name');
     expect(manifest.entityTypes.single.subtitleKey, 'summary');
     expect(
-      (manifest.entityTypes.single.snapshotSchema['properties']!
-          as Map)['name']['x-intentcall-role'],
+      ((manifest.entityTypes.single.snapshotSchema['properties']!
+                  as Map<String, Object?>)['name']!
+              as Map<String, Object?>)['x-intentcall-role']
+          as String?,
       'title',
     );
   });

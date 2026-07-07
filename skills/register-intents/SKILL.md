@@ -227,6 +227,7 @@ After changing registrations or projection policy, run:
 
 ```bash
 steward benchmark --scenario intentcall.projection-pipeline --json
+steward benchmark --scenario intentcall.manifest-resource-uri --json
 ```
 
 Apple sub-channels (Siri phrases, Spotlight donation hints) use
@@ -387,6 +388,7 @@ adapter contract test and run:
 ```bash
 steward benchmark --scenario intentcall.adapter-contract --json
 steward benchmark --scenario intentcall.projection-pipeline --json
+steward benchmark --scenario intentcall.manifest-resource-uri --json
 ```
 
 ---

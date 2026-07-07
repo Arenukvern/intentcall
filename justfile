@@ -35,6 +35,10 @@ projection-pipeline-check:
     cd packages/intentcall_codegen/example && dart run ../../intentcall_cli/bin/intentcall.dart manifest export --check
     cd packages/intentcall_codegen/example && dart run ../../intentcall_cli/bin/intentcall.dart platform sync --platform web --check
 
+# Manifest export must not emit package-wide intentcall:// resource URIs.
+manifest-resource-uri-check:
+    dart test packages/intentcall_platform_sync/test/manifest_resource_uri_policy_test.dart
+
 # Verify platform artifact sync on fixture projects
 platform-sync-check:
     dart run intentcall_cli:intentcall platform sync --project-dir packages/intentcall_cli/test/fixtures/flutter_project --platform web --check

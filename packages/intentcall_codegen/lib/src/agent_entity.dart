@@ -1,4 +1,4 @@
-/// Declares one property on an [@AgentEntity] type for catalog projection.
+/// Declares one property on an @[AgentEntity] type for catalog projection.
 class AgentEntityProperty {
   const AgentEntityProperty({
     required this.name,

@@ -337,5 +337,49 @@
       }
     }
   ],
+  "entityTypes": [
+    {
+      "qualifiedName": "app_project",
+      "namespace": "app",
+      "name": "project",
+      "displayName": "Project",
+      "description": "",
+      "idKey": "projectId",
+      "titleKey": "name",
+      "subtitleKey": "summary",
+      "keywordsKey": "tags",
+      "urlKey": "url",
+      "defaultQueryLimit": 20,
+      "snapshotSchema": {
+        "type": "object",
+        "required": [
+          "projectId"
+        ],
+        "properties": {
+          "projectId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name",
+            "x-intentcall-display": true,
+            "x-intentcall-role": "title"
+          },
+          "summary": {
+            "type": "string",
+            "description": "Searchable summary",
+            "x-intentcall-searchable": true,
+            "x-intentcall-role": "subtitle"
+          },
+          "tags": {
+            "type": "array",
+            "description": "Search keywords",
+            "x-intentcall-searchable": true,
+            "x-intentcall-role": "keywords"
+          }
+        }
+      }
+    }
+  ],
   "protocolScheme": "intentcallcodegen"
 }

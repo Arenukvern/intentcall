@@ -30,8 +30,11 @@ void main() {
     context = exporter.loadExportContext(projectRoot: projectRoot);
   });
 
-  AgentManifest buildManifest() =>
-      exporter.buildManifest(catalog: agentCatalogEntries, context: context);
+  AgentManifest buildManifest() => exporter.buildManifest(
+    catalog: agentCatalogEntries,
+    context: context,
+    entityTypeDescriptors: agentEntityTypeDescriptors,
+  );
 
   test('demo_cart respects @AgentProjection(webMcp: false)', () {
     final manifest = buildManifest();
@@ -81,6 +84,21 @@ void main() {
     expect(
       inbox.surfaces.includes(AgentManifestSurface.webMcp, defaultValue: false),
       isTrue,
+    );
+  });
+
+  test('exports @AgentEntity descriptor with three-slot keys', () {
+    final manifest = buildManifest();
+
+    expect(manifest.entityTypes, hasLength(1));
+    final entity = manifest.entityTypes.single;
+    expect(entity.qualifiedName, 'app_project');
+    expect(entity.titleKey, 'name');
+    expect(entity.subtitleKey, 'summary');
+    expect(entity.keywordsKey, 'tags');
+    expect(
+      (entity.snapshotSchema['properties'] as Map)['name']['x-intentcall-role'],
+      'title',
     );
   });
 
