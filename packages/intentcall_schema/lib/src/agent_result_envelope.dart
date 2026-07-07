@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'agent_result.dart';
+import 'resource_uri.dart';
 
 /// Builders for versioned snapshot payloads inside [AgentResult] data maps.
 ///
@@ -42,14 +43,18 @@ extension AgentResultEnvelope on AgentResult {
   ///
   /// Populates `resource_uri`, `resource`, and `contents` so clients can treat
   /// the payload like a resource read response. [resourceName] uses underscore
-  /// segments that map to path segments in the URI (see [resourceUriForName]).
+  /// segments that map to path segments in the URI (see [resourceUri]).
   static AgentResult resourceEnvelope({
+    required final String protocolScheme,
     required final String resourceName,
     required final Map<String, Object?> snapshot,
     final String mimeType = 'application/json',
     final int schemaVersion = 1,
   }) {
-    final uri = resourceUriForName(resourceName);
+    final uri = resourceUri(
+      protocolScheme: protocolScheme,
+      resourceName: resourceName,
+    );
     final text = jsonEncode(snapshot);
     final resource = <String, Object?>{
       'uri': uri,
@@ -70,18 +75,5 @@ extension AgentResultEnvelope on AgentResult {
         'contents': <Map<String, Object?>>[resource],
       },
     );
-  }
-
-  /// Builds `intentcall://resource/...` from underscore-separated [name] segments.
-  ///
-  /// Example: `spark_runtime_snapshot` →
-  /// `intentcall://resource/spark/runtime/snapshot`.
-  ///
-  /// Returns `intentcall://resource/unknown` when [name] is empty.
-  static String resourceUriForName(final String name) {
-    if (name.isEmpty) {
-      return 'intentcall://resource/unknown';
-    }
-    return 'intentcall://resource/${name.split('_').join('/')}';
   }
 }

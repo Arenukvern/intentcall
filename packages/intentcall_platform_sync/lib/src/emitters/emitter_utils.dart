@@ -1,3 +1,5 @@
+import 'package:intentcall_schema/intentcall_schema.dart' as schema;
+
 /// Shared helpers for platform artifact emitters.
 String humanizeAgentName(final String name) =>
     name.split('_').map(_titleCaseWord).join(' ');
@@ -46,3 +48,15 @@ String invokeUri({
   required final String protocolScheme,
   required final String qualifiedName,
 }) => '$protocolScheme://invoke/$qualifiedName';
+
+/// Builds `$protocolScheme://resource/...` from underscore-separated segments.
+///
+/// Example: `cool_runtime_snapshot` with scheme `demoapp` →
+/// `demoapp://resource/cool/runtime/snapshot`.
+String resourceUri({
+  required final String protocolScheme,
+  required final String resourceName,
+}) => schema.resourceUri(
+  protocolScheme: protocolScheme,
+  resourceName: resourceName,
+);

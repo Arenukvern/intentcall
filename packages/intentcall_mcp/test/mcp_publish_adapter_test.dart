@@ -214,7 +214,7 @@ void main() {
             FutureOr<ReadResourceResult> Function(ReadResourceRequest)
           >{};
       final publishedTemplates = <String>[];
-      const uri = 'intentcall://resource/app/state';
+      const uri = 'demoapp://resource/app/state';
 
       final adapter = McpPublishAdapter(
         publishTool: (_, final _) {},
@@ -306,7 +306,7 @@ void main() {
     'McpPublishAdapter clears resource template patterns on detach and reattach',
     () async {
       final registry = InMemoryAgentRegistry();
-      const template = 'intentcall://resource/app/{id}';
+      const template = 'demoapp://resource/app/{id}';
       registry.register(
         RegisteredAgentIntent(
           descriptor: AgentIntentDescriptor(

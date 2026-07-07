@@ -40,6 +40,31 @@ void main() {
     );
   });
 
+  test('ManifestMerger derives resourceUri from protocolScheme', () {
+    const merger = ManifestMerger();
+    const policy = ProjectionPolicy();
+    final manifest = merger.mergeManifest(
+      catalog: [
+        AgentRegistryCatalogEntry(
+          registryKey: 'app_diagnostics',
+          descriptor: AgentIntentDescriptor(
+            namespace: 'app',
+            name: 'diagnostics',
+            description: 'Diagnostics',
+            kind: AgentIntentKind.resource,
+            inputSchema: const <String, Object?>{'type': 'object'},
+          ),
+        ),
+      ],
+      policy: policy,
+      protocolScheme: 'demoapp',
+    );
+    expect(
+      manifest.entries.single.resourceUri,
+      'demoapp://resource/diagnostics',
+    );
+  });
+
   test('web-only enabledPlatforms scopes default surfaces', () {
     const merger = ManifestMerger();
     const policy = ProjectionPolicy();
@@ -65,7 +90,10 @@ void main() {
       isTrue,
     );
     expect(
-      surfaces.includes(AgentManifestSurface.androidShortcuts, defaultValue: false),
+      surfaces.includes(
+        AgentManifestSurface.androidShortcuts,
+        defaultValue: false,
+      ),
       isFalse,
     );
     expect(

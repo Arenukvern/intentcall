@@ -22,13 +22,16 @@ void main() {
         inputSchema: const <String, Object?>{'type': 'object'},
         mimeType: 'application/json',
       ),
-    ]);
+    ], protocolScheme: 'demoapp');
 
     final map = jsonDecode(json) as Map<String, Object?>;
     expect(map['platform'], 'apple');
     final intents = map['intents']! as List;
     expect(intents, hasLength(2));
-    expect((intents[1] as Map)['resourceUri'], isNotNull);
+    expect(
+      (intents[1] as Map)['resourceUri'],
+      'demoapp://resource/diagnostics',
+    );
   });
 
   test('generateAppleAgentManifest includes raw entityTypes section', () {

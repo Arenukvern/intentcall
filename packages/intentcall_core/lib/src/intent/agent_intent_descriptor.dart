@@ -1,4 +1,4 @@
-import 'package:intentcall_schema/intentcall_schema.dart';
+import 'package:intentcall_schema/intentcall_schema.dart' as schema;
 import 'package:meta/meta.dart';
 
 import '../naming/qualified_name.dart';
@@ -24,7 +24,7 @@ final class AgentIntentDescriptor {
   final String name;
   final String description;
   final AgentIntentKind kind;
-  final InputSchema inputSchema;
+  final schema.InputSchema inputSchema;
   final String? methodName;
   final String? resourceUri;
   final String? mimeType;
@@ -33,6 +33,10 @@ final class AgentIntentDescriptor {
 
   String get effectiveMethodName => methodName ?? name;
 
-  String get effectiveResourceUri =>
-      resourceUri ?? AgentResultEnvelope.resourceUriForName(name);
+  String effectiveResourceUri(final String protocolScheme) =>
+      resourceUri ??
+      schema.resourceUri(
+        protocolScheme: protocolScheme,
+        resourceName: name,
+      );
 }

@@ -81,10 +81,11 @@ Use envelopes when the consumer needs a versioned JSON snapshot (MCP resources, 
 
 ```dart
 final result = AgentResultEnvelope.resourceEnvelope(
+  protocolScheme: 'demoapp',
   resourceName: 'spark_runtime_snapshot',
   snapshot: {'phase': 'playing'},
 );
-// result.data['resource_uri'] == 'intentcall://resource/spark/runtime/snapshot'
+// result.data['resource_uri'] == 'demoapp://resource/spark/runtime/snapshot'
 ```
 
 ### Entity snapshots (agent-visible app state)

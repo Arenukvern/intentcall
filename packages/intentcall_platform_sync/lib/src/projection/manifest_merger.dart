@@ -7,6 +7,7 @@ import 'package:yaml/yaml.dart';
 
 import '../agent_manifest.dart';
 import '../catalog/agent_registry_catalog.dart';
+import '../emitters/emitter_utils.dart';
 import 'projection_policy.dart';
 import 'surface_resolver.dart';
 
@@ -73,7 +74,10 @@ final class ManifestMerger {
           dispatchMode: dispatchMode,
           inlineRuntime: inlineRuntime,
           surfaces: surfaces,
-          resourceUri: descriptor.resourceUri,
+          resourceUri: _resolvedResourceUri(
+            descriptor: descriptor,
+            protocolScheme: protocolScheme,
+          ),
         ),
       );
     }
@@ -203,6 +207,23 @@ final class ManifestMerger {
     final scheme = doc['protocolScheme']?.toString().trim();
     return scheme == null || scheme.isEmpty ? null : scheme;
   }
+}
+
+String? _resolvedResourceUri({
+  required final AgentIntentDescriptor descriptor,
+  required final String? protocolScheme,
+}) {
+  if (descriptor.resourceUri != null) {
+    return descriptor.resourceUri;
+  }
+  if (descriptor.kind != AgentIntentKind.resource) {
+    return null;
+  }
+  final scheme = protocolScheme?.trim() ?? '';
+  if (scheme.isEmpty) {
+    return null;
+  }
+  return resourceUri(protocolScheme: scheme, resourceName: descriptor.name);
 }
 
 AgentManifestEntityType _entityFromDescriptor(
