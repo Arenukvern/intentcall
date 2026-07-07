@@ -1,6 +1,6 @@
 import 'package:intentcall_schema/intentcall_schema.dart';
 
-import 'agent_entity_property_descriptor.dart';
+import 'agent_entity_snapshot_keys.dart';
 import 'agent_entity_type_descriptor.dart';
 
 /// Projects an app-owned entity snapshot into a platform-neutral cache row.
@@ -12,45 +12,23 @@ Map<String, Object?> projectAgentEntitySnapshot(
   final AgentEntitySnapshot snapshot,
   final AgentEntityTypeDescriptor descriptor,
 ) {
-  final displayProperties = descriptor.displayProperties.toList();
-  final searchableProperties = descriptor.searchableProperties.toList();
-  final titleKey = displayProperties.isNotEmpty
-      ? displayProperties.first.name
-      : 'title';
-  final subtitleKey = displayProperties.length > 1
-      ? displayProperties[1].name
-      : _firstOrNull(
-              searchableProperties
-                  .where((final property) => property.name != titleKey)
-                  .map((final property) => property.name),
-            ) ??
-            'subtitle';
-  final keywordsKey =
-      _firstOrNull(
-        searchableProperties
-            .where(
-              (final property) =>
-                  property.valueType == AgentEntityPropertyValueType.array,
-            )
-            .map((final property) => property.name),
-      ) ??
-      'keywords';
-  final title = _fieldValue(snapshot, titleKey) ?? snapshot.effectiveTitle;
-  final subtitle = _fieldValue(snapshot, subtitleKey) ?? snapshot.subtitle;
+  final keys = AgentEntitySnapshotKeys.fromDescriptor(descriptor);
+  final title = _fieldValue(snapshot, keys.titleKey) ?? snapshot.effectiveTitle;
+  final subtitle =
+      _fieldValue(snapshot, keys.subtitleKey) ?? snapshot.subtitle;
   final keywords =
-      _fieldValue(snapshot, keywordsKey) ??
+      _fieldValue(snapshot, keys.keywordsKey) ??
       (snapshot.keywords.isNotEmpty ? snapshot.keywords : null);
 
   final row = <String, Object?>{
     ...snapshot.properties,
     'id': snapshot.ref.identifier,
-    if (descriptor.identifierName != 'id')
-      descriptor.identifierName: snapshot.ref.identifier,
-    if (titleKey != 'title' && snapshot.effectiveTitle != null)
+    if (keys.idKey != 'id') keys.idKey: snapshot.ref.identifier,
+    if (keys.titleKey != 'title' && snapshot.effectiveTitle != null)
       'title': snapshot.effectiveTitle,
-    if (subtitleKey != 'subtitle' && snapshot.subtitle != null)
+    if (keys.subtitleKey != 'subtitle' && snapshot.subtitle != null)
       'subtitle': snapshot.subtitle,
-    if (keywordsKey != 'keywords' && snapshot.keywords.isNotEmpty)
+    if (keys.keywordsKey != 'keywords' && snapshot.keywords.isNotEmpty)
       'keywords': snapshot.keywords,
     if (snapshot.thumbnailUrl != null) 'thumbnailUrl': snapshot.thumbnailUrl,
     if (snapshot.url != null) 'url': snapshot.url,
@@ -63,13 +41,13 @@ Map<String, Object?> projectAgentEntitySnapshot(
     if (snapshot.properties.isNotEmpty) 'properties': snapshot.properties,
   };
   if (title != null) {
-    row[titleKey] = title;
+    row[keys.titleKey] = title;
   }
   if (subtitle != null) {
-    row[subtitleKey] = subtitle;
+    row[keys.subtitleKey] = subtitle;
   }
   if (keywords != null) {
-    row[keywordsKey] = keywords;
+    row[keys.keywordsKey] = keywords;
   }
   return row;
 }
@@ -77,9 +55,4 @@ Map<String, Object?> projectAgentEntitySnapshot(
 Object? _fieldValue(final AgentEntitySnapshot snapshot, final String key) {
   final value = snapshot.properties[key];
   return value;
-}
-
-String? _firstOrNull(final Iterable<String> values) {
-  final iterator = values.iterator;
-  return iterator.moveNext() ? iterator.current : null;
 }

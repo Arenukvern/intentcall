@@ -10,7 +10,16 @@
       "kind": "tool",
       "dispatchMode": "openApp",
       "surfaces": {
+        "apple.appIntents": {
+          "include": false
+        },
         "apple.appShortcuts": {
+          "include": false
+        },
+        "apple.spotlight": {
+          "include": false
+        },
+        "apple.entities": {
           "include": false
         },
         "android.shortcuts": {

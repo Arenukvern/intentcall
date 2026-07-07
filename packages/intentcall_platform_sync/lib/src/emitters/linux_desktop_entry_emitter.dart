@@ -22,7 +22,7 @@ final class LinuxDesktopEntryEmitter {
         .where(
           (final tool) => tool.surfaces.includes(
             AgentManifestSurface.linuxSchemeHandler,
-            defaultValue: true,
+            defaultValue: false,
           ),
         )
         .map((final t) => '# tool: ${t.qualifiedName}')

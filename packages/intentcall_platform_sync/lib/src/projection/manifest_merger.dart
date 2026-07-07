@@ -8,6 +8,7 @@ import 'package:yaml/yaml.dart';
 import '../agent_manifest.dart';
 import '../catalog/agent_registry_catalog.dart';
 import 'projection_policy.dart';
+import 'surface_resolver.dart';
 
 /// Inputs for [ManifestMerger.mergeManifest] loaded from host config.
 final class ManifestExportContext {
@@ -57,9 +58,10 @@ final class ManifestMerger {
           '"${row.qualifiedName}".',
         );
       }
-      final surfaces =
-          overlay?.resolveSurfaces(defaults: defaultSurfaces) ??
-          defaultSurfaces;
+      final surfaces = resolveEntrySurfaces(
+        defaultSurfaces: defaultSurfaces,
+        overlay: overlay,
+      );
       entries.add(
         AgentManifestEntry(
           qualifiedName: row.qualifiedName,
@@ -122,22 +124,38 @@ final class ManifestMerger {
   }
 
   String readManifestRelativePath(final String projectRoot) {
-    final configFile = File(p.join(projectRoot, 'intentcall.yaml'));
-    if (!configFile.existsSync()) {
-      return 'web/agent_manifest.json';
-    }
-    final doc = loadYaml(configFile.readAsStringSync());
-    if (doc is! YamlMap) {
-      return 'web/agent_manifest.json';
-    }
-    final layout = doc['layout'];
-    if (layout is YamlMap) {
+    final layout = _readLayoutYamlMap(projectRoot);
+    if (layout != null) {
       final manifest = layout['manifest']?.toString().trim();
       if (manifest != null && manifest.isNotEmpty) {
         return manifest;
       }
     }
     return 'web/agent_manifest.json';
+  }
+
+  String readWebDirRelativePath(final String projectRoot) {
+    final layout = _readLayoutYamlMap(projectRoot);
+    if (layout != null) {
+      final webDir = layout['webDir']?.toString().trim();
+      if (webDir != null && webDir.isNotEmpty) {
+        return webDir;
+      }
+    }
+    return 'web';
+  }
+
+  YamlMap? _readLayoutYamlMap(final String projectRoot) {
+    final configFile = File(p.join(projectRoot, 'intentcall.yaml'));
+    if (!configFile.existsSync()) {
+      return null;
+    }
+    final doc = loadYaml(configFile.readAsStringSync());
+    if (doc is! YamlMap) {
+      return null;
+    }
+    final layout = doc['layout'];
+    return layout is YamlMap ? layout : null;
   }
 
   ManifestExportContext loadExportContext({
@@ -198,20 +216,16 @@ AgentManifestEntityType _entityFromDescriptor(
 
 /// Shared entity projection JSON for one descriptor.
 String generateEntityManifestJson(final AgentEntityTypeDescriptor descriptor) {
-  final displayProperties = descriptor.displayProperties.toList();
-  final searchableProperties = descriptor.searchableProperties.toList();
-  final titleKey = displayProperties.isNotEmpty
-      ? displayProperties.first.name
-      : 'title';
+  final keys = AgentEntitySnapshotKeys.fromDescriptor(descriptor);
   return const JsonEncoder.withIndent('  ').convert(<String, Object?>{
     'qualifiedName': descriptor.qualifiedName,
     'namespace': descriptor.namespace,
     'name': descriptor.name,
     'displayName': descriptor.displayName ?? descriptor.name,
-    'idKey': descriptor.identifierName,
-    'titleKey': titleKey,
-    'subtitleKey': 'subtitle',
-    'keywordsKey': 'keywords',
-    'snapshotSchema': const <String, Object?>{'type': 'object'},
+    'idKey': keys.idKey,
+    'titleKey': keys.titleKey,
+    'subtitleKey': keys.subtitleKey,
+    'keywordsKey': keys.keywordsKey,
+    'snapshotSchema': agentEntitySnapshotSchema(descriptor),
   });
 }

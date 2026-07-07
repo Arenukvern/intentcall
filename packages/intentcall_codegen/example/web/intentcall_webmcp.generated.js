@@ -16,6 +16,22 @@
   var invokePath = "/agent/invoke";
   var tools = [
   {
+    "name": "app_demo_host_status",
+    "description": "Codegen instance-method host tool",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string",
+          "description": "Host label"
+        }
+      },
+      "required": [
+        "label"
+      ]
+    }
+  },
+  {
     "name": "app_demo_ping",
     "description": "Returns pong for a message",
     "inputSchema": {
@@ -32,26 +48,6 @@
     }
   },
   {
-    "name": "app_demo_cart",
-    "description": "Returns a cart total",
-    "inputSchema": {
-      "type": "object",
-      "properties": {
-        "currency": {
-          "type": "string",
-          "description": "Currency code"
-        },
-        "includeTax": {
-          "type": "boolean",
-          "description": "Include tax"
-        }
-      },
-      "required": [
-        "currency"
-      ]
-    }
-  },
-  {
     "name": "app_demo_required_named",
     "description": "Returns a required named parameter",
     "inputSchema": {
@@ -64,6 +60,38 @@
       },
       "required": [
         "mode"
+      ]
+    }
+  },
+  {
+    "name": "app_demo_inbox",
+    "description": "Read inbox folder",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "folder": {
+          "type": "string",
+          "description": "Inbox folder name"
+        }
+      },
+      "required": [
+        "folder"
+      ]
+    }
+  },
+  {
+    "name": "app_demo_handwritten",
+    "description": "Handwritten instance-bound tool",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "note": {
+          "type": "string",
+          "description": "Note to echo"
+        }
+      },
+      "required": [
+        "note"
       ]
     }
   }

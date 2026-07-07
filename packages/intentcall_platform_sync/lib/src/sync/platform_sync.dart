@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 import '../agent_manifest.dart';
+import '../projection/manifest_merger.dart';
 import '../emitters/android_shortcuts_xml_emitter.dart';
 import '../emitters/apple_swift_app_intents_emitter.dart';
 import '../emitters/linux_desktop_entry_emitter.dart';
@@ -127,6 +128,7 @@ final class PlatformSync {
     this.appleSwiftEmitter = const AppleSwiftAppIntentsEmitter(),
     this.linuxDesktopEmitter = const LinuxDesktopEntryEmitter(),
     this.windowsProtocolEmitter = const WindowsProtocolEmitter(),
+    this.manifestMerger = const ManifestMerger(),
   });
 
   final String manifestFileName;
@@ -149,6 +151,7 @@ final class PlatformSync {
   final AppleSwiftAppIntentsEmitter appleSwiftEmitter;
   final LinuxDesktopEntryEmitter linuxDesktopEmitter;
   final WindowsProtocolEmitter windowsProtocolEmitter;
+  final ManifestMerger manifestMerger;
 
   AgentManifest readManifest(final String projectRoot) {
     final manifestFile = _resolveManifestFile(projectRoot);
@@ -200,7 +203,7 @@ final class PlatformSync {
     final bool dryRun = false,
   }) {
     final manifest = readManifest(projectRoot);
-    final webDir = Directory(p.join(projectRoot, webDirName));
+    final webDir = Directory(p.join(projectRoot, _resolveWebDirName(projectRoot)));
     if (!webDir.existsSync()) {
       throw StateError('Missing web/ directory under $projectRoot');
     }
@@ -422,7 +425,7 @@ final class PlatformSync {
   /// Returns `true` when generated web outputs already match emitters.
   bool checkWeb(final String projectRoot) {
     final manifest = readManifest(projectRoot);
-    final webDir = p.join(projectRoot, webDirName);
+    final webDir = p.join(projectRoot, _resolveWebDirName(projectRoot));
     final webManifestFile = File(p.join(webDir, webManifestFileName));
     final jsFile = File(p.join(webDir, webMcpJsFileName));
     if (!webManifestFile.existsSync() || !jsFile.existsSync()) {
@@ -682,12 +685,20 @@ final class PlatformSync {
   );
 
   File _resolveManifestFile(final String projectRoot) {
+    final relativePath = manifestMerger.readManifestRelativePath(projectRoot);
+    final configured = File(p.join(projectRoot, relativePath));
+    if (configured.existsSync()) {
+      return configured;
+    }
     final rootCandidate = File(p.join(projectRoot, manifestFileName));
     if (rootCandidate.existsSync()) {
       return rootCandidate;
     }
-    return File(p.join(projectRoot, webDirName, manifestFileName));
+    return configured;
   }
+
+  String _resolveWebDirName(final String projectRoot) =>
+      manifestMerger.readWebDirRelativePath(projectRoot);
 }
 
 /// Snippet to inject into `web/index.html` once.

@@ -27,7 +27,7 @@ final class AndroidShortcutsXmlEmitter {
     final tools = manifest.tools.where(
       (final tool) => tool.surfaces.includes(
         AgentManifestSurface.androidShortcuts,
-        defaultValue: true,
+        defaultValue: false,
       ),
     );
 

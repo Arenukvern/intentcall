@@ -12,8 +12,9 @@ class AgentProjection {
 
   /// Per-surface inclusion overrides using typed [AgentManifestSurface] keys.
   ///
-  /// Sub-channel hints (for example Apple Siri vs Spotlight) use
-  /// [AgentManifestSurfaceExposure.options] on handwritten [EntryProjection]
-  /// rows until emitters support them.
+  /// Apple sub-channels: [AgentManifestSurface.appleAppIntents],
+  /// [AgentManifestSurface.appleAppShortcuts],
+  /// [AgentManifestSurface.appleSpotlight], and
+  /// [AgentManifestSurface.appleEntities].
   final Map<AgentManifestSurface, bool> surfaces;
 }

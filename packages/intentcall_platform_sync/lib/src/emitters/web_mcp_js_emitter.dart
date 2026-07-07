@@ -27,7 +27,7 @@ final class WebMcpJsEmitter {
         .where(
           (final tool) => tool.surfaces.includes(
             AgentManifestSurface.webMcp,
-            defaultValue: true,
+            defaultValue: false,
           ),
         )
         .map(

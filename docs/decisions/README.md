@@ -3,7 +3,7 @@
 Architecture Decision Records (ADRs) for IntentCall.
 Format: [MADR](https://adr.github.io/madr/) — see any existing ADR for the template.
 
-Next ADR number: **0021**
+Next ADR number: **0024**
 
 ---
 
@@ -23,6 +23,8 @@ Next ADR number: **0021**
 | [0019](0019-framework-neutral-intentcall-cli.md) | accepted | Framework-Neutral IntentCall CLI and Registry-Backed Manifest Generation | 2026-07-07 |
 | [0020](0020-platform-scoped-manifest-surfaces.md) | accepted | Platform-Scoped Manifest Surface Defaults | 2026-07-07 |
 | [0021](0021-agent-catalog-annotation.md) | accepted | @AgentCatalog Annotation and Removal of Handwritten Catalog Path | 2026-07-07 |
+| [0022](0022-projection-pipeline-alignment.md) | accepted | Projection Pipeline Alignment — Dense Export and Apple Sub-Channels | 2026-07-07 |
+| [0023](0023-entity-three-slot-projection.md) | accepted | Entity Three-Slot Projection and Property Roles | 2026-07-07 |
 
 ---
 

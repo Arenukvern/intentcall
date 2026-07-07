@@ -1,6 +1,10 @@
 import 'package:intentcall_platform_sync/intentcall_platform_sync.dart';
 import 'package:test/test.dart';
 
+const _appleAppIntentsSurface = <String, Object?>{
+  'apple.appIntents': <String, Object?>{'include': true},
+};
+
 void main() {
   final manifest = AgentManifest.fromJson(<String, Object?>{
     'version': 1,
@@ -14,7 +18,12 @@ void main() {
         'description': 'Return cart total',
         'kind': 'tool',
         'surfaces': <String, Object?>{
+          'apple.appIntents': <String, Object?>{'include': true},
           'apple.appShortcuts': <String, Object?>{'include': true},
+          'android.shortcuts': <String, Object?>{'include': true},
+          'linux.schemeHandler': <String, Object?>{'include': true},
+          'windows.protocolActivation': <String, Object?>{'include': true},
+          'windows.msixProtocol': <String, Object?>{'include': true},
         },
         'inputSchema': <String, Object?>{
           'type': 'object',
@@ -177,12 +186,10 @@ void main() {
           'IntentCallNativeEntitySnapshotStore.recordOpen(entityType: "app_project", id: target.id)',
         ),
       );
-      expect(swift, contains('enum IntentCallNativeEntitySnapshotStore'));
+      expect(swift, contains('enum IntentCallGeneratedEntityConfig'));
       expect(
         swift,
-        contains(
-          'private static let snapshotsKeyPrefix = "intentcall.entity_snapshots."',
-        ),
+        isNot(contains('enum IntentCallNativeEntitySnapshotStore {')),
       );
       expect(swift, contains('static func indexAppEntities() async throws'));
       expect(swift, contains('CSSearchableIndex.default().indexAppEntities'));
@@ -195,7 +202,9 @@ void main() {
       );
       expect(
         swift,
-        contains('private static let fallbackScheme: String? = "demoapp"'),
+        contains(
+          'IntentCallNativeEntitySnapshotStore.fallbackScheme = "demoapp"',
+        ),
       );
       expect(swift, isNot(contains('FlutterEngine')));
       expect(swift, isNot(contains('FlutterMethodChannel')));
@@ -213,6 +222,7 @@ void main() {
               'name': 'ping',
               'description': 'Ping',
               'kind': 'tool',
+              'surfaces': _appleAppIntentsSurface,
               'inputSchema': <String, Object?>{'type': 'object'},
             },
           ],
@@ -247,6 +257,7 @@ void main() {
               'description': 'Ping',
               'kind': 'tool',
               'dispatchMode': 'queueOnly',
+              'surfaces': _appleAppIntentsSurface,
               'inputSchema': <String, Object?>{'type': 'object'},
             },
           ],
@@ -286,6 +297,7 @@ void main() {
               'description': 'Inline',
               'kind': 'tool',
               'dispatchMode': 'inlineRuntime',
+              'surfaces': _appleAppIntentsSurface,
               'inlineRuntime': <String, Object?>{
                 'kind': 'nativeInline',
                 'platforms': <String, Object?>{
@@ -347,6 +359,7 @@ void main() {
               'description': 'Inline',
               'kind': 'tool',
               'dispatchMode': 'inlineRuntime',
+              'surfaces': _appleAppIntentsSurface,
               'inlineRuntime': <String, Object?>{
                 'kind': 'nativeInline',
                 'result': <String, Object?>{'type': 'string'},
@@ -426,6 +439,7 @@ void main() {
             'description': 'Inline',
             'kind': 'tool',
             'dispatchMode': 'inlineRuntime',
+            'surfaces': _appleAppIntentsSurface,
             'inlineRuntime': <String, Object?>{
               'kind': 'dartExtensionInline',
               'platforms': <String, Object?>{
@@ -463,6 +477,7 @@ void main() {
             'description': 'Inline',
             'kind': 'tool',
             'dispatchMode': 'inlineRuntime',
+            'surfaces': _appleAppIntentsSurface,
             'inlineRuntime': <String, Object?>{
               'kind': 'nativeInline',
               'platforms': <String, Object?>{
@@ -499,6 +514,7 @@ void main() {
               'description': 'Publish',
               'kind': 'tool',
               'surfaces': <String, Object?>{
+                'apple.appIntents': <String, Object?>{'include': true},
                 'apple.appShortcuts': <String, Object?>{'include': true},
               },
               'inputSchema': <String, Object?>{'type': 'object'},
@@ -509,6 +525,7 @@ void main() {
               'name': 'private',
               'description': 'Private',
               'kind': 'tool',
+              'surfaces': _appleAppIntentsSurface,
               'inputSchema': <String, Object?>{'type': 'object'},
             },
           ],
@@ -582,6 +599,7 @@ void main() {
               'name': 'reserved',
               'description': 'Reserved',
               'kind': 'tool',
+              'surfaces': _appleAppIntentsSurface,
               'inputSchema': <String, Object?>{
                 'type': 'object',
                 'required': <String>['class'],
@@ -609,6 +627,7 @@ void main() {
             'name': 'object',
             'description': 'Object',
             'kind': 'tool',
+            'surfaces': _appleAppIntentsSurface,
             'inputSchema': <String, Object?>{
               'type': 'object',
               'required': <String>['payload'],
@@ -707,6 +726,7 @@ void main() {
             'description': 'Inline',
             'kind': 'tool',
             'dispatchMode': 'inlineRuntime',
+            'surfaces': _appleAppIntentsSurface,
             'inlineRuntime': <String, Object?>{
               'kind': 'dartExtensionInline',
               'result': <String, Object?>{
@@ -785,6 +805,7 @@ void main() {
             'description': 'Inline',
             'kind': 'tool',
             'dispatchMode': 'inlineRuntime',
+            'surfaces': _appleAppIntentsSurface,
             'inlineRuntime': <String, Object?>{
               'kind': 'dartExtensionInline',
               'platforms': <String, Object?>{
@@ -864,6 +885,7 @@ void main() {
                   'description': 'Inline',
                   'kind': 'tool',
                   'dispatchMode': 'inlineRuntime',
+                  'surfaces': _appleAppIntentsSurface,
                   'inlineRuntime': <String, Object?>{
                     'kind': 'nativeInline',
                     'result': <String, Object?>{'type': 'number'},
@@ -1144,81 +1166,6 @@ struct AppCartTotalIntent: AppIntent {
 struct IntentCallShortcutsProvider: AppShortcutsProvider {
   static var appShortcuts: [AppShortcut] {
     AppShortcut(intent: AppCartTotalIntent(), phrases: ["\(.applicationName) Cart Total"])
-  }
-}
-
-struct IntentCallInlineRuntimeResult {
-  let dialog: String
-  let value: Any?
-
-  init(dialog: String = "Completed inline runtime invocation.", value: Any? = nil) {
-    self.dialog = dialog
-    self.value = value
-  }
-}
-
-enum IntentCallInlineRuntimeError: Error, CustomStringConvertible {
-  case missingHandler(String)
-  case handlerFailed(String)
-  case invalidTypedResult(String, String)
-
-  var description: String {
-    switch self {
-    case .missingHandler(let qualifiedName):
-      return "No native inline handler registered for \(qualifiedName)."
-    case .handlerFailed(let message):
-      return "Inline runtime failed: \(message)"
-    case .invalidTypedResult(let qualifiedName, let typeName):
-      return "Inline runtime for \(qualifiedName) did not return \(typeName)."
-    }
-  }
-}
-
-typealias IntentCallAppleInlineRuntimeHandler = @Sendable ([String: Any]) async throws -> IntentCallInlineRuntimeResult
-
-enum IntentCallAppleInlineRuntime {
-  private static let lock = NSObject()
-  private nonisolated(unsafe) static var handlers: [String: IntentCallAppleInlineRuntimeHandler] = [:]
-
-  static func register(qualifiedName: String, handler: @escaping IntentCallAppleInlineRuntimeHandler) {
-    objc_sync_enter(lock)
-    defer { objc_sync_exit(lock) }
-    handlers[qualifiedName] = handler
-  }
-
-  static func perform(qualifiedName: String, arguments: [String: Any]) async throws -> IntentCallInlineRuntimeResult {
-    objc_sync_enter(lock)
-    let handler = handlers[qualifiedName]
-    objc_sync_exit(lock)
-    guard let handler else {
-      throw IntentCallInlineRuntimeError.missingHandler(qualifiedName)
-    }
-    do {
-      return try await handler(arguments)
-    } catch let error as IntentCallInlineRuntimeError {
-      throw error
-    } catch {
-      throw IntentCallInlineRuntimeError.handlerFailed(error.localizedDescription)
-    }
-  }
-
-  static func typedValue<T>(_ result: IntentCallInlineRuntimeResult, as type: T.Type, qualifiedName: String) throws -> T {
-    guard let raw = result.value else {
-      throw IntentCallInlineRuntimeError.invalidTypedResult(qualifiedName, String(describing: T.self))
-    }
-    if let value = raw as? T {
-      return value
-    }
-    if T.self == Int.self, let value = raw as? NSNumber {
-      return value.intValue as! T
-    }
-    if T.self == Double.self, let value = raw as? NSNumber {
-      return value.doubleValue as! T
-    }
-    if T.self == Bool.self, let value = raw as? NSNumber {
-      return value.boolValue as! T
-    }
-    throw IntentCallInlineRuntimeError.invalidTypedResult(qualifiedName, String(describing: T.self))
   }
 }
 

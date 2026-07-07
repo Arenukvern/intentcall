@@ -34,7 +34,7 @@ void main() {
     expect(
       manifest.entries.single.surfaces.includes(
         AgentManifestSurface.webMcp,
-        defaultValue: true,
+        defaultValue: false,
       ),
       isFalse,
     );
@@ -65,13 +65,13 @@ void main() {
       isTrue,
     );
     expect(
-      surfaces.includes(AgentManifestSurface.androidShortcuts, defaultValue: true),
+      surfaces.includes(AgentManifestSurface.androidShortcuts, defaultValue: false),
       isFalse,
     );
     expect(
       surfaces.includes(
         AgentManifestSurface.windowsProtocolActivation,
-        defaultValue: true,
+        defaultValue: false,
       ),
       isFalse,
     );

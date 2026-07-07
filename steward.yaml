@@ -235,6 +235,80 @@ actions:
     evidence:
       redaction: steward/redaction/v1
       summary_fields: [exit_code, duration_ms, output_digest]
+  intentcall.projection-pipeline-check:
+    kind: command
+    desc: Run Layer 5 projection pipeline gates (merger, dense export, emitters, codegen example sync).
+    command:
+      argv: [just, projection-pipeline-check]
+      shell: false
+    cwd: .
+    effects:
+      fs_read:
+        - justfile
+        - packages/intentcall_platform_sync/**
+        - packages/intentcall_codegen/**
+        - packages/intentcall_cli/**
+        - pubspec.yaml
+        - pubspec.lock
+      fs_write: []
+      git: false
+      network: false
+      secrets: false
+      destructive: false
+    safety:
+      class: bounded_local
+      default_policy: auto
+      requires_confirmation: false
+    limits:
+      timeout_ms: 10000
+      max_output_bytes: 500000
+    outputs:
+      - id: stdout
+        kind: stream
+        required: true
+        retention: summary
+        format: text
+    evidence:
+      redaction: steward/redaction/v1
+      summary_fields: [exit_code, duration_ms, output_digest]
+  intentcall.projection-alignment-test:
+    kind: command
+    desc: Run cross-layer projection alignment matrix test.
+    command:
+      argv:
+        [
+          dart,
+          test,
+          packages/intentcall_platform_sync/test/projection_alignment_test.dart,
+        ]
+      shell: false
+    cwd: .
+    effects:
+      fs_read:
+        - packages/intentcall_platform_sync/**
+        - pubspec.yaml
+        - pubspec.lock
+      fs_write: []
+      git: false
+      network: false
+      secrets: false
+      destructive: false
+    safety:
+      class: bounded_local
+      default_policy: auto
+      requires_confirmation: false
+    limits:
+      timeout_ms: 10000
+      max_output_bytes: 200000
+    outputs:
+      - id: stdout
+        kind: stream
+        required: true
+        retention: summary
+        format: text
+    evidence:
+      redaction: steward/redaction/v1
+      summary_fields: [exit_code, duration_ms, output_digest]
   intentcall.docs-check:
     kind: command
     desc: Validate docs.page config (docs.json) and internal documentation links.
@@ -287,6 +361,8 @@ provenance:
   benchmarks:
     - id: intentcall.adapter-contract
       manifest: steward/scenarios/intentcall.adapter-contract.yaml
+    - id: intentcall.projection-pipeline
+      manifest: steward/scenarios/intentcall.projection-pipeline.yaml
 branding:
   banned_words: [unlock, supercharge, ultimate, leverage]
   ignored_paths: []

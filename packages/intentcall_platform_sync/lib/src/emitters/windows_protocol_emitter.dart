@@ -20,7 +20,7 @@ final class WindowsProtocolEmitter {
         .where(
           (final tool) => tool.surfaces.includes(
             AgentManifestSurface.windowsProtocolActivation,
-            defaultValue: true,
+            defaultValue: false,
           ),
         )
         .map((final t) => '; tool: ${t.qualifiedName}')
@@ -49,7 +49,7 @@ Windows Registry Editor Version 5.00
         .where(
           (final tool) => tool.surfaces.includes(
             AgentManifestSurface.windowsMsixProtocol,
-            defaultValue: true,
+            defaultValue: false,
           ),
         )
         .map((final t) => t.qualifiedName)

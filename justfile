@@ -25,6 +25,16 @@ adr-gates:
     just manifest-parity
     just platform-sync-check
 
+# Layer 5 projection pipeline gate (spec section 8)
+projection-pipeline-check:
+    dart test packages/intentcall_platform_sync/test/manifest_merger_test.dart
+    dart test packages/intentcall_platform_sync/test/dense_manifest_test.dart
+    dart test packages/intentcall_codegen/example/test/manifest_projection_test.dart
+    dart test packages/intentcall_platform_sync/test/native_emitters_test.dart
+    cd packages/intentcall_codegen/example && dart pub get && dart run build_runner build
+    cd packages/intentcall_codegen/example && dart run ../../intentcall_cli/bin/intentcall.dart manifest export --check
+    cd packages/intentcall_codegen/example && dart run ../../intentcall_cli/bin/intentcall.dart platform sync --platform web --check
+
 # Verify platform artifact sync on fixture projects
 platform-sync-check:
     dart run intentcall_cli:intentcall platform sync --project-dir packages/intentcall_cli/test/fixtures/flutter_project --platform web --check

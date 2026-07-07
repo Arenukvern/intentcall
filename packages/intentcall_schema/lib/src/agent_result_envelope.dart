@@ -2,8 +2,24 @@ import 'dart:convert';
 
 import 'agent_result.dart';
 
-/// Helpers for agent-stable JSON payloads (ecsly-style envelopes).
+/// Builders for versioned snapshot payloads inside [AgentResult] data maps.
+///
+/// Envelopes follow an ecsly-style shape so MCP resources, inspector tools, and
+/// codegen fixtures can share one JSON contract. Agents should read
+/// `schema_version`, `kind`, and `snapshot` (or `snapshot_json`) from the
+/// result data map.
 extension AgentResultEnvelope on AgentResult {
+  /// Creates a success result wrapping a versioned [snapshot].
+  ///
+  /// [kind] identifies the tool or snapshot type (also stored as `tool_name`).
+  /// [extra] merges additional JSON-safe fields into the result data map.
+  ///
+  /// ```dart
+  /// AgentResultEnvelope.envelope(
+  ///   kind: 'widget_tree',
+  ///   snapshot: {'root': 'MaterialApp'},
+  /// );
+  /// ```
   static AgentResult envelope({
     required final String kind,
     required final Map<String, Object?> snapshot,
@@ -22,6 +38,11 @@ extension AgentResultEnvelope on AgentResult {
     },
   );
 
+  /// Creates a success result for a named MCP-style resource snapshot.
+  ///
+  /// Populates `resource_uri`, `resource`, and `contents` so clients can treat
+  /// the payload like a resource read response. [resourceName] uses underscore
+  /// segments that map to path segments in the URI (see [resourceUriForName]).
   static AgentResult resourceEnvelope({
     required final String resourceName,
     required final Map<String, Object?> snapshot,
@@ -51,7 +72,12 @@ extension AgentResultEnvelope on AgentResult {
     );
   }
 
-  /// `intentcall://resource/a/b` from `a_b` name segments.
+  /// Builds `intentcall://resource/...` from underscore-separated [name] segments.
+  ///
+  /// Example: `spark_runtime_snapshot` →
+  /// `intentcall://resource/spark/runtime/snapshot`.
+  ///
+  /// Returns `intentcall://resource/unknown` when [name] is empty.
   static String resourceUriForName(final String name) {
     if (name.isEmpty) {
       return 'intentcall://resource/unknown';

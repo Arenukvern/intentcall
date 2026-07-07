@@ -1,6 +1,7 @@
 import 'package:intentcall_core/intentcall_core.dart';
 
 import '../invocation/intentcall_invocation.dart';
+import '../projection/manifest_surface_index.dart';
 import 'agent_web_mcp_bootstrap_stub.dart'
     if (dart.library.js_interop) 'agent_web_mcp_bootstrap_web.dart'
     as impl;
@@ -14,7 +15,12 @@ void registerAgentWebMcpFromEntries(
   final Set<AgentCallEntry> entries, {
   final IntentCallAuthorizationPolicy policy =
       const IntentCallAuthorizationPolicy.debugAllowAll(),
-}) => impl.registerFromEntries(entries, policy: policy);
+  final ManifestSurfaceIndex? surfaceIndex,
+}) => impl.registerFromEntries(
+  entries,
+  policy: policy,
+  surfaceIndex: surfaceIndex,
+);
 
 /// Registers WebMCP tools directly from [registry] and executes them in Dart.
 ///
@@ -25,7 +31,12 @@ void registerAgentWebMcpFromRegistry(
   final AgentRegistry registry, {
   final IntentCallAuthorizationPolicy policy =
       const IntentCallAuthorizationPolicy.debugAllowAll(),
-}) => impl.registerFromRegistry(registry, policy: policy);
+  final ManifestSurfaceIndex? surfaceIndex,
+}) => impl.registerFromRegistry(
+  registry,
+  policy: policy,
+  surfaceIndex: surfaceIndex,
+);
 
 /// Whether a tool was already registered on WebMCP (web only; stub returns false).
 bool isAgentWebMcpToolRegistered(final String qualifiedName) =>

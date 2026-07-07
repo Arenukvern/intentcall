@@ -6,6 +6,7 @@ import 'package:intentcall_core/intentcall_core.dart';
 import 'package:intentcall_schema/intentcall_schema.dart';
 
 import '../invocation/intentcall_invocation.dart';
+import '../projection/manifest_surface_index.dart';
 
 @JS('JSON.parse')
 external JSAny? _jsonParse(final JSString source);
@@ -54,6 +55,7 @@ extension type _WebMcpToolDefinition._(JSObject _) implements JSObject {
 void registerFromEntries(
   final Set<AgentCallEntry> entries, {
   required final IntentCallAuthorizationPolicy policy,
+  final ManifestSurfaceIndex? surfaceIndex,
 }) {
   final modelContext = _readModelContext();
   if (modelContext == null) {
@@ -69,6 +71,9 @@ void registerFromEntries(
     }
 
     final qualifiedName = descriptor.qualifiedName;
+    if (!_includesWebMcp(qualifiedName, surfaceIndex)) {
+      continue;
+    }
     _entriesByQualifiedName[qualifiedName] = entry;
     _entryPoliciesByQualifiedName[qualifiedName] = policy;
 
@@ -97,6 +102,7 @@ void registerFromEntries(
 void registerFromRegistry(
   final AgentRegistry registry, {
   required final IntentCallAuthorizationPolicy policy,
+  final ManifestSurfaceIndex? surfaceIndex,
 }) {
   final modelContext = _readModelContext();
   if (modelContext == null) {
@@ -115,6 +121,9 @@ void registerFromRegistry(
       continue;
     }
     final qualifiedName = entry.key;
+    if (!_includesWebMcp(qualifiedName, surfaceIndex)) {
+      continue;
+    }
     _bridgesByQualifiedName[qualifiedName] = bridge;
 
     if (_webMcpRegisteredToolNames.contains(qualifiedName)) {
@@ -258,4 +267,14 @@ Map<String, Object?> _encodeResult(final AgentResult result) {
     };
   }
   return <String, Object?>{'ok': true, ...result.data};
+}
+
+bool _includesWebMcp(
+  final String qualifiedName,
+  final ManifestSurfaceIndex? surfaceIndex,
+) {
+  if (surfaceIndex == null) {
+    return true;
+  }
+  return surfaceIndex.includesWebMcp(qualifiedName);
 }

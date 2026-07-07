@@ -1,13 +1,33 @@
 import 'package:meta/meta.dart';
 
+/// Stable identity for an indexable app object exposed to agents.
+///
+/// The triple `(namespace, typeName, identifier)` must be unique within an app.
+/// Agents use refs to open, update, or reference entities across transports.
+///
+/// ## Wire JSON (AX)
+///
+/// ```json
+/// {
+///   "namespace": "notes",
+///   "type_name": "note",
+///   "identifier": "note-1"
+/// }
+/// ```
 @immutable
 final class AgentEntityRef {
+  /// Creates a reference with the given [namespace], [typeName], and [identifier].
+  ///
+  /// All three strings must be non-empty when parsed from JSON.
   const AgentEntityRef({
     required this.namespace,
     required this.typeName,
     required this.identifier,
   });
 
+  /// Parses [json] produced by [toJson].
+  ///
+  /// Throws [ArgumentError] when required fields are missing or empty.
   factory AgentEntityRef.fromJson(final Map<String, Object?> json) =>
       AgentEntityRef(
         namespace: _requiredString(json, 'namespace'),
@@ -15,10 +35,16 @@ final class AgentEntityRef {
         identifier: _requiredString(json, 'identifier'),
       );
 
+  /// App domain grouping entities (for example `notes`, `music`).
   final String namespace;
+
+  /// Entity kind within [namespace] (for example `note`, `playlist`).
   final String typeName;
+
+  /// Stable id for this entity within ([namespace], [typeName]).
   final String identifier;
 
+  /// Serializes to JSON using snake_case keys (`type_name`).
   Map<String, Object?> toJson() => <String, Object?>{
     'namespace': namespace,
     'type_name': typeName,
@@ -37,8 +63,28 @@ final class AgentEntityRef {
   int get hashCode => Object.hash(namespace, typeName, identifier);
 }
 
+/// JSON-safe snapshot of an app entity for search, shortcuts, and agent context.
+///
+/// [properties] holds domain fields agents may read or filter on. Display
+/// fields (`title`, `subtitle`, `keywords`, …) support human and voice UIs.
+/// Only JSON-encodable values are allowed in [properties] (`String`, `int`,
+/// `double`, `bool`, `List`, and nested `Map` with string keys).
+///
+/// ## Wire JSON (AX)
+///
+/// See package README for the full shape. Use [toJson] / [fromJson] for
+/// round-tripping across native stores, manifest export, and MCP resources.
+///
+/// ## Display
+///
+/// Prefer [effectiveTitle] when rendering a single line of text; it falls back
+/// from [title] to [displayName].
 @immutable
 final class AgentEntitySnapshot {
+  /// Creates a snapshot for [ref] with JSON-safe [properties].
+  ///
+  /// [keywords] entries are trimmed; empty strings throw [ArgumentError].
+  /// [deleted] marks tombstones so indexes can remove stale entries.
   AgentEntitySnapshot({
     required this.ref,
     required final Map<String, Object?> properties,
@@ -64,6 +110,10 @@ final class AgentEntitySnapshot {
        ),
        properties = _jsonObject(properties);
 
+  /// Parses [json] produced by [toJson].
+  ///
+  /// Throws [ArgumentError] when `ref` or `properties` are not objects, or when
+  /// nested values are not JSON-safe.
   factory AgentEntitySnapshot.fromJson(final Map<String, Object?> json) {
     final rawRef = json['ref'];
     if (rawRef is! Map) {
@@ -94,22 +144,49 @@ final class AgentEntitySnapshot {
     );
   }
 
+  /// Identity of this entity.
   final AgentEntityRef ref;
+
+  /// Domain-specific JSON-safe fields (scalars, lists, nested maps).
   final Map<String, Object?> properties;
+
+  /// Primary display title.
   final String? title;
+
+  /// Secondary display line.
   final String? subtitle;
+
+  /// Search keywords (non-empty, trimmed).
   final List<String> keywords;
+
+  /// Thumbnail image URL.
   final String? thumbnailUrl;
+
+  /// Canonical web or app URL for this entity.
   final String? url;
+
+  /// Alternate display name when [title] is absent.
   final String? displayName;
+
+  /// Platform deep link or custom scheme URI to open this entity.
   final String? deepLink;
+
+  /// Last modification time (serialized as UTC ISO-8601).
   final DateTime? updatedAt;
+
+  /// When `true`, indexes should treat this snapshot as a tombstone.
   final bool deleted;
+
+  /// Opaque revision or etag for change detection.
   final String? version;
+
+  /// Hint for staleness (for example `fresh`, `stale`); adapter-defined.
   final String? freshness;
 
+  /// [title] if set, otherwise [displayName].
   String? get effectiveTitle => title ?? displayName;
 
+  /// Serializes to JSON using snake_case keys.
   Map<String, Object?> toJson() => <String, Object?>{
     'ref': ref.toJson(),
     'properties': properties,

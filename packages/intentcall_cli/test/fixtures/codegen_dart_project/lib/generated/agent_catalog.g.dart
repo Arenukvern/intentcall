@@ -7,3 +7,6 @@ final List<AgentRegistryCatalogEntry> agentCatalogEntries =
     <AgentRegistryCatalogEntry>[
   AgentRegistryCatalogEntry(registryKey: 'app_demo_ping', entry: demoPingCallEntry),
 ];
+
+final List<AgentEntityTypeDescriptor> agentEntityTypeDescriptors =
+    <AgentEntityTypeDescriptor>[];

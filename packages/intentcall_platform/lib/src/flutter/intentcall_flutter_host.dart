@@ -1,9 +1,8 @@
 import 'dart:async';
 
 import 'package:intentcall_core/intentcall_core.dart';
-import 'package:intentcall_schema/intentcall_schema.dart';
-
 import 'package:intentcall_platform_sync/intentcall_platform_sync.dart';
+import 'package:intentcall_schema/intentcall_schema.dart';
 
 import 'intentcall_host_events.dart';
 import 'intentcall_invoke_link_stub.dart'
@@ -31,23 +30,23 @@ final class IntentCallFlutterHost {
     required this.bridge,
     required this.takePendingInvocations,
     required this.registerWebMcp,
+    required this.webMcpSurfaceIndex,
     required this.onEnvelope,
     required this.onResult,
     required this.onDenied,
     required this.onError,
     required this.drainOnStart,
-    final Stream<IntentCallDrainTrigger>? wakeSignals,
-    final IntentCallLifecycleWakeSignals? lifecycleWakeSignals,
-    final IntentCallInvokeLinkListener? deepLinkListener,
-  }) : _wakeSignals = wakeSignals,
-       _lifecycleWakeSignals = lifecycleWakeSignals,
-       _deepLinkListener = deepLinkListener;
+    this._wakeSignals,
+    this._lifecycleWakeSignals,
+    this._deepLinkListener,
+  });
 
   factory IntentCallFlutterHost.bindRegistry({
     required final AgentRegistry registry,
     final IntentCallAuthorizationPolicy policy =
         const IntentCallAuthorizationPolicy.denyAll(),
     final bool registerWebMcp = false,
+    final ManifestSurfaceIndex? webMcpSurfaceIndex,
     final bool drainOnStart = true,
     final bool drainOnResume = true,
     final bool listenForDeepLinks = false,
@@ -86,6 +85,7 @@ final class IntentCallFlutterHost {
           takePendingInvocations ??
           const IntentCallPendingInvocations().takePending,
       registerWebMcp: registerWebMcp,
+      webMcpSurfaceIndex: webMcpSurfaceIndex,
       onEnvelope: onEnvelope,
       onResult: onResult,
       onDenied: onDenied,
@@ -101,6 +101,7 @@ final class IntentCallFlutterHost {
   final IntentCallNativeBridge bridge;
   final IntentCallPendingReader takePendingInvocations;
   final bool registerWebMcp;
+  final ManifestSurfaceIndex? webMcpSurfaceIndex;
   final IntentCallEnvelopeCallback? onEnvelope;
   final IntentCallResultCallback? onResult;
   final IntentCallResultCallback? onDenied;
@@ -122,7 +123,11 @@ final class IntentCallFlutterHost {
 
   Future<List<AgentResult>> start() async {
     if (registerWebMcp) {
-      registerAgentWebMcpFromRegistry(bridge.registry, policy: bridge.policy);
+      registerAgentWebMcpFromRegistry(
+        bridge.registry,
+        policy: bridge.policy,
+        surfaceIndex: webMcpSurfaceIndex,
+      );
     }
     await _deepLinkListener?.start();
     _wakeSubscription ??= _wakeSignals?.listen((final trigger) {

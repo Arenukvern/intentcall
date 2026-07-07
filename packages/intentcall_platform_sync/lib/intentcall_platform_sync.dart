@@ -15,6 +15,7 @@ export 'src/init/platform_hooks_init.dart';
 export 'src/invocation/intentcall_invocation.dart';
 export 'src/projection/manifest_exporter.dart';
 export 'src/projection/manifest_merger.dart';
+export 'src/projection/manifest_surface_index.dart';
 export 'src/projection/projection_policy.dart';
 export 'src/sync/platform_sync.dart';
 export 'src/templates/platform_hook_templates.dart';

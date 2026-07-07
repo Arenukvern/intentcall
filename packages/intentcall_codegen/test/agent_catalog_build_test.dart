@@ -5,13 +5,26 @@ import 'package:build_test/build_test.dart';
 import 'package:glob/glob.dart';
 import 'package:intentcall_codegen/src/generators/agent_catalog_generator.dart';
 import 'package:package_config/package_config.dart';
+import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
 const _package = 'intentcall_codegen';
 const _trigger = '$_package|lib/\$lib\$';
 const _output = '$_package|lib/generated/agent_catalog.g.dart';
 
-String _fixture(final String path) => File(path).readAsStringSync();
+String _fixture(final String path) {
+  final candidates = <String>[
+    path,
+    p.join('packages', 'intentcall_codegen', path),
+  ];
+  for (final candidate in candidates) {
+    final file = File(candidate);
+    if (file.existsSync()) {
+      return file.readAsStringSync();
+    }
+  }
+  throw FileSystemException('Fixture not found', path);
+}
 
 BuilderOptions _options(final Map<String, Object> config) =>
     BuilderOptions(config);
@@ -142,6 +155,31 @@ void main() {
           contains(
             "import '../../test/fixtures/catalog/host_static_catalog.dart';",
           ),
+        ),
+      );
+    });
+
+    test('discovers @AgentEntity descriptor rows', () async {
+      await runCatalogBuilder(
+        generator: AgentCatalogGenerator(
+          _options({
+            'tool_globs': ['test/fixtures/catalog/**.dart'],
+            'tool_exclude_globs': <String>[],
+          }),
+        ),
+        fixtures: {
+          'test/fixtures/catalog/agent_entity_annotated.dart': _fixture(
+            'test/fixtures/catalog/agent_entity_annotated.dart',
+          ),
+        },
+        outputMatcher: allOf(
+          contains('agentEntityTypeDescriptors'),
+          contains('abstract final class AppProjectEntityFields'),
+          contains("name: 'project'"),
+          contains('projectId'),
+          contains('AgentEntityPropertyValueType.string'),
+          contains('AgentEntityPropertyRole.title'),
+          contains('AgentEntityPropertyRole.subtitle'),
         ),
       );
     });

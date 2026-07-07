@@ -4,10 +4,12 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:build/build.dart';
 import 'package:glob/glob.dart';
+import 'package:intentcall_core/intentcall_core.dart';
 import 'package:path/path.dart' as p;
 import 'package:source_gen/source_gen.dart';
 
 import '../agent_catalog.dart';
+import '../agent_entity.dart';
 import '../agent_projection.dart';
 import '../agent_tool.dart';
 import 'agent_tool_generator.dart';
@@ -30,6 +32,7 @@ class AgentCatalogGenerator implements Builder {
   final BuilderOptions options;
 
   static const _toolChecker = TypeChecker.typeNamed(AgentTool);
+  static const _entityChecker = TypeChecker.typeNamed(AgentEntity);
   static const _projectionChecker = TypeChecker.typeNamed(AgentProjection);
   static const _agentCatalogChecker = TypeChecker.typeNamed(AgentCatalog);
   static const _defaultHostBindingField = 'shared';
@@ -103,6 +106,10 @@ class AgentCatalogGenerator implements Builder {
       buildStep,
       outputPath,
     );
+    final entityCodegenRows = await _discoverAgentEntityDescriptors(
+      buildStep,
+      outputPath,
+    );
     final seenAgentCatalogSymbols = <String>{};
     for (final catalogList in agentCatalogLists) {
       if (!seenAgentCatalogSymbols.add(catalogList.symbolName)) {
@@ -135,12 +142,17 @@ import 'package:intentcall_platform_sync/intentcall_platform_sync.dart';
 ${imports.join('\n')}
 ''';
 
-    if (entries.isEmpty && agentCatalogLists.isEmpty) {
+    if (entries.isEmpty &&
+        agentCatalogLists.isEmpty &&
+        entityCodegenRows.isEmpty) {
       await buildStep.writeAsString(buildStep.allowedOutputs.single, '''
 $header
 /// Empty catalog — add @AgentTool functions under lib/.
 final List<AgentRegistryCatalogEntry> agentCatalogEntries =
     <AgentRegistryCatalogEntry>[];
+
+final List<AgentEntityTypeDescriptor> agentEntityTypeDescriptors =
+    <AgentEntityTypeDescriptor>[];
 ''');
       return;
     }
@@ -151,12 +163,29 @@ final List<AgentRegistryCatalogEntry> agentCatalogEntries =
           .map((final list) => list.symbolName)
           .toList(),
     );
+    final entityFieldClasses = entityCodegenRows
+        .map((final row) => row.fieldsClass)
+        .join('\n\n');
+    final entityDescriptorRows = entityCodegenRows
+        .map((final row) => row.descriptorLiteral)
+        .join('\n');
+    final entityBlock = entityCodegenRows.isEmpty
+        ? 'final List<AgentEntityTypeDescriptor> agentEntityTypeDescriptors =\n    <AgentEntityTypeDescriptor>[];'
+        : '''
+$entityFieldClasses
+
+final List<AgentEntityTypeDescriptor> agentEntityTypeDescriptors =
+    <AgentEntityTypeDescriptor>[
+$entityDescriptorRows
+];''';
     await buildStep.writeAsString(buildStep.allowedOutputs.single, '''
 $header
 final List<AgentRegistryCatalogEntry> agentCatalogEntries =
     <AgentRegistryCatalogEntry>[
 $catalogRows
 ];
+
+$entityBlock
 ''');
   }
 
@@ -719,7 +748,10 @@ EntryProjection(
       'web.webMcp': 'webMcp',
       'web.manifestShortcuts': 'webManifestShortcuts',
       'web.protocolHandlers': 'webProtocolHandlers',
+      'apple.appIntents': 'appleAppIntents',
       'apple.appShortcuts': 'appleAppShortcuts',
+      'apple.spotlight': 'appleSpotlight',
+      'apple.entities': 'appleEntities',
       'android.shortcuts': 'androidShortcuts',
       'windows.protocolActivation': 'windowsProtocolActivation',
       'windows.msixProtocol': 'windowsMsixProtocol',
@@ -741,6 +773,325 @@ EntryProjection(
       return part[0].toUpperCase() + part.substring(1);
     });
     return first + rest.join();
+  }
+
+  Future<List<_EntityCodegenRow>> _discoverAgentEntityDescriptors(
+    final BuildStep buildStep,
+    final String outputPath,
+  ) async {
+    final descriptors = <_EntityCodegenRow>[];
+    final seenQualifiedNames = <String>{};
+    for (final pattern in _toolGlobs) {
+      await for (final input in buildStep.findAssets(Glob(pattern))) {
+        if (input.path.endsWith('.g.dart')) {
+          continue;
+        }
+        if (_isExcluded(input.path) || _isInternalSource(input.path)) {
+          continue;
+        }
+        final library = await buildStep.resolver.libraryFor(input);
+        for (final type in library.classes) {
+          final entityReader = _entityAnnotationReader(type);
+          if (entityReader == null) {
+            continue;
+          }
+          final qualifiedName =
+              '${entityReader.read('namespace').stringValue}_'
+              '${entityReader.read('name').stringValue}';
+          if (!seenQualifiedNames.add(qualifiedName)) {
+            throw InvalidGenerationSourceError(
+              "Duplicate entity qualifiedName '$qualifiedName' in agent catalog.",
+              element: type,
+            );
+          }
+          final resolvedProperties = _resolveEntityProperties(
+            entityReader: entityReader,
+            element: type,
+          );
+          descriptors.add(
+            _EntityCodegenRow(
+              fieldsClass: _entityFieldsClassLiteral(
+                namespace: entityReader.read('namespace').stringValue,
+                name: entityReader.read('name').stringValue,
+                properties: resolvedProperties,
+              ),
+              descriptorLiteral:
+                  '  ${_entityDescriptorLiteral(entityReader, resolvedProperties)},',
+            ),
+          );
+        }
+      }
+    }
+    return descriptors;
+  }
+
+  ConstantReader? _entityAnnotationReader(final ClassElement type) {
+    for (final annotation in type.metadata.annotations) {
+      final reader = ConstantReader(annotation.computeConstantValue());
+      if (!reader.isNull && reader.instanceOf(_entityChecker)) {
+        return reader;
+      }
+    }
+    return null;
+  }
+
+  String _entityDescriptorLiteral(
+    final ConstantReader reader,
+    final List<_ResolvedEntityProperty> properties,
+  ) {
+    final propertyLiterals = properties
+        .map(_entityPropertyLiteral)
+        .join(',\n      ');
+    final displayName = reader.read('displayName');
+    final displayNameLiteral = displayName.isNull
+        ? null
+        : _literalString(displayName.stringValue);
+    return '''AgentEntityTypeDescriptor(
+    namespace: ${_literalString(reader.read('namespace').stringValue)},
+    name: ${_literalString(reader.read('name').stringValue)},
+    identifierName: ${_literalString(reader.read('identifierName').stringValue)},
+    ${displayNameLiteral == null ? '' : 'displayName: $displayNameLiteral,\n    '}properties: <AgentEntityPropertyDescriptor>[
+      $propertyLiterals
+    ],
+    privacy: AgentEntityPrivacy.${reader.read('privacy').stringValue},
+    deepLinkBehavior: AgentEntityDeepLinkBehavior.${reader.read('deepLinkBehavior').stringValue},
+    openBehavior: AgentEntityOpenBehavior.${reader.read('openBehavior').stringValue},
+  )''';
+  }
+
+  String _entityFieldsClassLiteral({
+    required final String namespace,
+    required final String name,
+    required final List<_ResolvedEntityProperty> properties,
+  }) {
+    final className = _entityFieldsClassName(namespace: namespace, name: name);
+    final fields = properties
+        .map(
+          (final property) =>
+              "  static const String ${property.reader.read('name').stringValue} = "
+              "${_literalString(property.reader.read('name').stringValue)};",
+        )
+        .join('\n');
+    return '''abstract final class $className {
+$fields
+}''';
+  }
+
+  String _entityPropertyLiteral(final _ResolvedEntityProperty property) {
+    final reader = property.reader;
+    return '''AgentEntityPropertyDescriptor(
+        name: ${_literalString(reader.read('name').stringValue)},
+        valueType: AgentEntityPropertyValueType.${reader.read('valueType').stringValue},
+        description: ${_literalString(reader.read('description').stringValue)},
+        isDisplay: ${reader.read('isDisplay').boolValue},
+        isSearchable: ${reader.read('isSearchable').boolValue},
+        isIndexed: ${reader.read('isIndexed').boolValue},
+        role: AgentEntityPropertyRole.${property.role.name},
+      )''';
+  }
+
+  List<_ResolvedEntityProperty> _resolveEntityProperties({
+    required final ConstantReader entityReader,
+    required final Element element,
+  }) {
+    final titleProperty = _optionalAnnotationString(
+      entityReader,
+      'titleProperty',
+    );
+    final subtitleProperty = _optionalAnnotationString(
+      entityReader,
+      'subtitleProperty',
+    );
+    final keywordsProperty = _optionalAnnotationString(
+      entityReader,
+      'keywordsProperty',
+    );
+    final propertyReaders = entityReader
+        .read('properties')
+        .listValue
+        .map(ConstantReader.new)
+        .toList();
+    final propertyNames = propertyReaders
+        .map((final reader) => reader.read('name').stringValue)
+        .toSet();
+
+    for (final entry in <(String?, String)>[
+      (titleProperty, 'titleProperty'),
+      (subtitleProperty, 'subtitleProperty'),
+      (keywordsProperty, 'keywordsProperty'),
+    ]) {
+      final overrideName = entry.$1;
+      final label = entry.$2;
+      if (overrideName != null && !propertyNames.contains(overrideName)) {
+        throw InvalidGenerationSourceError(
+          '@AgentEntity $label must match a declared property name, '
+          "got '$overrideName'.",
+          element: element,
+        );
+      }
+    }
+
+    final resolved = <_ResolvedEntityProperty>[];
+    final roleCounts = <AgentEntityPropertyRole, int>{};
+
+    for (final reader in propertyReaders) {
+      final propertyName = reader.read('name').stringValue;
+      final explicitRole = _parseEntityPropertyRole(
+        reader.read('role').stringValue,
+        element: element,
+      );
+      final role = _resolveEntityPropertyRole(
+        propertyName: propertyName,
+        explicitRole: explicitRole,
+        titleProperty: titleProperty,
+        subtitleProperty: subtitleProperty,
+        keywordsProperty: keywordsProperty,
+      );
+      final isDisplay = reader.read('isDisplay').boolValue;
+      final isSearchable = reader.read('isSearchable').boolValue;
+      final valueType = reader.read('valueType').stringValue;
+
+      _warnRoleDisplayConflicts(
+        propertyName: propertyName,
+        role: role,
+        isDisplay: isDisplay,
+        isSearchable: isSearchable,
+      );
+
+      if (role == AgentEntityPropertyRole.keywords && valueType != 'array') {
+        throw InvalidGenerationSourceError(
+          "@AgentEntity property '$propertyName' has role 'keywords' but "
+          "valueType '$valueType'; keywords requires valueType 'array'.",
+          element: element,
+        );
+      }
+
+      if (role != AgentEntityPropertyRole.none) {
+        roleCounts[role] = (roleCounts[role] ?? 0) + 1;
+      }
+
+      resolved.add(_ResolvedEntityProperty(reader: reader, role: role));
+    }
+
+    for (final role in <AgentEntityPropertyRole>[
+      AgentEntityPropertyRole.title,
+      AgentEntityPropertyRole.subtitle,
+      AgentEntityPropertyRole.keywords,
+    ]) {
+      final count = roleCounts[role] ?? 0;
+      if (count > 1) {
+        throw InvalidGenerationSourceError(
+          '@AgentEntity declares more than one property with role '
+          "'${role.name}'.",
+          element: element,
+        );
+      }
+    }
+
+    return resolved;
+  }
+
+  AgentEntityPropertyRole _resolveEntityPropertyRole({
+    required final String propertyName,
+    required final AgentEntityPropertyRole explicitRole,
+    required final String? titleProperty,
+    required final String? subtitleProperty,
+    required final String? keywordsProperty,
+  }) {
+    if (titleProperty == propertyName) {
+      return AgentEntityPropertyRole.title;
+    }
+    if (subtitleProperty == propertyName) {
+      return AgentEntityPropertyRole.subtitle;
+    }
+    if (keywordsProperty == propertyName) {
+      return AgentEntityPropertyRole.keywords;
+    }
+    return explicitRole;
+  }
+
+  void _warnRoleDisplayConflicts({
+    required final String propertyName,
+    required final AgentEntityPropertyRole role,
+    required final bool isDisplay,
+    required final bool isSearchable,
+  }) {
+    if (role == AgentEntityPropertyRole.title && !isDisplay) {
+      log.warning(
+        "@AgentEntity property '$propertyName' has role 'title' but "
+        'isDisplay is false; role wins in generated descriptor.',
+      );
+    }
+    if (role == AgentEntityPropertyRole.subtitle && !isSearchable) {
+      log.warning(
+        "@AgentEntity property '$propertyName' has role 'subtitle' but "
+        'isSearchable is false; role wins in generated descriptor.',
+      );
+    }
+    if (role == AgentEntityPropertyRole.keywords && !isSearchable) {
+      log.warning(
+        "@AgentEntity property '$propertyName' has role 'keywords' but "
+        'isSearchable is false; role wins in generated descriptor.',
+      );
+    }
+    if (isDisplay &&
+        role != AgentEntityPropertyRole.none &&
+        role != AgentEntityPropertyRole.title) {
+      log.warning(
+        "@AgentEntity property '$propertyName' sets isDisplay but role is "
+        "'${role.name}'; role wins in generated descriptor.",
+      );
+    }
+    if (isSearchable &&
+        role != AgentEntityPropertyRole.none &&
+        role != AgentEntityPropertyRole.subtitle &&
+        role != AgentEntityPropertyRole.keywords) {
+      log.warning(
+        "@AgentEntity property '$propertyName' sets isSearchable but role is "
+        "'${role.name}'; role wins in generated descriptor.",
+      );
+    }
+  }
+
+  AgentEntityPropertyRole _parseEntityPropertyRole(
+    final String rawRole, {
+    required final Element element,
+  }) => switch (rawRole) {
+    'none' => AgentEntityPropertyRole.none,
+    'title' => AgentEntityPropertyRole.title,
+    'subtitle' => AgentEntityPropertyRole.subtitle,
+    'keywords' => AgentEntityPropertyRole.keywords,
+    _ => throw InvalidGenerationSourceError(
+      '@AgentEntityProperty role must be one of none, title, subtitle, '
+      "keywords; got '$rawRole'.",
+      element: element,
+    ),
+  };
+
+  String? _optionalAnnotationString(
+    final ConstantReader reader,
+    final String fieldName,
+  ) {
+    final value = reader.read(fieldName);
+    return value.isNull ? null : value.stringValue;
+  }
+
+  String _entityFieldsClassName({
+    required final String namespace,
+    required final String name,
+  }) => '${_toPascalCase(namespace)}${_toPascalCase(name)}EntityFields';
+
+  String _toPascalCase(final String value) {
+    if (value.isEmpty) {
+      return value;
+    }
+    final parts = value.split(RegExp('[._]'));
+    return parts.map((final part) {
+      if (part.isEmpty) {
+        return part;
+      }
+      return part[0].toUpperCase() + part.substring(1);
+    }).join();
   }
 }
 
@@ -771,4 +1122,21 @@ final class _StaticCatalogSymbol extends _CatalogSymbolName {
 
   final String className;
   final String fieldName;
+}
+
+final class _EntityCodegenRow {
+  const _EntityCodegenRow({
+    required this.fieldsClass,
+    required this.descriptorLiteral,
+  });
+
+  final String fieldsClass;
+  final String descriptorLiteral;
+}
+
+final class _ResolvedEntityProperty {
+  const _ResolvedEntityProperty({required this.reader, required this.role});
+
+  final ConstantReader reader;
+  final AgentEntityPropertyRole role;
 }

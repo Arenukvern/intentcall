@@ -7,3 +7,6 @@ final List<AgentRegistryCatalogEntry> agentCatalogEntries =
     <AgentRegistryCatalogEntry>[
   AgentRegistryCatalogEntry(registryKey: 'app_cart_total', entry: cartTotalCallEntry),
 ];
+
+final List<AgentEntityTypeDescriptor> agentEntityTypeDescriptors =
+    <AgentEntityTypeDescriptor>[];

@@ -1,0 +1,64 @@
+schema: steward/scenario-manifest/v1
+repo: intentcall
+scenario: intentcall.projection-pipeline
+status: runnable
+source:
+  git: https://github.com/Arenukvern/intentcall
+  commit: 2e4b137b8ef0b13a38f43be91d8a831d1a3191ab
+  steward_contract: steward.yaml
+safe_first_probe: intentcall.validate
+required_actions:
+  - intentcall.projection-alignment-test
+  - intentcall.projection-pipeline-check
+steps:
+  - run: dart test packages/intentcall_platform_sync/test/manifest_merger_test.dart
+  - run: dart test packages/intentcall_platform_sync/test/dense_manifest_test.dart
+  - run: dart test packages/intentcall_codegen/example/test/manifest_projection_test.dart
+  - run: dart test packages/intentcall_platform_sync/test/native_emitters_test.dart
+  - working_directory: packages/intentcall_codegen/example
+    run: dart run ../../intentcall_cli/bin/intentcall.dart manifest export --check
+  - working_directory: packages/intentcall_codegen/example
+    run: dart run ../../intentcall_cli/bin/intentcall.dart platform sync --platform web --check
+artifacts:
+  - id: steward_contract
+    kind: yaml
+    path: steward.yaml
+    required: true
+    durability: input
+  - id: projection_alignment_test
+    kind: dart
+    path: packages/intentcall_platform_sync/test/projection_alignment_test.dart
+    required: true
+    durability: behavior
+  - id: manifest_merger_test
+    kind: dart
+    path: packages/intentcall_platform_sync/test/manifest_merger_test.dart
+    required: true
+    durability: behavior
+  - id: dense_manifest_test
+    kind: dart
+    path: packages/intentcall_platform_sync/test/dense_manifest_test.dart
+    required: true
+    durability: behavior
+  - id: manifest_projection_test
+    kind: dart
+    path: packages/intentcall_codegen/example/test/manifest_projection_test.dart
+    required: true
+    durability: behavior
+  - id: native_emitters_test
+    kind: dart
+    path: packages/intentcall_platform_sync/test/native_emitters_test.dart
+    required: true
+    durability: behavior
+  - id: intentcall_cli
+    kind: dart
+    path: packages/intentcall_cli/bin/intentcall.dart
+    required: true
+    durability: input
+  - id: codegen_example_intentcall_yaml
+    kind: yaml
+    path: packages/intentcall_codegen/example/intentcall.yaml
+    required: true
+    durability: input
+blocked_by: null
+owner: intentcall

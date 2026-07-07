@@ -81,7 +81,10 @@ final class AgentManifestInlineRuntime {
 
 /// Platform projection surfaces that can expose a manifest entry.
 enum AgentManifestSurface {
+  appleAppIntents,
   appleAppShortcuts,
+  appleSpotlight,
+  appleEntities,
   androidShortcuts,
   webManifestShortcuts,
   webProtocolHandlers,
@@ -125,10 +128,10 @@ final class AgentManifestSurfacePolicy {
     final out = <String, Object?>{};
     for (final surface in AgentManifestSurface.values) {
       final exposure = overrides[surface];
-      if (exposure == null) {
-        continue;
-      }
-      out[surface.manifestKey] = exposure.toJson();
+      out[surface.manifestKey] = AgentManifestSurfaceExposure(
+        include: exposure?.include ?? false,
+        options: exposure?.options ?? const {},
+      ).toJson();
     }
     return out;
   }
@@ -209,7 +212,7 @@ final class AgentManifestEntry {
     'kind': kind.name,
     'dispatchMode': dispatchMode.name,
     if (inlineRuntime != null) 'inlineRuntime': inlineRuntime!.toJson(),
-    if (!surfaces.isEmpty) 'surfaces': surfaces.toJson(),
+    'surfaces': surfaces.toJson(),
     if (resourceUri != null) 'resourceUri': resourceUri,
     'inputSchema': inputSchema,
   };
@@ -727,7 +730,10 @@ String? _readOptionalProtocolScheme(final Object? value) {
 
 extension AgentManifestSurfaceKey on AgentManifestSurface {
   String get manifestKey => switch (this) {
+    AgentManifestSurface.appleAppIntents => 'apple.appIntents',
     AgentManifestSurface.appleAppShortcuts => 'apple.appShortcuts',
+    AgentManifestSurface.appleSpotlight => 'apple.spotlight',
+    AgentManifestSurface.appleEntities => 'apple.entities',
     AgentManifestSurface.androidShortcuts => 'android.shortcuts',
     AgentManifestSurface.webManifestShortcuts => 'web.manifestShortcuts',
     AgentManifestSurface.webProtocolHandlers => 'web.protocolHandlers',

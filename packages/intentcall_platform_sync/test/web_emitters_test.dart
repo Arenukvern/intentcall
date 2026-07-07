@@ -24,6 +24,10 @@ void main() {
             'name': 'cart_total',
             'description': 'Return cart total',
             'kind': 'tool',
+            'surfaces': <String, Object?>{
+              'web.manifestShortcuts': <String, Object?>{'include': true},
+              'web.protocolHandlers': <String, Object?>{'include': true},
+            },
             'inputSchema': <String, Object?>{'type': 'object'},
           },
         ],
@@ -716,6 +720,11 @@ final _fixtureAgentManifest = AgentManifest.fromJson(<String, Object?>{
       'name': 'cart_total',
       'description': 'Return cart total',
       'kind': 'tool',
+      'surfaces': <String, Object?>{
+        'web.manifestShortcuts': <String, Object?>{'include': true},
+        'web.protocolHandlers': <String, Object?>{'include': true},
+        'web.webMcp': <String, Object?>{'include': true},
+      },
       'inputSchema': <String, Object?>{'type': 'object'},
     },
   ],

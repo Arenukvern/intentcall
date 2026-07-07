@@ -3,7 +3,10 @@ import '../agent_manifest.dart';
 /// Default surface inclusion when no per-entry override exists.
 bool defaultSurfaceInclude(final AgentManifestSurface surface) =>
     switch (surface) {
-      AgentManifestSurface.appleAppShortcuts => false,
+      AgentManifestSurface.appleAppIntents ||
+      AgentManifestSurface.appleAppShortcuts ||
+      AgentManifestSurface.appleSpotlight ||
+      AgentManifestSurface.appleEntities => false,
       AgentManifestSurface.androidShortcuts ||
       AgentManifestSurface.webManifestShortcuts ||
       AgentManifestSurface.webProtocolHandlers ||
@@ -20,7 +23,10 @@ Set<String> platformsForManifestSurface(final AgentManifestSurface surface) =>
       AgentManifestSurface.webManifestShortcuts ||
       AgentManifestSurface.webProtocolHandlers => {'web'},
       AgentManifestSurface.androidShortcuts => {'android'},
-      AgentManifestSurface.appleAppShortcuts => {'ios', 'macos'},
+      AgentManifestSurface.appleAppIntents ||
+      AgentManifestSurface.appleAppShortcuts ||
+      AgentManifestSurface.appleSpotlight ||
+      AgentManifestSurface.appleEntities => {'ios', 'macos'},
       AgentManifestSurface.windowsProtocolActivation ||
       AgentManifestSurface.windowsMsixProtocol => {'windows'},
       AgentManifestSurface.linuxSchemeHandler => {'linux'},
@@ -30,6 +36,20 @@ bool defaultSurfaceIncludeForPlatforms(
   final AgentManifestSurface surface,
   final Set<String> enabledPlatforms,
 ) {
+  // ADR 0016 / 0022: shortcuts, entities, spotlight never auto-enable.
+  if (surface == AgentManifestSurface.appleAppShortcuts ||
+      surface == AgentManifestSurface.appleSpotlight ||
+      surface == AgentManifestSurface.appleEntities) {
+    return false;
+  }
+  // ADR 0022: App Intent structs default on for ios/macos when platforms scoped.
+  if (surface == AgentManifestSurface.appleAppIntents) {
+    if (enabledPlatforms.isEmpty) {
+      return defaultSurfaceInclude(surface);
+    }
+    return enabledPlatforms.contains('ios') ||
+        enabledPlatforms.contains('macos');
+  }
   if (enabledPlatforms.isEmpty) {
     return defaultSurfaceInclude(surface);
   }
@@ -144,18 +164,16 @@ final class ProjectionPolicy {
   AgentManifestSurfacePolicy resolvedDefaultSurfaces({
     final Iterable<String> enabledPlatforms = const [],
   }) {
-    if (!defaultSurfaces.isEmpty) {
-      return defaultSurfaces;
-    }
     final normalized = enabledPlatforms
         .map((final platform) => platform.trim().toLowerCase())
         .where((final platform) => platform.isNotEmpty)
         .toSet();
     final overrides = <AgentManifestSurface, AgentManifestSurfaceExposure>{};
     for (final surface in AgentManifestSurface.values) {
-      overrides[surface] = AgentManifestSurfaceExposure(
-        include: defaultSurfaceIncludeForPlatforms(surface, normalized),
-      );
+      final explicit = defaultSurfaces.overrides[surface]?.include;
+      final include =
+          explicit ?? defaultSurfaceIncludeForPlatforms(surface, normalized);
+      overrides[surface] = AgentManifestSurfaceExposure(include: include);
     }
     return AgentManifestSurfacePolicy(overrides);
   }

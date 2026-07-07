@@ -2,6 +2,7 @@ import 'package:meta/meta.dart';
 
 import '../naming/qualified_name.dart';
 import 'agent_entity_property_descriptor.dart';
+import 'agent_entity_property_role.dart';
 
 enum AgentEntityDeepLinkBehavior { unsupported, optional, required }
 
@@ -44,10 +45,20 @@ final class AgentEntityTypeDescriptor {
   String get qualifiedName => qualifyName(namespace: namespace, name: name);
 
   Iterable<AgentEntityPropertyDescriptor> get displayProperties =>
-      properties.where((final property) => property.isDisplay);
+      properties.where(
+        (final property) =>
+            property.isDisplay ||
+            property.role == AgentEntityPropertyRole.title ||
+            property.role == AgentEntityPropertyRole.subtitle,
+      );
 
   Iterable<AgentEntityPropertyDescriptor> get searchableProperties =>
-      properties.where((final property) => property.isSearchable);
+      properties.where(
+        (final property) =>
+            property.isSearchable ||
+            property.role == AgentEntityPropertyRole.subtitle ||
+            property.role == AgentEntityPropertyRole.keywords,
+      );
 
   Iterable<AgentEntityPropertyDescriptor> get indexedProperties =>
       properties.where((final property) => property.isIndexed);

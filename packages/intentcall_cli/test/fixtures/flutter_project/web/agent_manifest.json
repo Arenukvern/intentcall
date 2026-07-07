@@ -10,11 +10,38 @@
       "kind": "tool",
       "dispatchMode": "openApp",
       "surfaces": {
+        "apple.appIntents": {
+          "include": false
+        },
+        "apple.appShortcuts": {
+          "include": false
+        },
+        "apple.spotlight": {
+          "include": false
+        },
+        "apple.entities": {
+          "include": false
+        },
+        "android.shortcuts": {
+          "include": false
+        },
         "web.manifestShortcuts": {
+          "include": true
+        },
+        "web.protocolHandlers": {
           "include": true
         },
         "web.webMcp": {
           "include": true
+        },
+        "windows.protocolActivation": {
+          "include": false
+        },
+        "windows.msixProtocol": {
+          "include": false
+        },
+        "linux.schemeHandler": {
+          "include": false
         }
       },
       "inputSchema": {

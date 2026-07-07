@@ -239,7 +239,7 @@ dart test packages/intentcall_platform_sync/test/apple_surface_matrix_test.dart 
 | CLI export | `command_runner.dart`, `manifest_exporter.dart` | Pass `entityTypeDescriptors` from catalog loader |
 | Catalog loader | `catalog_loader.dart` | Load entity descriptors from generated catalog |
 | Unify snapshot store | `IntentCallPlatformPlugin.swift` (all copies) | Delegate to generated `IntentCallNativeEntitySnapshotStore` or delete hand-written store |
-| Dart API | `intentcall_entity_index.dart` | Deprecate legacy `upsertAgentSnapshots`; canonical: `upsertAgentSnapshotsForType` |
+| Dart API | `intentcall_entity_index.dart` | Remove legacy `upsertAgentSnapshots`; canonical API is `upsertAgentSnapshotsForType` (descriptor-aligned projection) |
 | Indexing hook | Plugin method channel | After upsert → call generated `IntentCallAppEntityIndexer.indexAppEntities()` |
 | Emitter | `apple_swift_app_intents_emitter.dart` | Indexing gated by `apple.spotlight` |
 

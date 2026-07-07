@@ -18,19 +18,6 @@ final class IntentCallPlatformEntityIndex {
 
   final IntentCallPlatformInvoke _invoke;
 
-  Future<int> upsertAgentSnapshots({
-    required final Iterable<AgentEntitySnapshot> snapshots,
-  }) async {
-    var count = 0;
-    for (final entry in _snapshotsByEntityType(snapshots).entries) {
-      count += await upsertSnapshots(
-        entityType: entry.key,
-        snapshots: entry.value.map(_snapshotFromModel),
-      );
-    }
-    return count;
-  }
-
   Future<int> upsertAgentSnapshotsForType({
     required final AgentEntityTypeDescriptor descriptor,
     required final Iterable<AgentEntitySnapshot> snapshots,
@@ -108,19 +95,6 @@ final class IntentCallPlatformEntityIndex {
   }
 }
 
-Map<String, List<AgentEntitySnapshot>> _snapshotsByEntityType(
-  final Iterable<AgentEntitySnapshot> snapshots,
-) {
-  final groups = <String, List<AgentEntitySnapshot>>{};
-  for (final snapshot in snapshots) {
-    final entityType = _entityType(
-      '${snapshot.ref.namespace}_${snapshot.ref.typeName}',
-    );
-    groups.putIfAbsent(entityType, () => <AgentEntitySnapshot>[]).add(snapshot);
-  }
-  return groups;
-}
-
 Map<String, List<String>> _refsByEntityType(
   final Iterable<AgentEntityRef> refs,
 ) {
@@ -131,23 +105,6 @@ Map<String, List<String>> _refsByEntityType(
   }
   return groups;
 }
-
-Map<String, Object?> _snapshotFromModel(final AgentEntitySnapshot snapshot) =>
-    <String, Object?>{
-      'id': snapshot.ref.identifier,
-      if (snapshot.effectiveTitle != null) 'title': snapshot.effectiveTitle,
-      if (snapshot.subtitle != null) 'subtitle': snapshot.subtitle,
-      if (snapshot.keywords.isNotEmpty) 'keywords': snapshot.keywords,
-      if (snapshot.thumbnailUrl != null) 'thumbnailUrl': snapshot.thumbnailUrl,
-      if (snapshot.url != null) 'url': snapshot.url,
-      if (snapshot.deepLink != null) 'deepLink': snapshot.deepLink,
-      if (snapshot.updatedAt != null)
-        'updatedAt': snapshot.updatedAt!.toUtc().toIso8601String(),
-      if (snapshot.deleted) 'deleted': true,
-      if (snapshot.version != null) 'version': snapshot.version,
-      if (snapshot.freshness != null) 'freshness': snapshot.freshness,
-      if (snapshot.properties.isNotEmpty) 'properties': snapshot.properties,
-    };
 
 String _entityType(final String value) {
   final trimmed = value.trim();

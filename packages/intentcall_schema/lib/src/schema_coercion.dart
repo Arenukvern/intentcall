@@ -2,8 +2,22 @@ import 'dart:convert';
 
 import 'agent_result.dart';
 
-/// Coerces VM service-extension wire values (`Map` values often [String]) to
-/// types expected by [validateAgainstSchema], using [schema] property types.
+/// Coerces wire [arguments] to types expected by [validateAgainstSchema].
+///
+/// VM service extensions and similar transports often deliver every value as a
+/// [String]. This function uses [schema] `properties` `type` fields to parse
+/// integers, numbers, booleans, JSON objects, and JSON arrays before
+/// validation.
+///
+/// Typical pipeline:
+///
+/// ```dart
+/// final args = coerceArgumentsForSchema(schema, wire.toAgentArguments());
+/// validateAgainstSchema(schema, args);
+/// ```
+///
+/// Empty strings for non-string types are **omitted** from the result so
+/// optional fields can stay unset. Unrecognized types pass through unchanged.
 AgentArguments coerceArgumentsForSchema(
   final InputSchema schema,
   final AgentArguments arguments,

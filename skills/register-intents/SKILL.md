@@ -204,12 +204,175 @@ control.
 @AgentProjection(surfaces: {AgentManifestSurface.webMcp: true})
 ```
 
-Apple sub-channels (Siri, Spotlight, etc.) use `AgentManifestSurfaceExposure.options`
-on handwritten `EntryProjection` rows until emitters support them.
+**Manifest surface families** (dense export emits all keys with explicit `include`):
+
+| Enum | Manifest key | Default when platform enabled |
+|------|--------------|------------------------------|
+| `appleAppIntents` | `apple.appIntents` | `true` on `ios`/`macos` |
+| `appleAppShortcuts` | `apple.appShortcuts` | `false` (opt-in, ADR 0016) |
+| `appleSpotlight` | `apple.spotlight` | `false` |
+| `appleEntities` | `apple.entities` | `false` |
+| `androidShortcuts` | `android.shortcuts` | `true` on `android` |
+| `webManifestShortcuts` | `web.manifestShortcuts` | `true` on `web` |
+| `webProtocolHandlers` | `web.protocolHandlers` | `true` on `web` |
+| `webMcp` | `web.webMcp` | `true` on `web` |
+| `windowsProtocolActivation` | `windows.protocolActivation` | `true` on `windows` |
+| `windowsMsixProtocol` | `windows.msixProtocol` | `true` on `windows` |
+| `linuxSchemeHandler` | `linux.schemeHandler` | `true` on `linux` |
+
+`platforms.enabled` in `intentcall.yaml` scopes defaults; explicit
+`defaults.surfaces` or per-entry `EntryProjection` overrides win.
+
+After changing registrations or projection policy, run:
+
+```bash
+steward benchmark --scenario intentcall.projection-pipeline --json
+```
+
+Apple sub-channels (Siri phrases, Spotlight donation hints) use
+`AgentManifestSurfaceExposure.options` on handwritten `EntryProjection` rows until
+emitters consume them.
 
 ---
 
-## 4. After Changing Registrations
+## 4. Typed app entities (`@AgentEntity`)
+
+Use `@AgentEntity` when the app exposes indexable domain objects (projects, notes,
+playlists) to native discovery surfaces. Entities are **additive projection
+metadata** — Dart still owns the source of truth and writes JSON-safe snapshots
+into a native cache. See
+[ADR 0018](../../docs/decisions/0018-additive-actions-typed-entities-indexing-lifecycle.md)
+and
+[ADR 0023](../../docs/decisions/0023-entity-three-slot-projection.md).
+
+### Three-slot projection model
+
+Native platforms expose a fixed display surface. Manifest export maps descriptor
+properties onto three slots:
+
+| Slot | Manifest key | Role enum | Typical use |
+|------|--------------|-----------|-------------|
+| Primary line | `titleKey` | `title` | Display name |
+| Secondary line | `subtitleKey` | `subtitle` | Summary or context |
+| Search tokens | `keywordsKey` | `keywords` | Tags array (`valueType: 'array'`) |
+
+`AgentEntitySnapshotKeys.fromDescriptor()` in `intentcall_core` resolves slots.
+Prefer **explicit roles** over implicit `isDisplay` / `isSearchable` ordering.
+
+### Annotate an entity type
+
+```dart
+import 'package:intentcall_codegen/intentcall_codegen.dart';
+
+@AgentEntity(
+  namespace: 'app',
+  name: 'project',
+  identifierName: 'projectId',
+  displayName: 'Project',
+  properties: [
+    AgentEntityProperty(
+      name: 'name',
+      valueType: 'string',
+      description: 'Display name',
+      isDisplay: true,
+      role: 'title',
+    ),
+    AgentEntityProperty(
+      name: 'summary',
+      valueType: 'string',
+      description: 'Searchable summary',
+      isSearchable: true,
+      role: 'subtitle',
+    ),
+    AgentEntityProperty(
+      name: 'tags',
+      valueType: 'array',
+      description: 'Search keywords',
+      isSearchable: true,
+      role: 'keywords',
+    ),
+  ],
+)
+final class AppProjectEntityDescriptor {}
+```
+
+Codegen emits `AppProjectEntityFields` constants and an
+`agentEntityTypeDescriptors` row in `lib/generated/agent_catalog.g.dart`.
+Run `build_runner`, then `intentcall manifest export --check`.
+
+### Entity-level property overrides
+
+When property names are stable but you prefer declaration at the type level:
+
+```dart
+@AgentEntity(
+  namespace: 'app',
+  name: 'project',
+  identifierName: 'projectId',
+  titleProperty: 'name',
+  subtitleProperty: 'summary',
+  keywordsProperty: 'tags',
+  properties: [ /* … */ ],
+)
+```
+
+Entity-level overrides win over per-property `role` when they name the same field.
+
+### Build cache rows with typed field constants
+
+```dart
+import 'package:intentcall_codegen/intentcall_codegen.dart';
+import 'package:intentcall_core/intentcall_core.dart';
+import 'package:your_app/generated/agent_catalog.g.dart';
+
+final descriptor = agentEntityTypeDescriptors.single;
+final builder = AgentEntitySnapshotBuilder(descriptor);
+
+final cacheRow = builder.buildProperties(
+  identifier: 'project-1',
+  values: {
+    AppProjectEntityFields.name: 'Launch',
+    AppProjectEntityFields.summary: 'Q3 launch',
+    AppProjectEntityFields.tags: ['launch', 'work'],
+  },
+);
+
+await entityIndex.upsertSnapshots(
+  entityType: descriptor.qualifiedName,
+  snapshots: [cacheRow],
+);
+```
+
+When upserting `AgentEntitySnapshot` models, prefer
+`upsertAgentSnapshotsForType` — it projects descriptor property names and
+display slots (`title` / `subtitle` / `keywords`) via
+`projectAgentEntitySnapshot()`. Use `upsertSnapshots` with
+`AgentEntitySnapshotBuilder` when you already have property-map rows.
+
+### Enable native entity surfaces
+
+Entity Swift / query codegen is gated by manifest surfaces. Opt in per tool or
+globally in `intentcall.yaml` / `@AgentProjection`:
+
+| Surface | Manifest key | When to enable |
+|---------|--------------|----------------|
+| `appleEntities` | `apple.entities` | `AppEntity`, `EntityQuery`, open-intent scaffolds |
+| `appleSpotlight` | `apple.spotlight` | CoreSpotlight indexing helpers |
+
+Apple `AppEntity` structs always read `titleKey`, `subtitleKey`, and
+`keywordsKey` from the manifest — keep roles aligned with what you upsert into
+the native cache.
+
+### Validation rules (codegen)
+
+- At most one property per role: `title`, `subtitle`, `keywords`.
+- `keywords` role requires `valueType: 'array'`.
+- Override property names must exist in `properties`.
+- `role` wins over conflicting `isDisplay` / `isSearchable` flags (warning logged).
+
+---
+
+## 5. After Changing Registrations
 
 Run the package tests that cover the registered handler. When changing this
 repository rather than only a downstream app, also run:
@@ -223,6 +386,7 @@ adapter contract test and run:
 
 ```bash
 steward benchmark --scenario intentcall.adapter-contract --json
+steward benchmark --scenario intentcall.projection-pipeline --json
 ```
 
 ---
@@ -231,3 +395,4 @@ steward benchmark --scenario intentcall.adapter-contract --json
 
 - [DESIGN_FAQ.mdx](../../docs/DESIGN_FAQ.mdx) — Why IntentCall is designed this way.
 - [DX_FAQ.mdx](../../docs/DX_FAQ.mdx) — General workflow and CLI commands.
+- [ADR 0023](../../docs/decisions/0023-entity-three-slot-projection.md) — Entity three-slot projection and `AgentEntityPropertyRole`.

@@ -7,3 +7,6 @@ final List<AgentRegistryCatalogEntry> agentCatalogEntries =
     <AgentRegistryCatalogEntry>[
   AgentRegistryCatalogEntry(registryKey: 'shop_search', entry: searchCallEntry),
 ];
+
+final List<AgentEntityTypeDescriptor> agentEntityTypeDescriptors =
+    <AgentEntityTypeDescriptor>[];

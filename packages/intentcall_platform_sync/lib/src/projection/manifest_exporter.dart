@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:intentcall_core/intentcall_core.dart';
+
 import '../agent_manifest.dart';
 import '../catalog/agent_registry_catalog.dart';
 import 'manifest_merger.dart';
@@ -17,12 +19,14 @@ final class ManifestExporter {
   AgentManifest buildManifest({
     required final Iterable<AgentRegistryCatalogEntry> catalog,
     required final ManifestExportContext context,
+    final Iterable<AgentEntityTypeDescriptor> entityTypeDescriptors = const [],
   }) => _merger.mergeManifest(
     catalog: catalog,
     policy: context.policy,
     protocolScheme: context.protocolScheme,
     platform: context.platform,
     enabledPlatforms: context.enabledPlatforms,
+    entityTypeDescriptors: entityTypeDescriptors,
   );
 
   String encodeManifest(final AgentManifest manifest) =>
@@ -35,10 +39,15 @@ final class ManifestExporter {
     required final Iterable<AgentRegistryCatalogEntry> catalog,
     required final ManifestExportContext context,
     required final File outPath,
+    final Iterable<AgentEntityTypeDescriptor> entityTypeDescriptors = const [],
     final bool checkOnly = false,
   }) {
     final encoded = encodeManifest(
-      buildManifest(catalog: catalog, context: context),
+      buildManifest(
+        catalog: catalog,
+        context: context,
+        entityTypeDescriptors: entityTypeDescriptors,
+      ),
     );
 
     if (checkOnly) {

@@ -25,13 +25,13 @@ final class WebManifestEmitter {
     final shortcutTools = manifest.tools.where(
       (final tool) => tool.surfaces.includes(
         AgentManifestSurface.webManifestShortcuts,
-        defaultValue: true,
+        defaultValue: false,
       ),
     );
     final protocolTools = manifest.tools.where(
       (final tool) => tool.surfaces.includes(
         AgentManifestSurface.webProtocolHandlers,
-        defaultValue: true,
+        defaultValue: false,
       ),
     );
 

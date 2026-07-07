@@ -1,42 +1,72 @@
 {
-  "name": "intentcall_codegen_example",
-  "start_url": ".",
-  "shortcuts": [
-    {
-      "name": "Demo Ping",
-      "short_name": "Demo Ping",
-      "description": "Returns pong for a message",
-      "url": "/agent/invoke?name=app_demo_ping"
-    },
-    {
-      "name": "Demo Cart",
-      "short_name": "Demo Cart",
-      "description": "Returns a cart total",
-      "url": "/agent/invoke?name=app_demo_cart"
-    },
-    {
-      "name": "Demo Required Named",
-      "short_name": "Demo Required Named",
-      "description": "Returns a required named parameter",
-      "url": "/agent/invoke?name=app_demo_required_named"
-    }
-  ],
-  "protocol_handlers": [
-    {
-      "protocol": "web+intentcall",
-      "url": "/agent/invoke?protocol=%s"
-    },
-    {
-      "protocol": "web+intentcall",
-      "url": "/agent/invoke?name=app_demo_ping&payload=%s"
-    },
-    {
-      "protocol": "web+intentcall",
-      "url": "/agent/invoke?name=app_demo_cart&payload=%s"
-    },
-    {
-      "protocol": "web+intentcall",
-      "url": "/agent/invoke?name=app_demo_required_named&payload=%s"
-    }
-  ]
+    "name": "intentcall_codegen_example",
+    "start_url": ".",
+    "shortcuts": [
+        {
+            "name": "Demo Host Status",
+            "short_name": "Demo Host Status",
+            "description": "Codegen instance-method host tool",
+            "url": "/agent/invoke?name=app_demo_host_status"
+        },
+        {
+            "name": "Demo Ping",
+            "short_name": "Demo Ping",
+            "description": "Returns pong for a message",
+            "url": "/agent/invoke?name=app_demo_ping"
+        },
+        {
+            "name": "Demo Cart",
+            "short_name": "Demo Cart",
+            "description": "Returns a cart total",
+            "url": "/agent/invoke?name=app_demo_cart"
+        },
+        {
+            "name": "Demo Required Named",
+            "short_name": "Demo Required Named",
+            "description": "Returns a required named parameter",
+            "url": "/agent/invoke?name=app_demo_required_named"
+        },
+        {
+            "name": "Demo Inbox",
+            "short_name": "Demo Inbox",
+            "description": "Read inbox folder",
+            "url": "/agent/invoke?name=app_demo_inbox"
+        },
+        {
+            "name": "Demo Handwritten",
+            "short_name": "Demo Handwritten",
+            "description": "Handwritten instance-bound tool",
+            "url": "/agent/invoke?name=app_demo_handwritten"
+        }
+    ],
+    "protocol_handlers": [
+        {
+            "protocol": "web+intentcall",
+            "url": "/agent/invoke?protocol=%s"
+        },
+        {
+            "protocol": "web+intentcall",
+            "url": "/agent/invoke?name=app_demo_host_status&payload=%s"
+        },
+        {
+            "protocol": "web+intentcall",
+            "url": "/agent/invoke?name=app_demo_ping&payload=%s"
+        },
+        {
+            "protocol": "web+intentcall",
+            "url": "/agent/invoke?name=app_demo_cart&payload=%s"
+        },
+        {
+            "protocol": "web+intentcall",
+            "url": "/agent/invoke?name=app_demo_required_named&payload=%s"
+        },
+        {
+            "protocol": "web+intentcall",
+            "url": "/agent/invoke?name=app_demo_inbox&payload=%s"
+        },
+        {
+            "protocol": "web+intentcall",
+            "url": "/agent/invoke?name=app_demo_handwritten&payload=%s"
+        }
+    ]
 }

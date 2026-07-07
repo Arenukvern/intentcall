@@ -33,7 +33,7 @@ void main() {
   });
 
   test(
-    'IntentCallPlatformEntityIndex writes schema snapshots by ref',
+    'IntentCallPlatformEntityIndex writes notes snapshots with legacy keys',
     () async {
       final calls = <String, Object?>{};
       final index = IntentCallPlatformEntityIndex(
@@ -42,8 +42,22 @@ void main() {
           return 1;
         },
       );
+      final descriptor = AgentEntityTypeDescriptor(
+        namespace: 'notes',
+        name: 'note',
+        identifierName: 'id',
+        properties: [
+          AgentEntityPropertyDescriptor(
+            name: 'title',
+            valueType: AgentEntityPropertyValueType.string,
+            role: AgentEntityPropertyRole.title,
+            isDisplay: true,
+          ),
+        ],
+      );
 
-      final count = await index.upsertAgentSnapshots(
+      final count = await index.upsertAgentSnapshotsForType(
+        descriptor: descriptor,
         snapshots: [
           AgentEntitySnapshot(
             ref: const AgentEntityRef(
@@ -70,6 +84,7 @@ void main() {
       expect(row['keywords'], ['launch']);
       expect(row['deepLink'], 'demo://entity/notes_note/note-1');
       expect(row['updatedAt'], '2026-06-29T00:00:00.000Z');
+      expect(row['category'], 'work');
     },
   );
 

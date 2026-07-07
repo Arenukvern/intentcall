@@ -3,8 +3,13 @@
 
 import 'agent_result.dart';
 
-/// Copies `inputSchema` from a registerDynamics resource payload, or
-/// [clientResourceReadInputSchema] when omitted.
+/// Extracts an [InputSchema] from a dynamic resource registration map.
+///
+/// Reads `inputSchema` from [registration]. When absent, returns
+/// [clientResourceReadInputSchema] (URI-only read args for
+/// `fmt_client_resource` style resources).
+///
+/// Throws [ArgumentError] when `inputSchema` is present but not a `Map`.
 InputSchema inputSchemaFromDynamicRegistrationMap(
   final Map<String, Object?> registration,
 ) {
@@ -18,7 +23,10 @@ InputSchema inputSchemaFromDynamicRegistrationMap(
   return _deepCopySchemaMap(Map<Object?, Object?>.from(raw));
 }
 
-/// Default read-args schema for dynamic client resources (`fmt_client_resource`).
+/// Default JSON Schema for reading a dynamic client resource by URI.
+///
+/// Requires a single `uri` string property. Used when a resource registration
+/// does not supply a custom `inputSchema`.
 InputSchema clientResourceReadInputSchema() => <String, Object?>{
   'type': 'object',
   'additionalProperties': false,
@@ -31,7 +39,11 @@ InputSchema clientResourceReadInputSchema() => <String, Object?>{
   },
 };
 
-/// Default read-args schema for dynamic client resource templates.
+/// Default JSON Schema for reading a dynamic client resource template.
+///
+/// Always requires `uri`. Additional [templateVariables] (for example `count`)
+/// are added to `properties`; `count` is typed as `integer`, others as
+/// `string`. Skips a variable named `uri` if listed twice.
 InputSchema clientResourceTemplateReadInputSchema({
   final Iterable<String> templateVariables = const <String>['count'],
 }) {

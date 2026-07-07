@@ -263,10 +263,18 @@ final class _ManifestExportCommand extends Command<int> {
 
     const exporter = ManifestExporter();
     final context = exporter.loadExportContext(projectRoot: projectRoot);
-    final catalog = await const CatalogLoader().load(projectRoot: projectRoot);
+    final catalogLoader = const CatalogLoader();
+    final catalog = await catalogLoader.load(projectRoot: projectRoot);
+    final entityTypeDescriptors = await catalogLoader.loadEntityTypeDescriptors(
+      projectRoot: projectRoot,
+    );
 
     final encoded = exporter.encodeManifest(
-      exporter.buildManifest(catalog: catalog, context: context),
+      exporter.buildManifest(
+        catalog: catalog,
+        context: context,
+        entityTypeDescriptors: entityTypeDescriptors,
+      ),
     );
 
     if (checkOnly) {

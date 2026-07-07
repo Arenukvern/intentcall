@@ -52,6 +52,12 @@ For adapter, platform bridge, or registry contract work, also run:
 steward benchmark --scenario intentcall.adapter-contract --json
 ```
 
+For manifest export, emitter, and platform projection alignment, run:
+
+```bash
+steward benchmark --scenario intentcall.projection-pipeline --json
+```
+
 The quick probe validates package synchronization, internal dependency floors,
 path dependency hygiene, active-plan hygiene, and the adapter/platform contract
 lane selected by `steward.yaml`.
@@ -471,7 +477,24 @@ field exists, or `Host.shared.<getter>CallEntry` when a probe anchor is present.
 Handwritten getters remain the canonical path when you need full control.
 
 **Typed projection:** `@AgentProjection` and `EntryProjection` use
-`AgentManifestSurface` enum keys. Apple sub-channels (Siri, Spotlight) use
+`AgentManifestSurface` enum keys. See [ADR 0022](decisions/0022-projection-pipeline-alignment.md)
+for the full surface table and Apple sub-channel defaults.
+
+| Enum | Manifest key | Default when platform enabled |
+|------|--------------|------------------------------|
+| `appleAppIntents` | `apple.appIntents` | `true` on `ios`/`macos` |
+| `appleAppShortcuts` | `apple.appShortcuts` | `false` (opt-in) |
+| `appleSpotlight` | `apple.spotlight` | `false` |
+| `appleEntities` | `apple.entities` | `false` |
+| `androidShortcuts` | `android.shortcuts` | `true` on `android` |
+| `webManifestShortcuts` | `web.manifestShortcuts` | `true` on `web` |
+| `webProtocolHandlers` | `web.protocolHandlers` | `true` on `web` |
+| `webMcp` | `web.webMcp` | `true` on `web` |
+| `windowsProtocolActivation` | `windows.protocolActivation` | `true` on `windows` |
+| `windowsMsixProtocol` | `windows.msixProtocol` | `true` on `windows` |
+| `linuxSchemeHandler` | `linux.schemeHandler` | `true` on `linux` |
+
+Apple sub-channels (Siri phrases, Spotlight donation hints) use
 `AgentManifestSurfaceExposure.options` on handwritten rows until emitters define
 them — see [ADR 0020](decisions/0020-platform-scoped-manifest-surfaces.md).
 
