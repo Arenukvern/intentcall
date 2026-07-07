@@ -6,5 +6,7 @@ layout:
 platforms:
   enabled:
     - web
+    - ios
+    - macos
 defaults:
   dispatchMode: openApp

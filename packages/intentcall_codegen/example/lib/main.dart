@@ -1,6 +1,5 @@
 import 'package:intentcall_core/intentcall_core.dart';
 
-import 'entity_snapshot_seed.dart';
 import 'generated/agent_catalog.g.dart';
 import 'tools/demo_host_tools.dart';
 
@@ -10,7 +9,6 @@ import 'tools/demo_host_tools.dart';
 ///
 /// ```text
 /// @AgentTool          →  tool implementation + (usually) catalog row
-/// @AgentEntity         →  entity type descriptor + EntityFields constants
 /// handwritten getter  →  tool implementation only
 /// catalog row         →  @AgentCatalog list
 /// agent_catalog.g.dart →  merge of all three sources
@@ -24,6 +22,12 @@ import 'tools/demo_host_tools.dart';
 ///   (here `DemoHostTools.shared.demoHostStatusCallEntry`).
 /// - **Runtime** — the app may register a different live host instance when
 ///   descriptors match (DI container, per-session state, tests).
+///
+/// **Apple discovery** — Siri and Shortcuts discover registry **verbs** via
+/// `apple.appIntents` + opt-in `apple.appShortcuts` on tools such as
+/// `app_demo_set_greeting`. Indexable **nouns** (`@AgentEntity`, Spotlight) are
+/// dogfooded in the Flutter showcase, not this dart-only host:
+/// `mcp_flutter/flutter_test_app`.
 Future<void> main() async {
   final registry = InMemoryAgentRegistry();
 
@@ -80,32 +84,13 @@ Future<void> main() async {
     );
   }
 
-  for (final descriptor in agentEntityTypeDescriptors) {
-    registry.registerEntityType(descriptor);
+  final greeting = await registry.invoke('app_demo_set_greeting', {
+    'text': 'hello codegen',
+  });
+  if (!greeting.ok) {
+    throw StateError('demo_set_greeting smoke failed: ${greeting.message}');
   }
-  if (agentEntityTypeDescriptors.isNotEmpty) {
-    final row = demoProjectSnapshotRow();
-    if (row['projectId'] != 'project-1') {
-      throw StateError('entity smoke failed: expected projectId project-1');
-    }
-    if (row['name'] != 'Codegen project') {
-      throw StateError(
-        'entity smoke failed: expected descriptor title key name',
-      );
-    }
-    if (row['summary'] != 'Entity snapshot seed') {
-      throw StateError(
-        'entity smoke failed: expected descriptor subtitle key summary',
-      );
-    }
-    final tags = row['tags'];
-    if (tags is! List ||
-        tags.length != 2 ||
-        tags[0] != 'demo' ||
-        tags[1] != 'codegen') {
-      throw StateError(
-        'entity smoke failed: expected descriptor keywords tags',
-      );
-    }
+  if (greeting.data['greeting'] != 'hello codegen') {
+    throw StateError('demo_set_greeting smoke failed: unexpected greeting');
   }
 }

@@ -130,6 +130,15 @@ from the row. Do not duplicate tools already merged by `@AgentTool` codegen.
 `platforms.enabled` in `intentcall.yaml` scopes default manifest surface families
 (web-only hosts omit android/windows/linux defaults unless overridden).
 
+**Siri / Shortcuts discovery** — registry **verbs** (`AgentCallEntry` /
+`@AgentTool`) surface through `apple.appIntents` (default on `ios`/`macos`) and
+opt-in `apple.appShortcuts`. The codegen example curates
+`app_demo_set_greeting` in
+[`demo_ping_tool.dart`](../../packages/intentcall_codegen/example/lib/tools/demo_ping_tool.dart).
+**Spotlight / entity nouns** (`@AgentEntity`) are dogfooded in the Flutter
+showcase [`mcp_flutter/flutter_test_app`](https://github.com/Arenukvern/mcp_flutter/tree/main/flutter_test_app),
+not the dart-only codegen example.
+
 ---
 
 ## 3. Code Generation (`@AgentTool`)
@@ -237,6 +246,15 @@ emitters consume them.
 ---
 
 ## 4. Typed app entities (`@AgentEntity`)
+
+> **Dogfood home:** The dart-only
+> [`intentcall_codegen/example`](../../packages/intentcall_codegen/example)
+> focuses on tool catalog and Apple **verb** discovery (`demo_set_greeting`).
+> Full `@AgentEntity` flow — Flutter host, native cache seeding, Spotlight
+> indexing, and `app_screen` nouns — lives in
+> [`mcp_flutter/flutter_test_app`](https://github.com/Arenukvern/mcp_flutter/tree/main/flutter_test_app).
+> Codegen/manifest unit tests use
+> [`entity_catalog_project`](../../packages/intentcall_cli/test/fixtures/entity_catalog_project).
 
 Use `@AgentEntity` when the app exposes indexable domain objects (projects, notes,
 playlists) to native discovery surfaces. Entities are **additive projection

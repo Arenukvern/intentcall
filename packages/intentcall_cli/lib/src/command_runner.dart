@@ -29,6 +29,7 @@ final class IntentCallCommandRunner extends CommandRunner<int> {
   }
 }
 
+// ignore: avoid_classes_with_only_static_members
 final class _ProjectDirOption {
   static void add(final ArgParser parser) {
     parser.addOption(
@@ -55,7 +56,7 @@ final class _DoctorCommand extends Command<int> {
   String get description => 'Check developer environment health.';
 
   @override
-  Future<int> run() async =>
+  Future<int> run() =>
       _runDoctor(asJson: argResults!['json'] as bool? ?? false);
 
   @override
@@ -96,7 +97,10 @@ final class _DoctorCommand extends Command<int> {
     }
 
     await checkTool('dart', <String>['dart', '--version']);
-    await checkTool('flutter', <String>['flutter', '--version'], required: false);
+    await checkTool('flutter', <String>[
+      'flutter',
+      '--version',
+    ], required: false);
     await checkTool('just', <String>['just', '--version'], required: false);
 
     final lockExists = File('pubspec.lock').existsSync();
@@ -111,10 +115,7 @@ final class _DoctorCommand extends Command<int> {
     });
 
     if (asJson) {
-      printJson(<String, Object?>{
-        'healthy': healthy,
-        'checks': checks,
-      });
+      printJson(<String, Object?>{'healthy': healthy, 'checks': checks});
     } else {
       stdout.writeln('== IntentCall Doctor ==');
       for (final check in checks) {
@@ -161,8 +162,9 @@ final class _ConfigShowCommand extends Command<int> {
     if (results['json'] as bool? ?? false) {
       printJson(enriched);
     } else {
-      stdout.writeln('# intentcall.yaml (${config.sourcePath})');
-      stdout.writeln(encodePrettyJson(enriched));
+      stdout
+        ..writeln('# intentcall.yaml (${config.sourcePath})')
+        ..writeln(encodePrettyJson(enriched));
     }
     return 0;
   }
@@ -220,10 +222,11 @@ final class _ManifestValidateCommand extends Command<int> {
           'entityTypeCount': manifest.entityTypes.length,
         });
       } else {
-        stdout.writeln('OK: valid manifest at ${manifestPath.path}');
-        stdout.writeln(
-          '  tools=${manifest.tools.length} entityTypes=${manifest.entityTypes.length}',
-        );
+        stdout
+          ..writeln('OK: valid manifest at ${manifestPath.path}')
+          ..writeln(
+            '  tools=${manifest.tools.length} entityTypes=${manifest.entityTypes.length}',
+          );
       }
       return 0;
     } on FormatException catch (error) {
@@ -263,7 +266,7 @@ final class _ManifestExportCommand extends Command<int> {
 
     const exporter = ManifestExporter();
     final context = exporter.loadExportContext(projectRoot: projectRoot);
-    final catalogLoader = const CatalogLoader();
+    const catalogLoader = CatalogLoader();
     final catalog = await catalogLoader.load(projectRoot: projectRoot);
     final entityTypeDescriptors = await catalogLoader.loadEntityTypeDescriptors(
       projectRoot: projectRoot,
@@ -438,10 +441,7 @@ final class _PlatformHooksInitCommand extends Command<int> {
     final checkOnly = results['check'] as bool? ?? false;
 
     if (host == IntentCallHost.jaspr.name) {
-      return _initJasprHooks(
-        projectRoot: projectRoot,
-        checkOnly: checkOnly,
-      );
+      return _initJasprHooks(projectRoot: projectRoot, checkOnly: checkOnly);
     }
 
     final report = await const PlatformHooksInit().run(
@@ -540,9 +540,10 @@ final class _PlatformHooksPrintCommand extends Command<int> {
         ? <String>['jaspr', 'web']
         : <String>['android', 'ios', 'macos'];
     for (final key in keys) {
-      stdout.writeln('== $key ==');
-      stdout.writeln(snippets[key]!.trim());
-      stdout.writeln();
+      stdout
+        ..writeln('== $key ==')
+        ..writeln(snippets[key]!.trim())
+        ..writeln();
     }
     return 0;
   }

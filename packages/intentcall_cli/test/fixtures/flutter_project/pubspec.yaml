@@ -19,9 +19,9 @@ dev_dependencies:
   build_runner: ^2.15.0
 
 dependency_overrides:
-  intentcall_schema:
-    path: ../../../../intentcall_schema
   intentcall_core:
     path: ../../../../intentcall_core
+  intentcall_schema:
+    path: ../../../../intentcall_schema
   intentcall_platform_sync:
     path: ../../../../intentcall_platform_sync

@@ -41,3 +41,23 @@ Future<AgentResult> demoRequiredNamed({
 }) async {
   return AgentResult.success(data: {'mode': mode});
 }
+
+/// Curated Apple verb for Siri / Shortcuts discovery (see `intentcall.yaml` ios/macos).
+@AgentTool(
+  namespace: 'app',
+  name: 'demo_set_greeting',
+  description: 'Set greeting text for the codegen demo host.',
+)
+@AgentProjection(
+  surfaces: {
+    AgentManifestSurface.appleAppIntents: true,
+    AgentManifestSurface.appleAppShortcuts: true,
+  },
+)
+Future<AgentResult> demoSetGreeting(
+  @AgentParam('Greeting text') String text,
+) async {
+  return AgentResult.success(
+    data: <String, Object?>{'greeting': text, 'kind': 'demo_set_greeting'},
+  );
+}

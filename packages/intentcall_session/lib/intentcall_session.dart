@@ -1,5 +1,3 @@
-library;
-
 export 'src/agent_session_executor.dart';
 export 'src/safe_writes.dart';
 export 'src/session_connector.dart';

@@ -4,15 +4,13 @@ import 'package:test/test.dart';
 AgentEntityTypeDescriptor _projectFixtureDescriptor({
   final Iterable<AgentEntityPropertyDescriptor> properties =
       const <AgentEntityPropertyDescriptor>[],
-}) {
-  return AgentEntityTypeDescriptor(
-    namespace: 'app',
-    name: 'project',
-    identifierName: 'project_id',
-    displayName: 'Project',
-    properties: properties,
-  );
-}
+}) => AgentEntityTypeDescriptor(
+  namespace: 'app',
+  name: 'project',
+  identifierName: 'project_id',
+  displayName: 'Project',
+  properties: properties,
+);
 
 void main() {
   group('AgentEntitySnapshotKeys.fromDescriptor', () {

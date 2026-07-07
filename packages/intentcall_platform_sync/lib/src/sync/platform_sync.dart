@@ -3,13 +3,13 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 import '../agent_manifest.dart';
-import '../projection/manifest_merger.dart';
 import '../emitters/android_shortcuts_xml_emitter.dart';
 import '../emitters/apple_swift_app_intents_emitter.dart';
 import '../emitters/linux_desktop_entry_emitter.dart';
 import '../emitters/web_manifest_emitter.dart';
 import '../emitters/web_mcp_js_emitter.dart';
 import '../emitters/windows_protocol_emitter.dart';
+import '../projection/manifest_merger.dart';
 import 'apple_info_plist_protocol_sync.dart';
 import 'apple_xcode_project_sync.dart';
 
@@ -203,7 +203,9 @@ final class PlatformSync {
     final bool dryRun = false,
   }) {
     final manifest = readManifest(projectRoot);
-    final webDir = Directory(p.join(projectRoot, _resolveWebDirName(projectRoot)));
+    final webDir = Directory(
+      p.join(projectRoot, _resolveWebDirName(projectRoot)),
+    );
     if (!webDir.existsSync()) {
       throw StateError('Missing web/ directory under $projectRoot');
     }

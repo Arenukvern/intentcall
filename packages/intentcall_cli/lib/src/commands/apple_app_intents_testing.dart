@@ -38,7 +38,10 @@ Future<int> _generateTests(
     return usageExitCode();
   }
 
-  final manifestPath = resolveProjectPath(projectRoot, '${command['manifest']}');
+  final manifestPath = resolveProjectPath(
+    projectRoot,
+    '${command['manifest']}',
+  );
   if (!manifestPath.existsSync()) {
     printUsageError('manifest not found: ${manifestPath.path}');
     return inputMissingExitCode();
@@ -102,7 +105,10 @@ Future<int> _generateFixtures(
     return usageExitCode();
   }
 
-  final manifestPath = resolveProjectPath(projectRoot, '${command['manifest']}');
+  final manifestPath = resolveProjectPath(
+    projectRoot,
+    '${command['manifest']}',
+  );
   if (!manifestPath.existsSync()) {
     printUsageError('manifest not found: ${manifestPath.path}');
     return inputMissingExitCode();
@@ -254,7 +260,7 @@ Map<String, Map<String, Object?>> _sampleArgumentsTemplate(
     }
     final required = <String>{
       ...((tool.inputSchema['required'] is List)
-              ? tool.inputSchema['required'] as List
+              ? tool.inputSchema['required']! as List
               : const <Object?>[])
           .whereType<String>(),
     };
@@ -299,18 +305,17 @@ Object? _sampleValueForSchema(
   final String schemaType, {
   required final String qualifiedName,
   required final String parameterName,
-}) =>
-    switch (schemaType) {
-      'string' => '<sample string>',
-      'integer' => 1,
-      'number' => 1.0,
-      'boolean' => true,
-      _ => throw UnsupportedError(
-        'AppIntentsTesting fixture templates support only primitive '
-        'string/integer/number/boolean parameters in $qualifiedName; '
-        '"$parameterName" has unsupported type "$schemaType".',
-      ),
-    };
+}) => switch (schemaType) {
+  'string' => '<sample string>',
+  'integer' => 1,
+  'number' => 1.0,
+  'boolean' => true,
+  _ => throw UnsupportedError(
+    'AppIntentsTesting fixture templates support only primitive '
+    'string/integer/number/boolean parameters in $qualifiedName; '
+    '"$parameterName" has unsupported type "$schemaType".',
+  ),
+};
 
 Map<String, Map<String, Object?>> _readSampleArguments(final File file) {
   final raw = readJsonObjectFile(file);
@@ -355,68 +360,64 @@ Map<String, AppleAppIntentsTestingEntityFixture> _readEntityFixtures(
   });
 }
 
-ArgParser buildAppleAppIntentsTestingParser() {
-  return ArgParser()
-    ..addCommand(
-      'generate-tests',
-      ArgParser()
-        ..addOption(
-          'manifest',
-          abbr: 'm',
-          help: 'Path to agent_manifest.json.',
-          defaultsTo: 'web/agent_manifest.json',
-        )
-        ..addOption(
-          'bundle-id',
-          help: 'Bundle identifier for IntentDefinitions lookup.',
-        )
-        ..addOption(
-          'output',
-          abbr: 'o',
-          help: 'Swift output path. Defaults to stdout.',
-        )
-        ..addOption(
-          'test-class',
-          help: 'Generated XCTest class name.',
-          defaultsTo: 'IntentCallAppIntentsLiveInvocationTests',
-        )
-        ..addOption(
-          'sample-arguments',
-          help:
-              'Optional JSON file keyed by manifest qualifiedName with primitive App Intent argument fixtures.',
-        )
-        ..addOption(
-          'entity-fixtures',
-          help:
-              'Optional JSON file keyed by entity qualifiedName with identifier/search/expectedTitle fixtures.',
-        ),
-    )
-    ..addCommand(
-      'generate-fixtures',
-      ArgParser()
-        ..addOption(
-          'manifest',
-          abbr: 'm',
-          help: 'Path to agent_manifest.json.',
-          defaultsTo: 'web/agent_manifest.json',
-        )
-        ..addOption(
-          'sample-arguments-output',
-          help:
-              'JSON output path for generated primitive argument fixtures.',
-        )
-        ..addOption(
-          'entity-fixtures-output',
-          help: 'JSON output path for generated AppEntity query fixtures.',
-        ),
-    )
-    ..addCommand(
-      'typecheck',
-      ArgParser()
-        ..addOption(
-          'xcode',
-          help: 'Xcode.app path containing AppIntentsTesting.framework.',
-          defaultsTo: '/Applications/Xcode-beta.app',
-        ),
-    );
-}
+ArgParser buildAppleAppIntentsTestingParser() => ArgParser()
+  ..addCommand(
+    'generate-tests',
+    ArgParser()
+      ..addOption(
+        'manifest',
+        abbr: 'm',
+        help: 'Path to agent_manifest.json.',
+        defaultsTo: 'web/agent_manifest.json',
+      )
+      ..addOption(
+        'bundle-id',
+        help: 'Bundle identifier for IntentDefinitions lookup.',
+      )
+      ..addOption(
+        'output',
+        abbr: 'o',
+        help: 'Swift output path. Defaults to stdout.',
+      )
+      ..addOption(
+        'test-class',
+        help: 'Generated XCTest class name.',
+        defaultsTo: 'IntentCallAppIntentsLiveInvocationTests',
+      )
+      ..addOption(
+        'sample-arguments',
+        help:
+            'Optional JSON file keyed by manifest qualifiedName with primitive App Intent argument fixtures.',
+      )
+      ..addOption(
+        'entity-fixtures',
+        help:
+            'Optional JSON file keyed by entity qualifiedName with identifier/search/expectedTitle fixtures.',
+      ),
+  )
+  ..addCommand(
+    'generate-fixtures',
+    ArgParser()
+      ..addOption(
+        'manifest',
+        abbr: 'm',
+        help: 'Path to agent_manifest.json.',
+        defaultsTo: 'web/agent_manifest.json',
+      )
+      ..addOption(
+        'sample-arguments-output',
+        help: 'JSON output path for generated primitive argument fixtures.',
+      )
+      ..addOption(
+        'entity-fixtures-output',
+        help: 'JSON output path for generated AppEntity query fixtures.',
+      ),
+  )
+  ..addCommand(
+    'typecheck',
+    ArgParser()..addOption(
+      'xcode',
+      help: 'Xcode.app path containing AppIntentsTesting.framework.',
+      defaultsTo: '/Applications/Xcode-beta.app',
+    ),
+  );

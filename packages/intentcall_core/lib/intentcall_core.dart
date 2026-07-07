@@ -1,5 +1,3 @@
-library;
-
 export 'src/adapter/agent_adapter.dart';
 export 'src/authoring/agent_call_entry.dart';
 export 'src/entity/agent_entity_index.dart';

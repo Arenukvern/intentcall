@@ -53,10 +53,13 @@ final class IntentCallConfig {
     );
   }
 
-  factory IntentCallConfig.parse(final String yamlText, {final String? sourcePath}) {
+  factory IntentCallConfig.parse(
+    final String yamlText, {
+    final String? sourcePath,
+  }) {
     final doc = loadYaml(yamlText);
     if (doc is! YamlMap) {
-      throw FormatException('intentcall.yaml must be a YAML mapping.');
+      throw const FormatException('intentcall.yaml must be a YAML mapping.');
     }
     return IntentCallConfig.fromYamlMap(doc, sourcePath: sourcePath);
   }
@@ -139,9 +142,7 @@ final class IntentCallPlatforms {
 
   final List<String> enabled;
 
-  Map<String, Object?> toJson() => <String, Object?>{
-    'enabled': enabled,
-  };
+  Map<String, Object?> toJson() => <String, Object?>{'enabled': enabled};
 }
 
 /// Global projection defaults merged into [ProjectionPolicy].

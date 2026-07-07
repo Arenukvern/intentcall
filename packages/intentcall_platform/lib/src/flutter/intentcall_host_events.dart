@@ -1,6 +1,5 @@
-import 'package:intentcall_schema/intentcall_schema.dart';
-
 import 'package:intentcall_platform_sync/intentcall_platform_sync.dart';
+import 'package:intentcall_schema/intentcall_schema.dart';
 
 /// Reason a pending native invocation drain was requested.
 enum IntentCallDrainTrigger { start, resume, deepLink, manual }

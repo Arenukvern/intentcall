@@ -16,53 +16,12 @@ final List<AgentRegistryCatalogEntry> agentCatalogEntries =
   surfaces: <AgentManifestSurface, bool>{AgentManifestSurface.webMcp: false},
 )),
   AgentRegistryCatalogEntry(registryKey: 'app_demo_required_named', entry: demoRequiredNamedCallEntry),
+  AgentRegistryCatalogEntry(registryKey: 'app_demo_set_greeting', entry: demoSetGreetingCallEntry, projection: EntryProjection(
+  dispatchMode: AgentManifestDispatchMode.openApp,
+  surfaces: <AgentManifestSurface, bool>{AgentManifestSurface.appleAppIntents: true, AgentManifestSurface.appleAppShortcuts: true},
+)),
   ...DemoHostTools.demoHostCatalogEntries,
 ];
 
-abstract final class AppProjectEntityFields {
-  static const String name = 'name';
-  static const String summary = 'summary';
-  static const String tags = 'tags';
-}
-
 final List<AgentEntityTypeDescriptor> agentEntityTypeDescriptors =
-    <AgentEntityTypeDescriptor>[
-  AgentEntityTypeDescriptor(
-    namespace: 'app',
-    name: 'project',
-    identifierName: 'projectId',
-    displayName: 'Project',
-    properties: <AgentEntityPropertyDescriptor>[
-      AgentEntityPropertyDescriptor(
-        name: 'name',
-        valueType: AgentEntityPropertyValueType.string,
-        description: 'Display name',
-        isDisplay: true,
-        isSearchable: false,
-        isIndexed: false,
-        role: AgentEntityPropertyRole.title,
-      ),
-      AgentEntityPropertyDescriptor(
-        name: 'summary',
-        valueType: AgentEntityPropertyValueType.string,
-        description: 'Searchable summary',
-        isDisplay: false,
-        isSearchable: true,
-        isIndexed: false,
-        role: AgentEntityPropertyRole.subtitle,
-      ),
-      AgentEntityPropertyDescriptor(
-        name: 'tags',
-        valueType: AgentEntityPropertyValueType.array,
-        description: 'Search keywords',
-        isDisplay: false,
-        isSearchable: true,
-        isIndexed: false,
-        role: AgentEntityPropertyRole.keywords,
-      )
-    ],
-    privacy: AgentEntityPrivacy.private,
-    deepLinkBehavior: AgentEntityDeepLinkBehavior.unsupported,
-    openBehavior: AgentEntityOpenBehavior.unsupported,
-  ),
-];
+    <AgentEntityTypeDescriptor>[];

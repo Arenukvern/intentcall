@@ -11,7 +11,7 @@
       "dispatchMode": "openApp",
       "surfaces": {
         "apple.appIntents": {
-          "include": false
+          "include": true
         },
         "apple.appShortcuts": {
           "include": false
@@ -66,7 +66,7 @@
       "dispatchMode": "openApp",
       "surfaces": {
         "apple.appIntents": {
-          "include": false
+          "include": true
         },
         "apple.appShortcuts": {
           "include": false
@@ -121,7 +121,7 @@
       "dispatchMode": "openApp",
       "surfaces": {
         "apple.appIntents": {
-          "include": false
+          "include": true
         },
         "apple.appShortcuts": {
           "include": false
@@ -180,7 +180,7 @@
       "dispatchMode": "openApp",
       "surfaces": {
         "apple.appIntents": {
-          "include": false
+          "include": true
         },
         "apple.appShortcuts": {
           "include": false
@@ -227,6 +227,61 @@
       }
     },
     {
+      "qualifiedName": "app_demo_set_greeting",
+      "namespace": "app",
+      "name": "demo_set_greeting",
+      "description": "Set greeting text for the codegen demo host.",
+      "kind": "tool",
+      "dispatchMode": "openApp",
+      "surfaces": {
+        "apple.appIntents": {
+          "include": true
+        },
+        "apple.appShortcuts": {
+          "include": true
+        },
+        "apple.spotlight": {
+          "include": false
+        },
+        "apple.entities": {
+          "include": false
+        },
+        "android.shortcuts": {
+          "include": false
+        },
+        "web.manifestShortcuts": {
+          "include": true
+        },
+        "web.protocolHandlers": {
+          "include": true
+        },
+        "web.webMcp": {
+          "include": true
+        },
+        "windows.protocolActivation": {
+          "include": false
+        },
+        "windows.msixProtocol": {
+          "include": false
+        },
+        "linux.schemeHandler": {
+          "include": false
+        }
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Greeting text"
+          }
+        },
+        "required": [
+          "text"
+        ]
+      }
+    },
+    {
       "qualifiedName": "app_demo_inbox",
       "namespace": "app",
       "name": "demo_inbox",
@@ -235,7 +290,7 @@
       "dispatchMode": "openApp",
       "surfaces": {
         "apple.appIntents": {
-          "include": false
+          "include": true
         },
         "apple.appShortcuts": {
           "include": false
@@ -290,7 +345,7 @@
       "dispatchMode": "openApp",
       "surfaces": {
         "apple.appIntents": {
-          "include": false
+          "include": true
         },
         "apple.appShortcuts": {
           "include": false
@@ -334,50 +389,6 @@
         "required": [
           "note"
         ]
-      }
-    }
-  ],
-  "entityTypes": [
-    {
-      "qualifiedName": "app_project",
-      "namespace": "app",
-      "name": "project",
-      "displayName": "Project",
-      "description": "",
-      "idKey": "projectId",
-      "titleKey": "name",
-      "subtitleKey": "summary",
-      "keywordsKey": "tags",
-      "urlKey": "url",
-      "defaultQueryLimit": 20,
-      "snapshotSchema": {
-        "type": "object",
-        "required": [
-          "projectId"
-        ],
-        "properties": {
-          "projectId": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string",
-            "description": "Display name",
-            "x-intentcall-display": true,
-            "x-intentcall-role": "title"
-          },
-          "summary": {
-            "type": "string",
-            "description": "Searchable summary",
-            "x-intentcall-searchable": true,
-            "x-intentcall-role": "subtitle"
-          },
-          "tags": {
-            "type": "array",
-            "description": "Search keywords",
-            "x-intentcall-searchable": true,
-            "x-intentcall-role": "keywords"
-          }
-        }
       }
     }
   ],

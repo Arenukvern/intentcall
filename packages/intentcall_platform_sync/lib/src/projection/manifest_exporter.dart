@@ -10,7 +10,7 @@ import 'manifest_merger.dart';
 final class ManifestExporter {
   const ManifestExporter();
 
-  final _merger = const ManifestMerger();
+  ManifestMerger get _merger => const ManifestMerger();
 
   ManifestExportContext loadExportContext({
     required final String projectRoot,

@@ -31,21 +31,18 @@ void main() {
     packageConfig = config;
   });
 
-  Future<String> generateFixture(final String fixturePath) async =>
-      resolveSources(
-        {'$_package|$fixturePath': useAssetReader},
-        (final resolver) async {
-          final library = await resolver.libraryFor(
-            AssetId(_package, fixturePath),
-          );
-          return generator.generate(
-            LibraryReader(library),
-            _FakeBuildStep(AssetId(_package, fixturePath)),
-          );
-        },
-        packageConfig: packageConfig,
-        readAllSourcesFromFilesystem: true,
+  Future<String> generateFixture(final String fixturePath) => resolveSources(
+    {'$_package|$fixturePath': useAssetReader},
+    (final resolver) async {
+      final library = await resolver.libraryFor(AssetId(_package, fixturePath));
+      return generator.generate(
+        LibraryReader(library),
+        _FakeBuildStep(AssetId(_package, fixturePath)),
       );
+    },
+    packageConfig: packageConfig,
+    readAllSourcesFromFilesystem: true,
+  );
 
   test(
     'instance @AgentTool emits extension getter with this-bound handler',

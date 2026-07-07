@@ -1,5 +1,6 @@
 import 'package:test/test.dart';
 
+// ignore: avoid_relative_lib_imports
 import '../example/lib/generated/agent_catalog.g.dart';
 
 void main() {
@@ -32,9 +33,8 @@ void main() {
     expect(keys, contains('app_demo_handwritten'));
   });
 
-  test('merges @AgentEntity descriptor rows from example', () {
-    expect(agentEntityTypeDescriptors, hasLength(1));
-    expect(agentEntityTypeDescriptors.single.qualifiedName, 'app_project');
+  test('example agent_catalog has no @AgentEntity descriptor rows', () {
+    expect(agentEntityTypeDescriptors, isEmpty);
   });
 
   test('example agent_catalog has no duplicate registry keys', () {

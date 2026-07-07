@@ -24,11 +24,7 @@ const kHostProfiles = <IntentCallHost, HostProfile>{
       'linux',
       'windows',
     ],
-    hookTemplateKeys: <String>[
-      'android',
-      'ios',
-      'macos',
-    ],
+    hookTemplateKeys: <String>['android', 'ios', 'macos'],
   ),
   IntentCallHost.jaspr: HostProfile(
     host: IntentCallHost.jaspr,
@@ -37,13 +33,13 @@ const kHostProfiles = <IntentCallHost, HostProfile>{
   ),
   IntentCallHost.dart: HostProfile(
     host: IntentCallHost.dart,
-    defaultPlatforms: const <String>[],
-    hookTemplateKeys: const <String>[],
+    defaultPlatforms: <String>[],
+    hookTemplateKeys: <String>[],
   ),
   IntentCallHost.custom: HostProfile(
     host: IntentCallHost.custom,
-    defaultPlatforms: const <String>[],
-    hookTemplateKeys: const <String>[],
+    defaultPlatforms: <String>[],
+    hookTemplateKeys: <String>[],
   ),
 };
 

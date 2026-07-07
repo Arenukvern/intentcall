@@ -87,23 +87,37 @@ void main() {
     );
   });
 
-  test('exports @AgentEntity descriptor with three-slot keys', () {
+  test('exports demo_set_greeting with Apple verb surfaces', () {
     final manifest = buildManifest();
+    final greeting = manifest.tools.singleWhere(
+      (final tool) => tool.qualifiedName == 'app_demo_set_greeting',
+    );
 
-    expect(manifest.entityTypes, hasLength(1));
-    final entity = manifest.entityTypes.single;
-    expect(entity.qualifiedName, 'app_project');
-    expect(entity.titleKey, 'name');
-    expect(entity.subtitleKey, 'summary');
-    expect(entity.keywordsKey, 'tags');
+    expect(greeting.dispatchMode, AgentManifestDispatchMode.openApp);
     expect(
-      (entity.snapshotSchema['properties'] as Map)['name']['x-intentcall-role'],
-      'title',
+      greeting.surfaces.includes(
+        AgentManifestSurface.appleAppIntents,
+        defaultValue: false,
+      ),
+      isTrue,
+    );
+    expect(
+      greeting.surfaces.includes(
+        AgentManifestSurface.appleAppShortcuts,
+        defaultValue: false,
+      ),
+      isTrue,
     );
   });
 
-  test('web-only example disables non-web default surfaces', () {
-    expect(context.enabledPlatforms, contains('web'));
+  test('example has no @AgentEntity rows (entities dogfood in mcp_flutter)', () {
+    final manifest = buildManifest();
+    expect(manifest.entityTypes, isEmpty);
+    expect(agentEntityTypeDescriptors, isEmpty);
+  });
+
+  test('web + Apple platforms scope default surfaces', () {
+    expect(context.enabledPlatforms, containsAll(['web', 'ios', 'macos']));
 
     final manifest = buildManifest();
     final ping = manifest.tools.singleWhere(
@@ -113,6 +127,20 @@ void main() {
     expect(
       ping.surfaces.includes(AgentManifestSurface.webMcp, defaultValue: false),
       isTrue,
+    );
+    expect(
+      ping.surfaces.includes(
+        AgentManifestSurface.appleAppIntents,
+        defaultValue: false,
+      ),
+      isTrue,
+    );
+    expect(
+      ping.surfaces.includes(
+        AgentManifestSurface.appleAppShortcuts,
+        defaultValue: true,
+      ),
+      isFalse,
     );
     expect(
       ping.surfaces.includes(

@@ -301,7 +301,10 @@ $entityBlock
     final String? descriptorLiteral,
     final String? projectionLiteral,
   }) {
-    assert(entryReference != null || descriptorLiteral != null);
+    assert(
+      entryReference != null || descriptorLiteral != null,
+      'entryReference or descriptorLiteral must be provided',
+    );
     final target = entryReference != null
         ? 'entry: $entryReference'
         : 'descriptor: $descriptorLiteral';

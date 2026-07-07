@@ -57,12 +57,11 @@ final class CatalogLoader {
       return null;
     }
 
-    final probeDir = Directory(p.join(projectRoot, '.dart_tool'));
-    probeDir.createSync(recursive: true);
-    final probeFile = File(
-      p.join(probeDir.path, 'intentcall_catalog_probe.dart'),
-    );
-    probeFile.writeAsStringSync('''
+    final probeDir = Directory(p.join(projectRoot, '.dart_tool'))
+      ..createSync(recursive: true);
+    final probeFile =
+        File(p.join(probeDir.path, 'intentcall_catalog_probe.dart'))
+          ..writeAsStringSync('''
 // ignore_for_file: avoid_print
 import 'dart:convert';
 import 'package:$packageName/generated/agent_catalog.g.dart';

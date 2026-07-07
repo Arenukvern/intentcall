@@ -97,3 +97,27 @@ AgentCallEntry get demoRequiredNamedCallEntry => AgentCallEntry.tool(
     return await (result as Future<AgentResult>);
   },
 );
+
+const _demo_set_greetingInputSchema = <String, Object?>{
+  'type': 'object',
+  'properties': <String, Object?>{
+    'text': <String, Object?>{'type': 'string', 'description': 'Greeting text'},
+  },
+  'required': <String>['text'],
+};
+
+RegisteredAgentIntent get demoSetGreetingRegistration =>
+    demoSetGreetingCallEntry.toRegistration();
+
+AgentCallEntry get demoSetGreetingCallEntry => AgentCallEntry.tool(
+  namespace: 'app',
+  name: 'demo_set_greeting',
+  description: 'Set greeting text for the codegen demo host.',
+  inputSchema: _demo_set_greetingInputSchema,
+  handler: (final args) async {
+    final result = Function.apply(demoSetGreeting, <Object?>[
+      args['text'] as String,
+    ], <Symbol, Object?>{});
+    return await (result as Future<AgentResult>);
+  },
+);
