@@ -45,6 +45,10 @@ platform-sync-check:
     dart run intentcall_cli:intentcall platform sync --project-dir packages/intentcall_cli/test/fixtures/jaspr_web_project --platform web --check
     dart run intentcall_cli:intentcall platform sync --project-dir packages/intentcall_cli/test/fixtures/codegen_dart_project --platform web --check
 
+# Apple Swift drift + AppSetGreetingIntent proof against sibling mcp_flutter
+mcp-flutter-apple-sync-check:
+    dart test packages/intentcall_platform_sync/test/mcp_flutter_apple_sync_test.dart
+
 # Manifest/registry parity gate
 manifest-parity:
     dart test packages/intentcall_cli/test/manifest_registry_parity_test.dart

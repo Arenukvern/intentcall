@@ -137,7 +137,9 @@ opt-in `apple.appShortcuts`. The codegen example curates
 [`demo_ping_tool.dart`](../../packages/intentcall_codegen/example/lib/tools/demo_ping_tool.dart).
 **Spotlight / entity nouns** (`@AgentEntity`) are dogfooded in the Flutter
 showcase [`mcp_flutter/flutter_test_app`](https://github.com/Arenukvern/mcp_flutter/tree/main/flutter_test_app),
-not the dart-only codegen example.
+not the dart-only codegen example. To verify Apple Swift output (e.g.
+`AppSetGreetingIntent`), run platform sync against that app — see
+[`intentcall_codegen/example/README.md`](../../packages/intentcall_codegen/example/README.md#platform-sync-against-mcp_flutter-apple-swift-proof).
 
 ---
 
