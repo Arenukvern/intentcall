@@ -11,6 +11,17 @@ Optional `@AgentTool` / `@AgentParam` annotations and **build_runner** codegen p
 
 Hand-written `AgentCallEntry` remains first-class; codegen is opt-in for stable tools with typed parameters.
 
+## Catalog mental model
+
+```text
+@AgentTool          →  tool implementation + (usually) catalog row
+handwritten getter  →  tool implementation only
+catalog row         →  @AgentCatalog list
+agent_catalog.g.dart →  merge of all three sources
+```
+
+See [ADR 0021](../../docs/decisions/0021-agent-catalog-annotation.md).
+
 ## Wiring instance methods
 
 When a tool handler needs host state (services, config, or UI policy), keep the
@@ -38,30 +49,30 @@ final class DemoHostTools {
 }
 ```
 
-2. **Merge handwritten rows into the generated catalog**
+2. **Merge catalog rows with `@AgentCatalog`**
 
-Create `lib/catalog/handwritten_entries.dart` exporting
-`handwrittenCatalogEntries` — a `List<AgentRegistryCatalogEntry>` that references
-`DemoHostTools.shared.<getter>CallEntry`. Optional per-row projection uses
-`EntryProjection` (same as `@AgentProjection` on annotated tools).
+Co-locate a `List<AgentRegistryCatalogEntry>` with the host class (or module) and
+annotate it with `@AgentCatalog`. The catalog builder discovers annotated lists
+under `lib/` and spreads them into `lib/generated/agent_catalog.g.dart` alongside
+`@AgentTool` rows. Optional per-row projection uses `EntryProjection` (same as
+`@AgentProjection` on annotated tools).
 
 ```dart
-final List<AgentRegistryCatalogEntry> handwrittenCatalogEntries =
+@AgentCatalog()
+final List<AgentRegistryCatalogEntry> demoHostCatalogEntries =
     <AgentRegistryCatalogEntry>[
   AgentRegistryCatalogEntry(
     registryKey: 'app_demo_inbox',
     entry: DemoHostTools.shared.inboxCallEntry,
-    projection: const EntryProjection(
-      surfaces: {AgentManifestSurface.webMcp: true},
-    ),
+    projection: DemoHostTools.inboxProjection,
   ),
 ];
 ```
 
 After `dart run build_runner build`, `lib/generated/agent_catalog.g.dart`
-imports that file and spreads `...handwrittenCatalogEntries` alongside
-`@AgentTool` rows. Duplicate `registryKey` values between codegen and
-handwritten rows fail the build.
+spreads `@AgentCatalog` lists next to `@AgentTool` rows discovered from generated
+`*.g.dart` parts. Duplicate `registryKey` values between codegen and
+`@AgentCatalog` rows fail the build.
 
 3. **Export manifest and register at runtime**
 
@@ -81,12 +92,58 @@ per-request or widget-scoped instance. The probe needs descriptor metadata only;
 your runtime registry may bind a different live instance as long as
 `qualifiedName` and schema stay aligned.
 
+`static shared` is **optional**. When absent, instance `@AgentTool` catalog rows
+use `descriptor:` (manifest metadata only); register extension getters from your
+live host at bootstrap. When present, catalog may use `entry: Host.shared.*` for
+one-line `registerAll` demos.
+
+### Handwritten projection
+
+Co-locate projection policy on the host class and reference it from the catalog:
+
+```dart
+static const inboxProjection = EntryProjection(
+  surfaces: {AgentManifestSurface.webMcp: true},
+);
+
+AgentCallEntry get inboxCallEntry => AgentCallEntry.tool(/* … */);
+```
+
+```dart
+AgentRegistryCatalogEntry(
+  registryKey: 'app_demo_inbox',
+  entry: DemoHostTools.shared.inboxCallEntry,
+  projection: DemoHostTools.inboxProjection,
+),
+```
+
 For manifest-only rows without a handler at probe time, use `descriptor:` on
 `AgentRegistryCatalogEntry` and register the handler separately at runtime.
 
 Full runnable example:
-[`example/lib/tools/demo_host_tools.dart`](example/lib/tools/demo_host_tools.dart),
-[`example/lib/catalog/handwritten_entries.dart`](example/lib/catalog/handwritten_entries.dart).
+[`example/lib/tools/demo_host_tools.dart`](example/lib/tools/demo_host_tools.dart).
+
+### Catalog builder options
+
+Configure `intentcall_codegen|agent_catalog` in `build.yaml`:
+
+```yaml
+targets:
+  $default:
+    builders:
+      intentcall_codegen|agent_catalog:
+        options:
+          tool_part_globs: [lib/**.g.dart]   # @AgentTool via agent_tool parts
+          tool_globs: [lib/**.dart]          # @AgentCatalog scan only
+          tool_exclude_globs: [lib/**.g.dart, lib/generated/**]
+          host_binding_field: shared         # optional static probe anchor name
+```
+
+- **`tool_part_globs`** — catalog rows come from generated parts, not raw `@AgentTool` sources.
+- **`tool_globs` / `tool_exclude_globs`** — scope `@AgentCatalog` discovery only.
+- **`lib/src/`** — not hard-excluded; tools under `lib/src/` join the catalog when `agent_tool` emits their `.g.dart`.
+
+See [`example/build.yaml`](example/build.yaml) for a commented template.
 
 ## Pilot usage
 
@@ -158,21 +215,30 @@ For each top-level `@AgentTool` function, `.g.dart` emits:
 - `<name>CallEntry` — top-level `AgentCallEntry.tool(...)` factory
 - `<name>Registration` — `RegisteredAgentIntent` via `.toRegistration()`
 
-For each instance `@AgentTool` method on a host class with a static binding field
-(default `shared`), `.g.dart` emits:
+For each instance `@AgentTool` method on a host class, `.g.dart` emits:
 
 - `_<name>InputSchema` constants
 - `extension <Host>AgentCodegen on <Host>` with `<name>CallEntry` getters whose
   handlers call instance methods on `this`
-- top-level `<name>Registration` aliases via `Host.shared.<name>CallEntry`
+- optional top-level `<name>Registration` aliases when a static binding field
+  (default `shared`) exists
 
-The aggregate catalog references instance rows as
-`Host.shared.<name>CallEntry` (same as handwritten getters).
+The aggregate catalog references instance rows as `Host.shared.<name>CallEntry`
+when a binding static exists, otherwise `descriptor:` metadata only.
+
+`@AgentProjection` uses typed `AgentManifestSurface` keys:
+
+```dart
+@AgentProjection(surfaces: {AgentManifestSurface.webMcp: true})
+```
 
 Supported parameter types: `String`, `int`, `bool`, `double`.
 
-Optional `host_binding_field` in `build.yaml` overrides the default `shared`
-static field name used for catalog probe anchors.
+`host_binding_field` (see **Catalog builder options**) overrides the default
+`shared` static field name used for optional catalog probe anchors.
+
+`platforms.enabled` in `intentcall.yaml` scopes default manifest surface families
+(see [ADR 0020](../../docs/decisions/0020-platform-scoped-manifest-surfaces.md)).
 
 ## Scope (pilot)
 

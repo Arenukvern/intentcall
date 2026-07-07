@@ -24,7 +24,7 @@ void main() {
     expect(hostStatus.qualifiedName, 'app_demo_host_status');
   });
 
-  test('spreads handwrittenCatalogEntries when present', () {
+  test('merges @AgentCatalog rows from example', () {
     final keys = agentCatalogEntries
         .map((final row) => row.registryKey)
         .toSet();

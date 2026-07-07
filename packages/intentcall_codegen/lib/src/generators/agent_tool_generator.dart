@@ -57,16 +57,9 @@ class AgentToolGenerator extends GeneratorForAnnotation<AgentTool> {
         continue;
       }
 
-      final bindingField = _hostBindingField;
-      if (!_hasBindingField(classElement, bindingField)) {
-        throw InvalidGenerationSourceError(
-          '@AgentTool instance methods require a static host binding field '
-          "'$bindingField' on ${classElement.name}. "
-          'Add `static final ${classElement.name} $bindingField = ...` or '
-          'configure `host_binding_field` in build.yaml.',
-          element: classElement,
-        );
-      }
+      final bindingField = _hasBindingField(classElement, _hostBindingField)
+          ? _hostBindingField
+          : null;
 
       values.add(
         _generateInstanceToolBlock(classElement, instanceMethods, bindingField),
@@ -138,7 +131,7 @@ $handlerArgs
   String _generateInstanceToolBlock(
     final ClassElement classElement,
     final List<MethodElement> methods,
-    final String bindingField,
+    final String? bindingField,
   ) {
     final schemas = <String>[];
     final getters = <String>[];
@@ -159,19 +152,28 @@ $handlerArgs
         'const $schemaName = <String, Object?>${_formatInputSchema(schemaMap)};',
       );
       getters.add(_generateExtensionGetter(method, reader, schemaName));
-      registrations.add(
-        _generateRegistrationAlias(classElement, method, reader, bindingField),
-      );
+      if (bindingField != null) {
+        registrations.add(
+          _generateRegistrationAlias(
+            classElement,
+            method,
+            reader,
+            bindingField,
+          ),
+        );
+      }
     }
+
+    final registrationBlock = registrations.isEmpty
+        ? ''
+        : '\n\n${registrations.join('\n\n')}';
 
     return '''
 ${schemas.join('\n\n')}
 
 extension ${classElement.name}AgentCodegen on ${classElement.name} {
 ${getters.join('\n\n')}
-}
-
-${registrations.join('\n\n')}''';
+}$registrationBlock''';
   }
 
   String _generateExtensionGetter(

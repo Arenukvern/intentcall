@@ -3,7 +3,6 @@ import 'package:intentcall_core/intentcall_core.dart';
 import 'package:intentcall_platform_sync/intentcall_platform_sync.dart';
 import '../tools/demo_host_tools.dart';
 import '../tools/demo_ping_tool.dart';
-import '../catalog/handwritten_entries.dart';
 
 final List<AgentRegistryCatalogEntry> agentCatalogEntries =
     <AgentRegistryCatalogEntry>[
@@ -17,5 +16,5 @@ final List<AgentRegistryCatalogEntry> agentCatalogEntries =
   surfaces: <AgentManifestSurface, bool>{AgentManifestSurface.webMcp: false},
 )),
   AgentRegistryCatalogEntry(registryKey: 'app_demo_required_named', entry: demoRequiredNamedCallEntry),
-  ...handwrittenCatalogEntries,
+  ...demoHostCatalogEntries,
 ];

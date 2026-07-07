@@ -7,3 +7,8 @@ targets:
       intentcall_codegen|agent_catalog:
         generate_for:
           - lib/**
+        # options:
+        #   tool_part_globs: [lib/**.g.dart]
+        #   tool_globs: [lib/**.dart]          # @AgentCatalog scan only
+        #   tool_exclude_globs: [lib/**.g.dart, lib/generated/**]
+        #   host_binding_field: shared

@@ -16,12 +16,16 @@ final class ManifestExportContext {
     required this.platform,
     required this.manifestRelativePath,
     this.protocolScheme,
+    this.enabledPlatforms = const [],
   });
 
   final ProjectionPolicy policy;
   final String? protocolScheme;
   final String platform;
   final String manifestRelativePath;
+
+  /// From `intentcall.yaml` `platforms.enabled` — scopes default surface families.
+  final List<String> enabledPlatforms;
 }
 
 /// Merges registry catalog rows and projection policy into [agent_manifest.json].
@@ -35,8 +39,11 @@ final class ManifestMerger {
     final Iterable<AgentEntityTypeDescriptor> entityTypeDescriptors = const [],
     final Iterable<Map<String, Object?>> entityTypes = const [],
     final String platform = 'unified',
+    final Iterable<String> enabledPlatforms = const [],
   }) {
-    final defaultSurfaces = policy.resolvedDefaultSurfaces();
+    final defaultSurfaces = policy.resolvedDefaultSurfaces(
+      enabledPlatforms: enabledPlatforms,
+    );
     final entries = <AgentManifestEntry>[];
     for (final row in catalog) {
       final descriptor = row.resolveDescriptor();
@@ -140,7 +147,31 @@ final class ManifestMerger {
     protocolScheme: readProtocolScheme(projectRoot),
     platform: readPlatformLabel(projectRoot),
     manifestRelativePath: readManifestRelativePath(projectRoot),
+    enabledPlatforms: readEnabledPlatforms(projectRoot),
   );
+
+  List<String> readEnabledPlatforms(final String projectRoot) {
+    final configFile = File(p.join(projectRoot, 'intentcall.yaml'));
+    if (!configFile.existsSync()) {
+      return const [];
+    }
+    final doc = loadYaml(configFile.readAsStringSync());
+    if (doc is! YamlMap) {
+      return const [];
+    }
+    final platforms = doc['platforms'];
+    if (platforms is! YamlMap) {
+      return const [];
+    }
+    final enabled = platforms['enabled'];
+    if (enabled is! YamlList) {
+      return const [];
+    }
+    return enabled
+        .map((final value) => value?.toString().trim().toLowerCase() ?? '')
+        .where((final value) => value.isNotEmpty)
+        .toList();
+  }
 
   String? readProtocolScheme(final String projectRoot) {
     final configFile = File(p.join(projectRoot, 'intentcall.yaml'));

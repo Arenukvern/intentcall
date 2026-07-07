@@ -22,6 +22,7 @@ final class ManifestExporter {
     policy: context.policy,
     protocolScheme: context.protocolScheme,
     platform: context.platform,
+    enabledPlatforms: context.enabledPlatforms,
   );
 
   String encodeManifest(final AgentManifest manifest) =>

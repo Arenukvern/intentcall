@@ -47,15 +47,6 @@ void main() {
         readAllSourcesFromFilesystem: true,
       );
 
-  Future<String> generateFixtureExpectingError(final String fixturePath) async {
-    try {
-      await generateFixture(fixturePath);
-    } on InvalidGenerationSourceError catch (error) {
-      return error.message;
-    }
-    return '';
-  }
-
   test(
     'instance @AgentTool emits extension getter with this-bound handler',
     () async {
@@ -78,19 +69,30 @@ void main() {
     },
   );
 
-  test('instance @AgentTool without host binding field is rejected', () async {
-    final message = await generateFixtureExpectingError(
-      'test/fixtures/instance_without_host_tool.dart',
-    );
+  test(
+    'instance @AgentTool without binding static omits registration alias',
+    () async {
+      final output = await generateFixture(
+        'test/fixtures/instance_without_host_tool.dart',
+      );
 
-    expect(message, contains("require a static host binding field 'shared'"));
-  });
+      expect(
+        output,
+        contains('extension DemoHostToolsAgentCodegen on DemoHostTools'),
+      );
+      expect(output, isNot(contains('Registration')));
+    },
+  );
 
   test('static method @AgentTool on class is rejected', () async {
-    final message = await generateFixtureExpectingError(
-      'test/fixtures/static_method_tool.dart',
-    );
-
-    expect(message, contains('use top-level @AgentTool or handwritten entry'));
+    try {
+      await generateFixture('test/fixtures/static_method_tool.dart');
+      fail('expected InvalidGenerationSourceError');
+    } on InvalidGenerationSourceError catch (error) {
+      expect(
+        error.message,
+        contains('use top-level @AgentTool or handwritten entry'),
+      );
+    }
   });
 }

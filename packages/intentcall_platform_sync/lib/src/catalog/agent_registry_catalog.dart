@@ -9,7 +9,10 @@ final class AgentRegistryCatalogEntry {
     this.descriptor,
     this.entry,
     this.projection,
-  }) : assert(descriptor != null || entry != null);
+  }) : assert(
+         descriptor != null || entry != null,
+         'Either descriptor or entry must be provided',
+       );
 
   final String registryKey;
   final AgentIntentDescriptor? descriptor;

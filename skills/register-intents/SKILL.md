@@ -54,13 +54,14 @@ over `this`).
 
 **Pattern (same as the mcp_flutter harness):**
 
-1. Put behavior on a host class with `static final shared`.
+1. Put behavior on a host class (optional `static final shared` for probe anchors).
 2. Expose each intent as an instance `AgentCallEntry` getter; the handler calls
    instance methods on `this`.
-3. List catalog rows in `lib/catalog/handwritten_entries.dart` as
-   `handwrittenCatalogEntries`.
-4. Run `build_runner` so `lib/generated/agent_catalog.g.dart` merges annotated
-   tools and `...handwrittenCatalogEntries`.
+3. Optionally co-locate `EntryProjection` consts on the host (see **Handwritten projection** below).
+4. Co-locate a `List<AgentRegistryCatalogEntry>` annotated with **`@AgentCatalog`**
+   (discovered via `tool_globs`).
+5. Run `build_runner` so `lib/generated/agent_catalog.g.dart` merges `@AgentTool`
+   rows (from `tool_part_globs` / generated `.g.dart` parts) and `@AgentCatalog` spreads.
 
 ```dart
 final class InboxHost {
@@ -80,11 +81,9 @@ final class InboxHost {
 ```
 
 ```dart
-// lib/catalog/handwritten_entries.dart
-import 'package:intentcall_platform_sync/intentcall_platform_sync.dart';
-import '../hosts/inbox_host.dart';
-
-final List<AgentRegistryCatalogEntry> handwrittenCatalogEntries =
+// Co-located with InboxHost (same file or sibling module file)
+@AgentCatalog()
+final List<AgentRegistryCatalogEntry> inboxHostCatalogEntries =
     <AgentRegistryCatalogEntry>[
   AgentRegistryCatalogEntry(
     registryKey: 'app_read_inbox',
@@ -100,14 +99,33 @@ Then run `intentcall manifest export --check` so committed
 `agent_manifest.json` stays in sync with the merged catalog (see
 [ADR 0019](../../docs/decisions/0019-framework-neutral-intentcall-cli.md)).
 
-**Probe anchor:** Catalog rows must use compile-time expressions such as
+**Probe anchor (optional):** When `static shared` exists, catalog rows may use
 `InboxHost.shared.readInboxCallEntry` — manifest export evaluates `entry:` in a
-subprocess and strips handlers. Runtime may use a different instance when
-descriptors match.
+subprocess and strips handlers. **Live instance registration is canonical** for
+stateful hosts: construct the host and register `liveHost.readInboxCallEntry`
+at bootstrap even when catalog uses `shared` for probe convenience.
 
 **Descriptor-only rows:** Use `descriptor:` on `AgentRegistryCatalogEntry` when
-manifest metadata is needed without a probe-time handler; register handlers at
-runtime and keep `qualifiedName` aligned.
+manifest metadata is needed without a probe-time handler; register handlers from
+a live host at runtime and keep `qualifiedName` aligned.
+
+**Handwritten projection:** Co-locate surface hints on the host class and
+reference them from catalog rows:
+
+```dart
+static const inboxProjection = EntryProjection(
+  surfaces: {AgentManifestSurface.webMcp: true},
+);
+
+AgentRegistryCatalogEntry(
+  registryKey: 'app_read_inbox',
+  entry: InboxHost.shared.readInboxCallEntry,
+  projection: InboxHost.inboxProjection,
+),
+```
+
+`platforms.enabled` in `intentcall.yaml` scopes default manifest surface families
+(web-only hosts omit android/windows/linux defaults unless overridden).
 
 ---
 
@@ -170,10 +188,21 @@ another host language.
 ### Optional: instance-method codegen
 
 For host-bound tools you may annotate instance methods instead of writing
-getters by hand. The host class needs a static binding field (default name
-`shared`). Codegen emits an extension with `AgentCallEntry` getters; catalog rows
-reference `Host.shared.<getter>CallEntry`. Handwritten getters in section 2
-remain the canonical path when you need full control.
+getters by hand. Codegen emits an extension with `this`-bound `AgentCallEntry`
+getters. When a static binding field exists (default name `shared`), catalog
+rows use `entry: Host.shared.<getter>CallEntry` for probe convenience; otherwise
+codegen emits `descriptor:`-only rows and you register from a live host instance.
+Handwritten getters in section 2 remain the canonical path when you need full
+control.
+
+`@AgentProjection` uses typed `AgentManifestSurface` keys:
+
+```dart
+@AgentProjection(surfaces: {AgentManifestSurface.webMcp: true})
+```
+
+Apple sub-channels (Siri, Spotlight, etc.) use `AgentManifestSurfaceExposure.options`
+on handwritten `EntryProjection` rows until emitters support them.
 
 ---
 

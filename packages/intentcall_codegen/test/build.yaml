@@ -4,8 +4,10 @@ targets:
       intentcall_codegen|agent_tool:
         generate_for:
           - test/fixtures/**.dart
+          - test/fixtures/catalog/**.dart
         # Optional: host_binding_field: shared
       intentcall_codegen|agent_catalog:
         generate_for:
           - test/fixtures/**.dart
+          - test/fixtures/catalog/**.dart
         # Optional: host_binding_field: shared

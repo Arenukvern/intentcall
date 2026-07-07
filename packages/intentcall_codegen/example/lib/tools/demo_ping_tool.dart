@@ -1,5 +1,6 @@
 import 'package:intentcall_codegen/intentcall_codegen.dart';
 import 'package:intentcall_core/intentcall_core.dart';
+import 'package:intentcall_platform_sync/intentcall_platform_sync.dart';
 import 'package:intentcall_schema/intentcall_schema.dart';
 
 part 'demo_ping_tool.g.dart';
@@ -20,9 +21,7 @@ Future<AgentResult> demoPing(
   name: 'demo_cart',
   description: 'Returns a cart total',
 )
-@AgentProjection(
-  surfaces: {'web.webMcp': false},
-)
+@AgentProjection(surfaces: {AgentManifestSurface.webMcp: false})
 Future<AgentResult> demoCart(
   @AgentParam('Currency code') String currency, {
   @AgentParam('Include tax', required: false) bool includeTax = false,

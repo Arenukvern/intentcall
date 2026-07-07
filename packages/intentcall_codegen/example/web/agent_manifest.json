@@ -14,7 +14,7 @@
           "include": false
         },
         "android.shortcuts": {
-          "include": true
+          "include": false
         },
         "web.manifestShortcuts": {
           "include": true
@@ -26,13 +26,13 @@
           "include": true
         },
         "windows.protocolActivation": {
-          "include": true
+          "include": false
         },
         "windows.msixProtocol": {
-          "include": true
+          "include": false
         },
         "linux.schemeHandler": {
-          "include": true
+          "include": false
         }
       },
       "inputSchema": {
@@ -60,7 +60,7 @@
           "include": false
         },
         "android.shortcuts": {
-          "include": true
+          "include": false
         },
         "web.manifestShortcuts": {
           "include": true
@@ -72,13 +72,13 @@
           "include": true
         },
         "windows.protocolActivation": {
-          "include": true
+          "include": false
         },
         "windows.msixProtocol": {
-          "include": true
+          "include": false
         },
         "linux.schemeHandler": {
-          "include": true
+          "include": false
         }
       },
       "inputSchema": {
@@ -106,7 +106,7 @@
           "include": false
         },
         "android.shortcuts": {
-          "include": true
+          "include": false
         },
         "web.manifestShortcuts": {
           "include": true
@@ -118,13 +118,13 @@
           "include": false
         },
         "windows.protocolActivation": {
-          "include": true
+          "include": false
         },
         "windows.msixProtocol": {
-          "include": true
+          "include": false
         },
         "linux.schemeHandler": {
-          "include": true
+          "include": false
         }
       },
       "inputSchema": {
@@ -156,7 +156,7 @@
           "include": false
         },
         "android.shortcuts": {
-          "include": true
+          "include": false
         },
         "web.manifestShortcuts": {
           "include": true
@@ -168,13 +168,13 @@
           "include": true
         },
         "windows.protocolActivation": {
-          "include": true
+          "include": false
         },
         "windows.msixProtocol": {
-          "include": true
+          "include": false
         },
         "linux.schemeHandler": {
-          "include": true
+          "include": false
         }
       },
       "inputSchema": {
@@ -202,7 +202,7 @@
           "include": false
         },
         "android.shortcuts": {
-          "include": true
+          "include": false
         },
         "web.manifestShortcuts": {
           "include": true
@@ -214,13 +214,13 @@
           "include": true
         },
         "windows.protocolActivation": {
-          "include": true
+          "include": false
         },
         "windows.msixProtocol": {
-          "include": true
+          "include": false
         },
         "linux.schemeHandler": {
-          "include": true
+          "include": false
         }
       },
       "inputSchema": {
@@ -248,7 +248,7 @@
           "include": false
         },
         "android.shortcuts": {
-          "include": true
+          "include": false
         },
         "web.manifestShortcuts": {
           "include": true
@@ -260,13 +260,13 @@
           "include": true
         },
         "windows.protocolActivation": {
-          "include": true
+          "include": false
         },
         "windows.msixProtocol": {
-          "include": true
+          "include": false
         },
         "linux.schemeHandler": {
-          "include": true
+          "include": false
         }
       },
       "inputSchema": {

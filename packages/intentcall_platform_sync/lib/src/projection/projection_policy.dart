@@ -13,6 +13,30 @@ bool defaultSurfaceInclude(final AgentManifestSurface surface) =>
       AgentManifestSurface.linuxSchemeHandler => true,
     };
 
+/// Platform tokens required for a manifest surface family to default on.
+Set<String> platformsForManifestSurface(final AgentManifestSurface surface) =>
+    switch (surface) {
+      AgentManifestSurface.webMcp ||
+      AgentManifestSurface.webManifestShortcuts ||
+      AgentManifestSurface.webProtocolHandlers => {'web'},
+      AgentManifestSurface.androidShortcuts => {'android'},
+      AgentManifestSurface.appleAppShortcuts => {'ios', 'macos'},
+      AgentManifestSurface.windowsProtocolActivation ||
+      AgentManifestSurface.windowsMsixProtocol => {'windows'},
+      AgentManifestSurface.linuxSchemeHandler => {'linux'},
+    };
+
+bool defaultSurfaceIncludeForPlatforms(
+  final AgentManifestSurface surface,
+  final Set<String> enabledPlatforms,
+) {
+  if (enabledPlatforms.isEmpty) {
+    return defaultSurfaceInclude(surface);
+  }
+  final required = platformsForManifestSurface(surface);
+  return required.any(enabledPlatforms.contains);
+}
+
 /// Per-entry projection overlay (dispatch + surfaces only).
 final class EntryProjection {
   const EntryProjection({
@@ -69,18 +93,14 @@ final class EntryProjection {
 final class ProjectionPolicy {
   const ProjectionPolicy({
     this.defaultDispatchMode = AgentManifestDispatchMode.openApp,
-    this.defaultSurfaces = const AgentManifestSurfacePolicy(
-      <AgentManifestSurface, AgentManifestSurfaceExposure>{},
-    ),
+    this.defaultSurfaces = AgentManifestSurfacePolicy.empty,
     this.overlays = const <String, EntryProjection>{},
   });
 
   factory ProjectionPolicy.fromYamlMap(final Map<Object?, Object?> yaml) {
     final defaultsRaw = yaml['defaults'];
     var dispatchMode = AgentManifestDispatchMode.openApp;
-    var defaultSurfaces = const AgentManifestSurfacePolicy(
-      <AgentManifestSurface, AgentManifestSurfaceExposure>{},
-    );
+    var defaultSurfaces = AgentManifestSurfacePolicy.empty;
     if (defaultsRaw is Map) {
       final dispatchName = defaultsRaw['dispatchMode']?.toString();
       if (dispatchName != null) {
@@ -121,14 +141,20 @@ final class ProjectionPolicy {
   EntryProjection? overlayFor(final String qualifiedName) =>
       overlays[qualifiedName];
 
-  AgentManifestSurfacePolicy resolvedDefaultSurfaces() {
+  AgentManifestSurfacePolicy resolvedDefaultSurfaces({
+    final Iterable<String> enabledPlatforms = const [],
+  }) {
     if (!defaultSurfaces.isEmpty) {
       return defaultSurfaces;
     }
+    final normalized = enabledPlatforms
+        .map((final platform) => platform.trim().toLowerCase())
+        .where((final platform) => platform.isNotEmpty)
+        .toSet();
     final overrides = <AgentManifestSurface, AgentManifestSurfaceExposure>{};
     for (final surface in AgentManifestSurface.values) {
       overrides[surface] = AgentManifestSurfaceExposure(
-        include: defaultSurfaceInclude(surface),
+        include: defaultSurfaceIncludeForPlatforms(surface, normalized),
       );
     }
     return AgentManifestSurfacePolicy(overrides);

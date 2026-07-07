@@ -39,4 +39,41 @@ void main() {
       isFalse,
     );
   });
+
+  test('web-only enabledPlatforms scopes default surfaces', () {
+    const merger = ManifestMerger();
+    const policy = ProjectionPolicy();
+    final manifest = merger.mergeManifest(
+      catalog: [
+        AgentRegistryCatalogEntry(
+          registryKey: 'app_ping',
+          descriptor: AgentIntentDescriptor(
+            namespace: 'app',
+            name: 'ping',
+            description: 'Ping',
+            kind: AgentIntentKind.tool,
+            inputSchema: const <String, Object?>{'type': 'object'},
+          ),
+        ),
+      ],
+      policy: policy,
+      enabledPlatforms: ['web'],
+    );
+    final surfaces = manifest.entries.single.surfaces;
+    expect(
+      surfaces.includes(AgentManifestSurface.webMcp, defaultValue: false),
+      isTrue,
+    );
+    expect(
+      surfaces.includes(AgentManifestSurface.androidShortcuts, defaultValue: true),
+      isFalse,
+    );
+    expect(
+      surfaces.includes(
+        AgentManifestSurface.windowsProtocolActivation,
+        defaultValue: true,
+      ),
+      isFalse,
+    );
+  });
 }

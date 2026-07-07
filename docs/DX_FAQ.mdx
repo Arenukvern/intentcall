@@ -391,15 +391,35 @@ No. You can register `AgentCallEntry` objects manually. Codegen is a convenience
 
 **Q: How do instance-bound or handwritten tools join the generated catalog and manifest?**
 
+Catalog sources:
+
+```text
+@AgentTool          →  tool implementation + (usually) catalog row
+handwritten getter  →  tool implementation only
+catalog row         →  @AgentCatalog list
+agent_catalog.g.dart →  merge of all three sources
+```
+
 Put instance methods and `AgentCallEntry` getters on a host class (typically
-`static final shared`), list rows in `lib/catalog/handwritten_entries.dart` as
-`handwrittenCatalogEntries`, and run `build_runner`. The aggregate catalog at
-`lib/generated/agent_catalog.g.dart` spreads those rows next to `@AgentTool`
-entries; `intentcall manifest export --check` then merges catalog + projection
-into committed `agent_manifest.json`. Per-row projection uses `EntryProjection`
-on catalog rows — same policy surface as `@AgentProjection` on annotated tools.
-See [ADR 0019](decisions/0019-framework-neutral-intentcall-cli.md) and the
+`static final shared`), then co-locate a `List<AgentRegistryCatalogEntry>`
+annotated with **`@AgentCatalog`** — the catalog builder discovers it via
+`tool_globs`.
+
+Run `build_runner`. `@AgentTool` rows are collected from generated `*.g.dart`
+parts (`tool_part_globs`, default `lib/**.g.dart`), including tools under
+`lib/src/` when `agent_tool` emits their parts. The aggregate catalog at
+`lib/generated/agent_catalog.g.dart` spreads `@AgentCatalog` lists next to
+codegen rows; `intentcall manifest export --check` merges catalog +
+projection into committed `agent_manifest.json`. Per-row projection uses
+`EntryProjection` on catalog rows — same policy surface as `@AgentProjection`
+on annotated tools. See [ADR 0019](decisions/0019-framework-neutral-intentcall-cli.md),
+[ADR 0021](decisions/0021-agent-catalog-annotation.md), and the
 [`intentcall_codegen` example](../packages/intentcall_codegen/example/lib/tools/demo_host_tools.dart).
+
+**Catalog builder options** (`intentcall_codegen|agent_catalog` in `build.yaml`):
+`tool_part_globs`, `tool_globs` (`@AgentCatalog` scan only), `tool_exclude_globs`,
+`host_binding_field`.
+Defaults and a commented template: [`example/build.yaml`](../packages/intentcall_codegen/example/build.yaml).
 
 **Probe anchor:** `intentcall manifest export` runs a subprocess that evaluates
 each row's `entry:` and calls `resolveDescriptor()` — handlers are stripped
@@ -413,10 +433,19 @@ not materialize an `AgentCallEntry` at probe time, set `descriptor:` on
 `qualifiedName` aligned for parity gates.
 
 **Optional instance `@AgentTool` codegen:** Annotate instance methods on a host
-class with a static binding field (default name `shared`). Codegen emits an
-extension with `AgentCallEntry` getters whose handlers call instance methods on
-`this`; the catalog references `Host.shared.<getter>CallEntry`. Handwritten
-getters remain the canonical path when you need full control.
+class. Codegen emits an extension with `AgentCallEntry` getters whose handlers call
+instance methods on `this`. Catalog rows use `descriptor:` when no static binding
+field exists, or `Host.shared.<getter>CallEntry` when a probe anchor is present.
+Handwritten getters remain the canonical path when you need full control.
+
+**Typed projection:** `@AgentProjection` and `EntryProjection` use
+`AgentManifestSurface` enum keys. Apple sub-channels (Siri, Spotlight) use
+`AgentManifestSurfaceExposure.options` on handwritten rows until emitters define
+them — see [ADR 0020](decisions/0020-platform-scoped-manifest-surfaces.md).
+
+**Platform-scoped surfaces:** `platforms.enabled` in `intentcall.yaml` scopes
+default manifest surface families at export time (not just platform sync targets).
+Explicit `defaults.surfaces` in yaml overrides platform-scoped defaults.
 
 ---
 

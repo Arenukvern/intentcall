@@ -1,10 +1,22 @@
 import 'package:intentcall_core/intentcall_core.dart';
 
 import 'generated/agent_catalog.g.dart';
+import 'tools/demo_host_tools.dart';
 
 Future<void> main() async {
   final registry = InMemoryAgentRegistry();
-  registerAll(registry, agentCatalogEntries.map((final row) => row.entry!));
+  final liveHost = DemoHostTools();
+
+  for (final row in agentCatalogEntries) {
+    if (row.registryKey == 'app_demo_host_status') {
+      continue;
+    }
+    final entry = row.entry;
+    if (entry != null) {
+      registry.register(entry.toRegistration());
+    }
+  }
+  registry.register(liveHost.demoHostStatusCallEntry.toRegistration());
 
   final inbox = await registry.invoke('app_demo_inbox', {'folder': 'inbox'});
   if (!inbox.ok) {

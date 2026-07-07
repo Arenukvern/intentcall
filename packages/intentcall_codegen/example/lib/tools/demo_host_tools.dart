@@ -1,5 +1,6 @@
 import 'package:intentcall_codegen/intentcall_codegen.dart';
 import 'package:intentcall_core/intentcall_core.dart';
+import 'package:intentcall_platform_sync/intentcall_platform_sync.dart';
 import 'package:intentcall_schema/intentcall_schema.dart';
 
 part 'demo_host_tools.g.dart';
@@ -8,6 +9,10 @@ final class DemoHostTools {
   DemoHostTools();
 
   static final DemoHostTools shared = DemoHostTools();
+
+  static const inboxProjection = EntryProjection(
+    surfaces: {AgentManifestSurface.webMcp: true},
+  );
 
   Future<AgentResult> inbox(final String folder) async {
     return AgentResult.success(
@@ -23,7 +28,7 @@ final class DemoHostTools {
     name: 'demo_host_status',
     description: 'Codegen instance-method host tool',
   )
-  @AgentProjection(surfaces: {'web.webMcp': true})
+  @AgentProjection(surfaces: {AgentManifestSurface.webMcp: true})
   Future<AgentResult> hostStatus(@AgentParam('Host label') String label) async {
     return AgentResult.success(
       data: {
@@ -74,3 +79,17 @@ final class DemoHostTools {
     handler: (final args) async => demoHandwritten(args['note'] as String),
   );
 }
+
+@AgentCatalog()
+final List<AgentRegistryCatalogEntry> demoHostCatalogEntries =
+    <AgentRegistryCatalogEntry>[
+      AgentRegistryCatalogEntry(
+        registryKey: 'app_demo_inbox',
+        entry: DemoHostTools.shared.inboxCallEntry,
+        projection: DemoHostTools.inboxProjection,
+      ),
+      AgentRegistryCatalogEntry(
+        registryKey: 'app_demo_handwritten',
+        entry: DemoHostTools.shared.demoHandwrittenCallEntry,
+      ),
+    ];
