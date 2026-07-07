@@ -30,6 +30,8 @@ Builder agentToolBuilder(final BuilderOptions options) => PartBuilder(
 ''',
 );
 
-/// Aggregates all `@AgentTool` registrations into `lib/generated/agent_catalog.g.dart`.
+/// Aggregates `@AgentTool` and `@AgentCatalog` rows into `lib/generated/agent_catalog.g.dart`.
+///
+/// See [AgentCatalogGenerator] and [AgentCatalog].
 Builder agentCatalogBuilder(final BuilderOptions options) =>
     AgentCatalogGenerator(options);

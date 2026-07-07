@@ -16,5 +16,5 @@ final List<AgentRegistryCatalogEntry> agentCatalogEntries =
   surfaces: <AgentManifestSurface, bool>{AgentManifestSurface.webMcp: false},
 )),
   AgentRegistryCatalogEntry(registryKey: 'app_demo_required_named', entry: demoRequiredNamedCallEntry),
-  ...demoHostCatalogEntries,
+  ...DemoHostTools.demoHostCatalogEntries,
 ];

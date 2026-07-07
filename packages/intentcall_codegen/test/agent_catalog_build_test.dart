@@ -120,6 +120,32 @@ void main() {
       );
     });
 
+    test('discovers @AgentCatalog on static class field', () async {
+      expect(
+        _fixture('test/fixtures/catalog/host_static_catalog.dart'),
+        contains('app_host_static_a'),
+      );
+      await runCatalogBuilder(
+        generator: AgentCatalogGenerator(
+          _options({
+            'tool_globs': ['test/fixtures/catalog/**.dart'],
+            'tool_exclude_globs': <String>[],
+          }),
+        ),
+        fixtures: {
+          'test/fixtures/catalog/host_static_catalog.dart': _fixture(
+            'test/fixtures/catalog/host_static_catalog.dart',
+          ),
+        },
+        outputMatcher: allOf(
+          contains('...CatalogHost.hostCatalogEntries,'),
+          contains(
+            "import '../../test/fixtures/catalog/host_static_catalog.dart';",
+          ),
+        ),
+      );
+    });
+
     test('unannotated catalog list omitted', () async {
       await runCatalogBuilder(
         generator: AgentCatalogGenerator(_options({})),

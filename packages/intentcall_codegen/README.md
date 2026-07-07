@@ -51,22 +51,31 @@ final class DemoHostTools {
 
 2. **Merge catalog rows with `@AgentCatalog`**
 
-Co-locate a `List<AgentRegistryCatalogEntry>` with the host class (or module) and
-annotate it with `@AgentCatalog`. The catalog builder discovers annotated lists
-under `lib/` and spreads them into `lib/generated/agent_catalog.g.dart` alongside
-`@AgentTool` rows. Optional per-row projection uses `EntryProjection` (same as
-`@AgentProjection` on annotated tools).
+Co-locate a top-level or **static** `List<AgentRegistryCatalogEntry>` with the host
+class and annotate it with `@AgentCatalog`. The catalog builder discovers annotated
+lists under `lib/` and spreads them into `lib/generated/agent_catalog.g.dart`
+alongside `@AgentTool` rows. Static host lists merge as
+`HostClass.catalogEntries`. Optional per-row projection uses `EntryProjection`
+(same as `@AgentProjection` on annotated tools).
 
 ```dart
-@AgentCatalog()
-final List<AgentRegistryCatalogEntry> demoHostCatalogEntries =
-    <AgentRegistryCatalogEntry>[
-  AgentRegistryCatalogEntry(
-    registryKey: 'app_demo_inbox',
-    entry: DemoHostTools.shared.inboxCallEntry,
-    projection: DemoHostTools.inboxProjection,
-  ),
-];
+final class DemoHostTools {
+  static final DemoHostTools shared = DemoHostTools();
+
+  AgentCallEntry get inboxCallEntry => AgentCallEntry.tool(/* … */);
+
+  @AgentCatalog()
+  static final List<AgentRegistryCatalogEntry> demoHostCatalogEntries =
+      <AgentRegistryCatalogEntry>[
+    AgentRegistryCatalogEntry(
+      registryKey: 'app_demo_inbox',
+      entry: shared.inboxCallEntry,
+      projection: const EntryProjection(
+        surfaces: {AgentManifestSurface.webMcp: true},
+      ),
+    ),
+  ];
+}
 ```
 
 After `dart run build_runner build`, `lib/generated/agent_catalog.g.dart`
@@ -99,26 +108,31 @@ one-line `registerAll` demos.
 
 ### Handwritten projection
 
-Co-locate projection policy on the host class and reference it from the catalog:
-
-```dart
-static const inboxProjection = EntryProjection(
-  surfaces: {AgentManifestSurface.webMcp: true},
-);
-
-AgentCallEntry get inboxCallEntry => AgentCallEntry.tool(/* … */);
-```
+Use inline `EntryProjection` on `@AgentCatalog` rows (recommended for small hosts):
 
 ```dart
 AgentRegistryCatalogEntry(
   registryKey: 'app_demo_inbox',
-  entry: DemoHostTools.shared.inboxCallEntry,
-  projection: DemoHostTools.inboxProjection,
+  entry: shared.inboxCallEntry,
+  projection: const EntryProjection(
+    surfaces: {AgentManifestSurface.webMcp: true},
+  ),
 ),
 ```
 
 For manifest-only rows without a handler at probe time, use `descriptor:` on
 `AgentRegistryCatalogEntry` and register the handler separately at runtime.
+
+### `@AgentCatalog` placement
+
+| Placement | Spread in `agent_catalog.g.dart` |
+|-----------|----------------------------------|
+| Static field on host (recommended) | `...HostClass.catalogEntries` |
+| Top-level list | `...catalogEntries` |
+| Instance field | Not supported |
+
+Do not list tools in `@AgentCatalog` when `@AgentTool` already emits their catalog
+row (duplicate `registryKey` fails the build).
 
 Full runnable example:
 [`example/lib/tools/demo_host_tools.dart`](example/lib/tools/demo_host_tools.dart).

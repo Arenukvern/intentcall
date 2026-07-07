@@ -10,10 +10,6 @@ final class DemoHostTools {
 
   static final DemoHostTools shared = DemoHostTools();
 
-  static const inboxProjection = EntryProjection(
-    surfaces: {AgentManifestSurface.webMcp: true},
-  );
-
   Future<AgentResult> inbox(final String folder) async {
     return AgentResult.success(
       data: {
@@ -78,18 +74,20 @@ final class DemoHostTools {
     },
     handler: (final args) async => demoHandwritten(args['note'] as String),
   );
-}
 
-@AgentCatalog()
-final List<AgentRegistryCatalogEntry> demoHostCatalogEntries =
-    <AgentRegistryCatalogEntry>[
-      AgentRegistryCatalogEntry(
-        registryKey: 'app_demo_inbox',
-        entry: DemoHostTools.shared.inboxCallEntry,
-        projection: DemoHostTools.inboxProjection,
-      ),
-      AgentRegistryCatalogEntry(
-        registryKey: 'app_demo_handwritten',
-        entry: DemoHostTools.shared.demoHandwrittenCallEntry,
-      ),
-    ];
+  @AgentCatalog()
+  static final List<AgentRegistryCatalogEntry> demoHostCatalogEntries =
+      <AgentRegistryCatalogEntry>[
+        AgentRegistryCatalogEntry(
+          registryKey: 'app_demo_inbox',
+          entry: shared.inboxCallEntry,
+          projection: const EntryProjection(
+            surfaces: {AgentManifestSurface.webMcp: true},
+          ),
+        ),
+        AgentRegistryCatalogEntry(
+          registryKey: 'app_demo_handwritten',
+          entry: shared.demoHandwrittenCallEntry,
+        ),
+      ];
+}

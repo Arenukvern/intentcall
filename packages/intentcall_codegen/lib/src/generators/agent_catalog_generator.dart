@@ -12,7 +12,18 @@ import '../agent_projection.dart';
 import '../agent_tool.dart';
 import 'agent_tool_generator.dart';
 
-/// Emits `lib/generated/agent_catalog.g.dart` listing all tool call entries.
+/// Emits `lib/generated/agent_catalog.g.dart` by merging three catalog sources:
+///
+/// 1. **`@AgentTool`** — rows from generated `*.g.dart` parts (`tool_part_globs`).
+/// 2. **`@AgentCatalog`** — top-level or static `List<AgentRegistryCatalogEntry>`
+///    discovered via `tool_globs` (default `lib/**.dart`). Static host lists
+///    spread as `HostClass.catalogSymbol`.
+/// 3. Empty catalog stub when neither source is present.
+///
+/// Configure via `intentcall_codegen|agent_catalog` in `build.yaml`:
+/// `tool_part_globs`, `tool_globs`, `tool_exclude_globs`, `host_binding_field`.
+///
+/// See [AgentCatalog] and [ADR 0021](https://github.com/Arenukvern/intentcall/blob/main/docs/decisions/0021-agent-catalog-annotation.md).
 class AgentCatalogGenerator implements Builder {
   AgentCatalogGenerator(this.options);
 
@@ -352,35 +363,75 @@ $propertyLines
         }
 
         final library = await buildStep.resolver.libraryFor(input);
+        final libraryReader = LibraryReader(library);
         for (final variable in library.topLevelVariables) {
-          if (!_hasAgentCatalogAnnotation(variable)) {
-            continue;
-          }
-          if (!_isCatalogEntryListType(variable.type)) {
-            throw InvalidGenerationSourceError(
-              '@AgentCatalog on ${variable.name} must be '
-              'List<AgentRegistryCatalogEntry>.',
-              element: variable,
+          _addAgentCatalogSpread(
+            spreads: supplements,
+            element: variable,
+            assetId: input,
+            outputPath: outputPath,
+            symbolName: variable.name!,
+          );
+        }
+        for (final classElement in libraryReader.classes) {
+          for (final field in classElement.fields) {
+            if (!field.isStatic) {
+              continue;
+            }
+            _addAgentCatalogSpread(
+              spreads: supplements,
+              element: field,
+              assetId: input,
+              outputPath: outputPath,
+              symbolName: '${classElement.name}.${field.name}',
             );
           }
-          supplements.add(
-            _CatalogSpread(
-              assetId: input,
-              symbolName: variable.name!,
-              importPath: _importForAsset(input.path, outputPath),
-            ),
-          );
         }
       }
     }
-    supplements.sort(
-      (final a, final b) => a.assetId.path.compareTo(b.assetId.path),
-    );
+    supplements.sort((final a, final b) {
+      final pathCompare = a.assetId.path.compareTo(b.assetId.path);
+      if (pathCompare != 0) {
+        return pathCompare;
+      }
+      return a.symbolName.compareTo(b.symbolName);
+    });
     return supplements;
   }
 
-  bool _hasAgentCatalogAnnotation(final TopLevelVariableElement variable) {
-    for (final annotation in variable.metadata.annotations) {
+  void _addAgentCatalogSpread({
+    required final List<_CatalogSpread> spreads,
+    required final Element element,
+    required final AssetId assetId,
+    required final String outputPath,
+    required final String symbolName,
+  }) {
+    if (!_hasAgentCatalogAnnotation(element)) {
+      return;
+    }
+    final type = switch (element) {
+      TopLevelVariableElement(:final type) => type,
+      FieldElement(:final type) => type,
+      _ => null,
+    };
+    if (type == null || !_isCatalogEntryListType(type)) {
+      throw InvalidGenerationSourceError(
+        '@AgentCatalog on $symbolName must be '
+        'List<AgentRegistryCatalogEntry>.',
+        element: element,
+      );
+    }
+    spreads.add(
+      _CatalogSpread(
+        assetId: assetId,
+        symbolName: symbolName,
+        importPath: _importForAsset(assetId.path, outputPath),
+      ),
+    );
+  }
+
+  bool _hasAgentCatalogAnnotation(final Element element) {
+    for (final annotation in element.metadata.annotations) {
       final reader = ConstantReader(annotation.computeConstantValue());
       if (!reader.isNull && reader.instanceOf(_agentCatalogChecker)) {
         return true;
@@ -409,59 +460,128 @@ $propertyLines
     final String symbolName,
   ) async {
     final library = await buildStep.resolver.libraryFor(assetId);
-    TopLevelVariableElement? variable;
-    for (final element in library.topLevelVariables) {
-      if (element.name == symbolName) {
-        variable = element;
-        break;
-      }
-    }
-    if (variable == null) {
+    final qualified = _parseCatalogSymbolName(symbolName);
+    final Element? element = switch (qualified) {
+      _TopLevelCatalogSymbol(:final name) => _findTopLevelCatalogVariable(
+        library,
+        name,
+      ),
+      _StaticCatalogSymbol(:final className, :final fieldName) =>
+        _findStaticCatalogField(library, className, fieldName),
+    };
+    if (element == null) {
       throw InvalidGenerationSourceError(
         '${assetId.path} must export $symbolName '
         'as List<AgentRegistryCatalogEntry>.',
       );
     }
 
-    final constant = variable.computeConstantValue();
-    if (constant != null) {
-      final list = constant.toListValue();
-      if (list != null) {
-        final keys = <String>[];
-        for (final item in list) {
-          final key = item.getField('registryKey')?.toStringValue();
-          if (key != null) {
-            keys.add(key);
+    if (element is VariableElement) {
+      final constant = element.computeConstantValue();
+      if (constant != null) {
+        final list = constant.toListValue();
+        if (list != null) {
+          final keys = <String>[];
+          for (final item in list) {
+            final key = item.getField('registryKey')?.toStringValue();
+            if (key != null) {
+              keys.add(key);
+            }
           }
+          return keys;
         }
-        return keys;
       }
     }
 
     final unit = await buildStep.resolver.compilationUnitFor(assetId);
     final keys = <String>[];
-    for (final declaration in unit.declarations) {
-      if (declaration is! TopLevelVariableDeclaration) {
-        continue;
-      }
-      for (final variableDeclaration in declaration.variables.variables) {
-        if (variableDeclaration.name.lexeme != symbolName) {
-          continue;
+    switch (qualified) {
+      case _TopLevelCatalogSymbol(:final name):
+        for (final declaration in unit.declarations) {
+          if (declaration is! TopLevelVariableDeclaration) {
+            continue;
+          }
+          for (final variableDeclaration in declaration.variables.variables) {
+            if (variableDeclaration.name.lexeme != name) {
+              continue;
+            }
+            final initializer = variableDeclaration.initializer;
+            if (initializer != null) {
+              _collectRegistryKeysFromExpression(initializer, keys);
+            }
+          }
         }
-        final initializer = variableDeclaration.initializer;
-        if (initializer != null) {
-          _collectRegistryKeysFromExpression(initializer, keys);
+      case _StaticCatalogSymbol(:final className, :final fieldName):
+        for (final declaration in unit.declarations) {
+          if (declaration is! ClassDeclaration ||
+              declaration.name.lexeme != className) {
+            continue;
+          }
+          for (final member in declaration.members) {
+            if (member is! FieldDeclaration) {
+              continue;
+            }
+            for (final variableDeclaration in member.fields.variables) {
+              if (variableDeclaration.name.lexeme != fieldName) {
+                continue;
+              }
+              final initializer = variableDeclaration.initializer;
+              if (initializer != null) {
+                _collectRegistryKeysFromExpression(initializer, keys);
+              }
+            }
+          }
         }
-      }
     }
     if (keys.isEmpty) {
       throw InvalidGenerationSourceError(
         'Could not read registryKey values from $symbolName '
         'in ${assetId.path}.',
-        element: variable,
+        element: element,
       );
     }
     return keys;
+  }
+
+  _CatalogSymbolName _parseCatalogSymbolName(final String symbolName) {
+    final separator = symbolName.lastIndexOf('.');
+    if (separator == -1) {
+      return _TopLevelCatalogSymbol(symbolName);
+    }
+    return _StaticCatalogSymbol(
+      symbolName.substring(0, separator),
+      symbolName.substring(separator + 1),
+    );
+  }
+
+  TopLevelVariableElement? _findTopLevelCatalogVariable(
+    final LibraryElement library,
+    final String name,
+  ) {
+    for (final element in library.topLevelVariables) {
+      if (element.name == name) {
+        return element;
+      }
+    }
+    return null;
+  }
+
+  FieldElement? _findStaticCatalogField(
+    final LibraryElement library,
+    final String className,
+    final String fieldName,
+  ) {
+    for (final type in library.classes) {
+      if (type.name != className) {
+        continue;
+      }
+      for (final field in type.fields) {
+        if (field.isStatic && field.name == fieldName) {
+          return field;
+        }
+      }
+    }
+    return null;
   }
 
   void _collectRegistryKeysFromExpression(
@@ -634,4 +754,21 @@ final class _CatalogSpread {
   final AssetId assetId;
   final String symbolName;
   final String importPath;
+}
+
+sealed class _CatalogSymbolName {
+  const _CatalogSymbolName();
+}
+
+final class _TopLevelCatalogSymbol extends _CatalogSymbolName {
+  const _TopLevelCatalogSymbol(this.name);
+
+  final String name;
+}
+
+final class _StaticCatalogSymbol extends _CatalogSymbolName {
+  const _StaticCatalogSymbol(this.className, this.fieldName);
+
+  final String className;
+  final String fieldName;
 }

@@ -64,12 +64,15 @@ void main() {
 
     expect(hostStatus.dispatchMode, AgentManifestDispatchMode.openApp);
     expect(
-      hostStatus.surfaces.includes(AgentManifestSurface.webMcp, defaultValue: true),
+      hostStatus.surfaces.includes(
+        AgentManifestSurface.webMcp,
+        defaultValue: true,
+      ),
       isTrue,
     );
   });
 
-  test('handwritten inbox respects co-located inboxProjection', () {
+  test('handwritten inbox respects inline EntryProjection', () {
     final manifest = buildManifest();
     final inbox = manifest.tools.singleWhere(
       (final tool) => tool.qualifiedName == 'app_demo_inbox',

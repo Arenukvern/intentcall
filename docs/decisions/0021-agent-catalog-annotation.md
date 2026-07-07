@@ -38,15 +38,25 @@ multi-file discovery but introduced two overlapping mechanisms and confusing nam
 
 4. **Breaking change** (pre-release): apps using the default handwritten file must
    add `@AgentCatalog()` to their list and co-locate it with the owning host.
+5. **Discover `@AgentCatalog` on static host fields** (2026-07-07 amendment):
+   annotated `List<AgentRegistryCatalogEntry>` may live as a **static** field on a
+   host class (recommended) or as a top-level variable. The generator spreads
+   static lists as `HostClass.catalogSymbol` (e.g.
+   `...DemoHostTools.demoHostCatalogEntries`). **Instance fields are not
+   supported** — no compile-time symbol exists for build-time spread.
 
 ## Consequences
 
-- Catalog rows live next to host classes; no `lib/catalog/handwritten_entries.dart`
+- Catalog rows live on or next to host classes; no `lib/catalog/handwritten_entries.dart`
   convention.
 - `tool_globs` scopes `@AgentCatalog` discovery only; unannotated lists are ignored.
+- Static host catalogs are the preferred co-location pattern; top-level lists remain valid.
 - Pre-release consumers must migrate from `handwrittenCatalogEntries` to annotated lists.
+- Tools already covered by `@AgentTool` codegen must not be duplicated in `@AgentCatalog`
+  lists (`registryKey` collision fails the build).
 
 ## Related
 
 - [0019-framework-neutral-intentcall-cli.md](0019-framework-neutral-intentcall-cli.md)
 - [0020-platform-scoped-manifest-surfaces.md](0020-platform-scoped-manifest-surfaces.md)
+- Reference: [`demo_host_tools.dart`](../../packages/intentcall_codegen/example/lib/tools/demo_host_tools.dart)

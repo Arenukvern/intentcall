@@ -57,11 +57,13 @@ over `this`).
 1. Put behavior on a host class (optional `static final shared` for probe anchors).
 2. Expose each intent as an instance `AgentCallEntry` getter; the handler calls
    instance methods on `this`.
-3. Optionally co-locate `EntryProjection` consts on the host (see **Handwritten projection** below).
-4. Co-locate a `List<AgentRegistryCatalogEntry>` annotated with **`@AgentCatalog`**
-   (discovered via `tool_globs`).
+3. Optionally add inline `EntryProjection` on catalog rows (see **Handwritten projection** below).
+4. Co-locate a **static** `List<AgentRegistryCatalogEntry>` on the host class,
+   annotated with **`@AgentCatalog`** (discovered via `tool_globs`). Top-level
+   lists are also valid; instance fields are not supported.
 5. Run `build_runner` so `lib/generated/agent_catalog.g.dart` merges `@AgentTool`
-   rows (from `tool_part_globs` / generated `.g.dart` parts) and `@AgentCatalog` spreads.
+   rows (from `tool_part_globs` / generated `.g.dart` parts) and `@AgentCatalog`
+   spreads (e.g. `...InboxHost.inboxHostCatalogEntries`).
 
 ```dart
 final class InboxHost {
@@ -77,19 +79,19 @@ final class InboxHost {
     inputSchema: const <String, Object?>{ /* … */ },
     handler: (final args) async => readInbox(args['folder'] as String),
   );
-}
-```
 
-```dart
-// Co-located with InboxHost (same file or sibling module file)
-@AgentCatalog()
-final List<AgentRegistryCatalogEntry> inboxHostCatalogEntries =
-    <AgentRegistryCatalogEntry>[
-  AgentRegistryCatalogEntry(
-    registryKey: 'app_read_inbox',
-    entry: InboxHost.shared.readInboxCallEntry,
-  ),
-];
+  @AgentCatalog()
+  static final List<AgentRegistryCatalogEntry> inboxHostCatalogEntries =
+      <AgentRegistryCatalogEntry>[
+    AgentRegistryCatalogEntry(
+      registryKey: 'app_read_inbox',
+      entry: shared.readInboxCallEntry,
+      projection: const EntryProjection(
+        surfaces: {AgentManifestSurface.webMcp: true},
+      ),
+    ),
+  ];
+}
 ```
 
 Reference implementation:
@@ -97,7 +99,8 @@ Reference implementation:
 
 Then run `intentcall manifest export --check` so committed
 `agent_manifest.json` stays in sync with the merged catalog (see
-[ADR 0019](../../docs/decisions/0019-framework-neutral-intentcall-cli.md)).
+[ADR 0019](../../docs/decisions/0019-framework-neutral-intentcall-cli.md) and
+[ADR 0021](../../docs/decisions/0021-agent-catalog-annotation.md)).
 
 **Probe anchor (optional):** When `static shared` exists, catalog rows may use
 `InboxHost.shared.readInboxCallEntry` — manifest export evaluates `entry:` in a
@@ -109,20 +112,20 @@ at bootstrap even when catalog uses `shared` for probe convenience.
 manifest metadata is needed without a probe-time handler; register handlers from
 a live host at runtime and keep `qualifiedName` aligned.
 
-**Handwritten projection:** Co-locate surface hints on the host class and
-reference them from catalog rows:
+**Handwritten projection:** Use inline `EntryProjection` on catalog rows:
 
 ```dart
-static const inboxProjection = EntryProjection(
-  surfaces: {AgentManifestSurface.webMcp: true},
-);
-
 AgentRegistryCatalogEntry(
   registryKey: 'app_read_inbox',
-  entry: InboxHost.shared.readInboxCallEntry,
-  projection: InboxHost.inboxProjection,
+  entry: shared.readInboxCallEntry,
+  projection: const EntryProjection(
+    surfaces: {AgentManifestSurface.webMcp: true},
+  ),
 ),
 ```
+
+Alternatively, co-locate a `static const` projection on the host and reference it
+from the row. Do not duplicate tools already merged by `@AgentTool` codegen.
 
 `platforms.enabled` in `intentcall.yaml` scopes default manifest surface families
 (web-only hosts omit android/windows/linux defaults unless overridden).

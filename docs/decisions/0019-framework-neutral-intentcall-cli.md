@@ -59,7 +59,8 @@ contracts.
      Global defaults in `intentcall.yaml` `defaults` only — **no per-tool YAML**.
 3. **`intentcall_codegen` gains one aggregate builder:**
    - `AgentCatalogBuilder` → `lib/generated/agent_catalog.g.dart` (aggregates
-     registrations and optional per-row projection from `@AgentProjection`).
+     `@AgentTool` registrations, `@AgentCatalog` lists — top-level or static host
+     fields — and optional per-row projection from `@AgentProjection`).
    - **`agent_manifest.json` is written by `intentcall manifest export`** (shared
      `ManifestExporter` in `intentcall_platform_sync`) — not a second build_runner
      builder.

@@ -405,6 +405,38 @@ Put instance methods and `AgentCallEntry` getters on a host class (typically
 annotated with **`@AgentCatalog`** — the catalog builder discovers it via
 `tool_globs`.
 
+**Placement:**
+
+| Where | Generated spread | Supported |
+|-------|------------------|-----------|
+| **Static field on host class** (recommended) | `...HostClass.catalogEntries` | Yes |
+| Top-level variable | `...catalogEntries` | Yes |
+| Instance field on host | — | No |
+
+```dart
+final class DemoHostTools {
+  static final DemoHostTools shared = DemoHostTools();
+
+  AgentCallEntry get inboxCallEntry => AgentCallEntry.tool(/* … */);
+
+  @AgentCatalog()
+  static final List<AgentRegistryCatalogEntry> demoHostCatalogEntries =
+      <AgentRegistryCatalogEntry>[
+    AgentRegistryCatalogEntry(
+      registryKey: 'app_demo_inbox',
+      entry: shared.inboxCallEntry,
+      projection: const EntryProjection(
+        surfaces: {AgentManifestSurface.webMcp: true},
+      ),
+    ),
+  ];
+}
+```
+
+**Do not duplicate `@AgentTool` rows** in `@AgentCatalog` — e.g. `app_demo_host_status`
+is merged from `@AgentTool` codegen on the instance method, not from the host catalog
+list. Duplicate `registryKey` values fail the build.
+
 Run `build_runner`. `@AgentTool` rows are collected from generated `*.g.dart`
 parts (`tool_part_globs`, default `lib/**.g.dart`), including tools under
 `lib/src/` when `agent_tool` emits their parts. The aggregate catalog at
