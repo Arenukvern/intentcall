@@ -11,7 +11,7 @@ void main() {
     expect(result.ok, isTrue);
     expect(
       result.data['resource_uri'],
-      'demoapp://resource/spark/runtime/snapshot',
+      'demoapp://resource/cool/runtime/snapshot',
     );
   });
 }

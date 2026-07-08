@@ -693,7 +693,9 @@ let package = Package(
 $importLine
 
 public class IntentCallPlatformPlugin: NSObject, FlutterPlugin {
-  public static func register(with registrar: FlutterPluginRegistrar) {}
+  public static func register(with registrar: FlutterPluginRegistrar) {
+    IntentCallInvocationsHostApiSetup.setUp(registrar: registrar, api: nil)
+  }
 
   public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
     let channel = "intentcall_platform/invocations"

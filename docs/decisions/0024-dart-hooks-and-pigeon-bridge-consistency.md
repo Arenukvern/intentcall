@@ -45,9 +45,17 @@ Gradle, Xcode, and Jaspr templates are **generated from the spine**, not hand-ma
 Publish `intentcall_hooks` with `hook/build.dart` that calls `ManifestExporter` and
 `PlatformSync` **in-process** (no subprocess `intentcall`).
 
-- **Phase 2a:** Jaspr and plain Dart web hosts
-- **Phase 2b:** Flutter hosts — only after `flutter build` hook timing is proven; Gradle/Xcode
-  templates may shrink to staleness checks meanwhile
+- **Phase 2a:** Jaspr and plain Dart web hosts — `intentcall_hooks` is the
+  canonical build hook; no Gradle/Xcode involvement
+- **Phase 2b (deferred gate):** Flutter hosts — Gradle `preBuild` and Xcode Run
+  Script templates from `PlatformHookSpine` stay until dogfood proves Dart SDK
+  hook ordering. **Gate:** `flutter build` must run `hook/build.dart` and
+  complete manifest export + platform sync **before** `xcodebuild compile` /
+  Android native compile for the app target. Until then, Flutter consumers keep
+  spine-rendered Gradle/Xcode hooks from `intentcall platform hooks init`; do not
+  remove those templates. After proof, templates may shrink to staleness checks;
+  full removal needs ADR amendment. See
+  [hooks-native-bridge-plan §6.3](../evidence/hooks-native-bridge-plan.md#63-flutter-native-hook-migration-deferred--phase-2b).
 - Hook v1 **requires** fresh `agent_catalog.g.dart`; does not spawn `build_runner` inside the hook
 - Extract shared `CatalogLoader` for CLI and hook parity
 

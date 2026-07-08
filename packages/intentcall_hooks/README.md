@@ -3,13 +3,20 @@
 Dart SDK build hooks for IntentCall projection: manifest export and platform
 sync in-process (no `intentcall` subprocess).
 
+**Host scope (ADR 0024):** Jaspr and plain Dart web hosts use this package as the
+canonical build hook (Phase 2a). **Flutter hosts still use Gradle/Xcode templates
+from `PlatformHookSpine`** (`intentcall platform hooks init`) until Phase 2b
+timing proof shows `flutter build` runs this hook before `xcodebuild compile` /
+Android native compile. Do not remove Gradle/Xcode hooks in Flutter apps until
+that gate passes.
+
 ## Usage
 
 Add a dev dependency and configure user-defines on the consuming package:
 
 ```yaml
 dev_dependencies:
-  intentcall_hooks: ^0.6.0
+  intentcall_hooks: any # dart pub add --dev intentcall_hooks
 
 hooks:
   user_defines:

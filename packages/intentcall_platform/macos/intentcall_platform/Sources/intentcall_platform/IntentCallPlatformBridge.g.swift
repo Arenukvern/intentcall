@@ -227,6 +227,59 @@ struct IntentCallInvocationEnvelopeDto: Hashable {
   }
 }
 
+/// Native entity-open envelope drained from the entity snapshot store.
+///
+/// Generated class from Pigeon that represents data sent in messages.
+struct IntentCallEntityOpenEnvelopeDto: Hashable {
+  var id: String
+  var entityType: String
+  var entityId: String
+  var source: String
+  var createdAt: String
+
+
+  // swift-format-ignore: AlwaysUseLowerCamelCase
+  static func fromList(_ pigeonVar_list: [Any?]) -> IntentCallEntityOpenEnvelopeDto? {
+    let id = pigeonVar_list[0] as! String
+    let entityType = pigeonVar_list[1] as! String
+    let entityId = pigeonVar_list[2] as! String
+    let source = pigeonVar_list[3] as! String
+    let createdAt = pigeonVar_list[4] as! String
+
+    return IntentCallEntityOpenEnvelopeDto(
+      id: id,
+      entityType: entityType,
+      entityId: entityId,
+      source: source,
+      createdAt: createdAt
+    )
+  }
+  func toList() -> [Any?] {
+    return [
+      id,
+      entityType,
+      entityId,
+      source,
+      createdAt,
+    ]
+  }
+  static func == (lhs: IntentCallEntityOpenEnvelopeDto, rhs: IntentCallEntityOpenEnvelopeDto) -> Bool {
+    if Swift.type(of: lhs) != Swift.type(of: rhs) {
+      return false
+    }
+    return deepEqualsIntentCallPlatformBridge(lhs.id, rhs.id) && deepEqualsIntentCallPlatformBridge(lhs.entityType, rhs.entityType) && deepEqualsIntentCallPlatformBridge(lhs.entityId, rhs.entityId) && deepEqualsIntentCallPlatformBridge(lhs.source, rhs.source) && deepEqualsIntentCallPlatformBridge(lhs.createdAt, rhs.createdAt)
+  }
+
+  func hash(into hasher: inout Hasher) {
+    hasher.combine("IntentCallEntityOpenEnvelopeDto")
+    deepHashIntentCallPlatformBridge(value: id, hasher: &hasher)
+    deepHashIntentCallPlatformBridge(value: entityType, hasher: &hasher)
+    deepHashIntentCallPlatformBridge(value: entityId, hasher: &hasher)
+    deepHashIntentCallPlatformBridge(value: source, hasher: &hasher)
+    deepHashIntentCallPlatformBridge(value: createdAt, hasher: &hasher)
+  }
+}
+
 /// Manifest-projected entity field keys for snapshot CRUD and search.
 ///
 /// Generated class from Pigeon that represents data sent in messages.
@@ -281,6 +334,8 @@ private class IntentCallPlatformBridgePigeonCodecReader: FlutterStandardReader {
     case 129:
       return IntentCallInvocationEnvelopeDto.fromList(self.readValue() as! [Any?])
     case 130:
+      return IntentCallEntityOpenEnvelopeDto.fromList(self.readValue() as! [Any?])
+    case 131:
       return IntentCallEntityKeyBundle.fromList(self.readValue() as! [Any?])
     default:
       return super.readValue(ofType: type)
@@ -293,8 +348,11 @@ private class IntentCallPlatformBridgePigeonCodecWriter: FlutterStandardWriter {
     if let value = value as? IntentCallInvocationEnvelopeDto {
       super.writeByte(129)
       super.writeValue(value.toList())
-    } else if let value = value as? IntentCallEntityKeyBundle {
+    } else if let value = value as? IntentCallEntityOpenEnvelopeDto {
       super.writeByte(130)
+      super.writeValue(value.toList())
+    } else if let value = value as? IntentCallEntityKeyBundle {
+      super.writeByte(131)
       super.writeValue(value.toList())
     } else {
       super.writeValue(value)
@@ -349,6 +407,7 @@ protocol IntentCallEntitiesHostApi {
   func clearEntityTypeSnapshots(entityType: String) throws -> Int64
   func listEntitySnapshots(entityType: String) throws -> [[String?: Any?]]
   func searchEntitySnapshots(entityType: String, query: String, limit: Int64, keys: IntentCallEntityKeyBundle) throws -> [[String?: Any?]]
+  func takePendingEntityOpens() throws -> [IntentCallEntityOpenEnvelopeDto]
 }
 
 /// Generated setup class from Pigeon to handle messages through the `binaryMessenger`.
@@ -438,6 +497,19 @@ class IntentCallEntitiesHostApiSetup {
       }
     } else {
       searchEntitySnapshotsChannel.setMessageHandler(nil)
+    }
+    let takePendingEntityOpensChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.intentcall_bridge.IntentCallEntitiesHostApi.takePendingEntityOpens\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      takePendingEntityOpensChannel.setMessageHandler { _, reply in
+        do {
+          let result = try api.takePendingEntityOpens()
+          reply(wrapResult(result))
+        } catch {
+          reply(wrapError(error))
+        }
+      }
+    } else {
+      takePendingEntityOpensChannel.setMessageHandler(nil)
     }
   }
 }

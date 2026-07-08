@@ -247,6 +247,60 @@ data class IntentCallInvocationEnvelopeDto (
 }
 
 /**
+ * Native entity-open envelope drained from the entity snapshot store.
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+data class IntentCallEntityOpenEnvelopeDto (
+  val id: String,
+  val entityType: String,
+  val entityId: String,
+  val source: String,
+  val createdAt: String
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): IntentCallEntityOpenEnvelopeDto {
+      val id = pigeonVar_list[0] as String
+      val entityType = pigeonVar_list[1] as String
+      val entityId = pigeonVar_list[2] as String
+      val source = pigeonVar_list[3] as String
+      val createdAt = pigeonVar_list[4] as String
+      return IntentCallEntityOpenEnvelopeDto(id, entityType, entityId, source, createdAt)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      id,
+      entityType,
+      entityId,
+      source,
+      createdAt,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    val other = other as IntentCallEntityOpenEnvelopeDto
+    return IntentCallPlatformBridgePigeonUtils.deepEquals(this.id, other.id) && IntentCallPlatformBridgePigeonUtils.deepEquals(this.entityType, other.entityType) && IntentCallPlatformBridgePigeonUtils.deepEquals(this.entityId, other.entityId) && IntentCallPlatformBridgePigeonUtils.deepEquals(this.source, other.source) && IntentCallPlatformBridgePigeonUtils.deepEquals(this.createdAt, other.createdAt)
+  }
+
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + IntentCallPlatformBridgePigeonUtils.deepHash(this.id)
+    result = 31 * result + IntentCallPlatformBridgePigeonUtils.deepHash(this.entityType)
+    result = 31 * result + IntentCallPlatformBridgePigeonUtils.deepHash(this.entityId)
+    result = 31 * result + IntentCallPlatformBridgePigeonUtils.deepHash(this.source)
+    result = 31 * result + IntentCallPlatformBridgePigeonUtils.deepHash(this.createdAt)
+    return result
+  }
+}
+
+/**
  * Manifest-projected entity field keys for snapshot CRUD and search.
  *
  * Generated class from Pigeon that represents data sent in messages.
@@ -305,6 +359,11 @@ private open class IntentCallPlatformBridgePigeonCodec : StandardMessageCodec() 
       }
       130.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
+          IntentCallEntityOpenEnvelopeDto.fromList(it)
+        }
+      }
+      131.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
           IntentCallEntityKeyBundle.fromList(it)
         }
       }
@@ -317,8 +376,12 @@ private open class IntentCallPlatformBridgePigeonCodec : StandardMessageCodec() 
         stream.write(129)
         writeValue(stream, value.toList())
       }
-      is IntentCallEntityKeyBundle -> {
+      is IntentCallEntityOpenEnvelopeDto -> {
         stream.write(130)
+        writeValue(stream, value.toList())
+      }
+      is IntentCallEntityKeyBundle -> {
+        stream.write(131)
         writeValue(stream, value.toList())
       }
       else -> super.writeValue(stream, value)
@@ -364,6 +427,7 @@ interface IntentCallEntitiesHostApi {
   fun clearEntityTypeSnapshots(entityType: String): Long
   fun listEntitySnapshots(entityType: String): List<Map<String?, Any?>>
   fun searchEntitySnapshots(entityType: String, query: String, limit: Long, keys: IntentCallEntityKeyBundle): List<Map<String?, Any?>>
+  fun takePendingEntityOpens(): List<IntentCallEntityOpenEnvelopeDto>
 
   companion object {
     /** The codec used by IntentCallEntitiesHostApi. */
@@ -457,6 +521,21 @@ interface IntentCallEntitiesHostApi {
             val keysArg = args[3] as IntentCallEntityKeyBundle
             val wrapped: List<Any?> = try {
               listOf(api.searchEntitySnapshots(entityTypeArg, queryArg, limitArg, keysArg))
+            } catch (exception: Throwable) {
+              IntentCallPlatformBridgePigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.intentcall_bridge.IntentCallEntitiesHostApi.takePendingEntityOpens$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { _, reply ->
+            val wrapped: List<Any?> = try {
+              listOf(api.takePendingEntityOpens())
             } catch (exception: Throwable) {
               IntentCallPlatformBridgePigeonUtils.wrapError(exception)
             }

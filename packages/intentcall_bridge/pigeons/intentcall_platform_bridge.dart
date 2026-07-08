@@ -9,9 +9,7 @@ import 'package:pigeon/pigeon.dart';
     swiftOptions: SwiftOptions(),
     kotlinOut:
         '../intentcall_platform/android/src/main/kotlin/dev/intentcall/intentcall_platform/IntentCallPlatformBridge.g.kt',
-    kotlinOptions: KotlinOptions(
-      package: 'dev.intentcall.intentcall_platform',
-    ),
+    kotlinOptions: KotlinOptions(package: 'dev.intentcall.intentcall_platform'),
   ),
 )
 /// Native invocation envelope drained from the handoff store.
@@ -23,19 +21,27 @@ class IntentCallInvocationEnvelopeDto {
   late String createdAt;
 }
 
+/// Native entity-open envelope drained from the entity snapshot store.
+class IntentCallEntityOpenEnvelopeDto {
+  late String id;
+  late String entityType;
+  late String entityId;
+  late String source;
+  late String createdAt;
+}
+
 /// Manifest-projected entity field keys for snapshot CRUD and search.
 class IntentCallEntityKeyBundle {
-  String idKey;
-  String titleKey;
-  String subtitleKey;
-  String keywordsKey;
-
   IntentCallEntityKeyBundle({
     this.idKey = 'id',
     this.titleKey = 'title',
     this.subtitleKey = 'subtitle',
     this.keywordsKey = 'keywords',
   });
+  String idKey;
+  String titleKey;
+  String subtitleKey;
+  String keywordsKey;
 }
 
 @HostApi()
@@ -46,25 +52,27 @@ abstract class IntentCallInvocationsHostApi {
 @HostApi()
 abstract class IntentCallEntitiesHostApi {
   int upsertEntitySnapshots(
-    String entityType,
-    List<Map<String?, Object?>> snapshots,
-    IntentCallEntityKeyBundle keys,
+    final String entityType,
+    final List<Map<String?, Object?>> snapshots,
+    final IntentCallEntityKeyBundle keys,
   );
 
   int deleteEntitySnapshots(
-    String entityType,
-    List<String> ids,
-    IntentCallEntityKeyBundle keys,
+    final String entityType,
+    final List<String> ids,
+    final IntentCallEntityKeyBundle keys,
   );
 
-  int clearEntityTypeSnapshots(String entityType);
+  int clearEntityTypeSnapshots(final String entityType);
 
-  List<Map<String?, Object?>> listEntitySnapshots(String entityType);
+  List<Map<String?, Object?>> listEntitySnapshots(final String entityType);
 
   List<Map<String?, Object?>> searchEntitySnapshots(
-    String entityType,
-    String query,
-    int limit,
-    IntentCallEntityKeyBundle keys,
+    final String entityType,
+    final String query,
+    final int limit,
+    final IntentCallEntityKeyBundle keys,
   );
+
+  List<IntentCallEntityOpenEnvelopeDto> takePendingEntityOpens();
 }

@@ -6,7 +6,7 @@ default:
 
 # Run tests for all packages in the workspace
 test:
-    dart test packages/intentcall_schema packages/intentcall_core packages/intentcall_session packages/intentcall_mcp packages/intentcall_webmcp packages/intentcall_gemma packages/intentcall_apple packages/intentcall_android packages/intentcall_platform_sync packages/intentcall_hooks packages/intentcall_codegen packages/intentcall_cli packages/intentcall_platform packages/intentcall_testing tool/intentcall
+    dart test packages/intentcall_schema packages/intentcall_core packages/intentcall_session packages/intentcall_mcp packages/intentcall_webmcp packages/intentcall_gemma packages/intentcall_apple packages/intentcall_android packages/intentcall_platform_sync packages/intentcall_hooks packages/intentcall_bridge packages/intentcall_codegen/test packages/intentcall_cli packages/intentcall_platform packages/intentcall_testing tool/intentcall
 
 # Manifest freshness gate (build_runner catalog + export --check)
 manifest-export-check:

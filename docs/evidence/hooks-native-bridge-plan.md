@@ -138,7 +138,44 @@ packages/intentcall_hooks/
 
 **Order:** P2b → P2a (loader first)
 
-**Defer:** Flutter iOS/Android Gradle/Xcode hook removal until Flutter hook timing proof.
+**Defer:** Flutter iOS/Android Gradle/Xcode hook removal until Flutter hook timing proof
+(see §6.3).
+
+### 6.3 Flutter native hook migration (deferred — Phase 2b)
+
+Gradle `preBuild` and Xcode Run Script hooks remain the **canonical** invocation
+surface for Flutter Android/iOS/macOS until Dart SDK hook ordering is proven in
+real `flutter build` pipelines.
+
+**Deferral criteria (Phase 2b gate):**
+
+Do **not** remove or shrink Gradle/Xcode templates until all of:
+
+1. **Ordering** — `flutter build` (apk, appbundle, ipa, macos, or equivalent)
+   runs `intentcall_hooks` `hook/build.dart` **before** the host native compile
+   phase (`xcodebuild compile` / `CompileSwift` for Apple; `compileDebugKotlin`
+   or release equivalent for Android).
+2. **Three-gate parity** — manifest export + platform sync complete before native
+   Swift/Kotlin that reads `agent_manifest.json`, `IntentCallGenerated.swift`, or
+   other sync outputs is compiled.
+3. **Incremental builds** — stale-cache and skip paths are observed (hook not
+   re-run on incremental rebuild, `DataAsset` invalidation gaps) and mitigations
+   are documented or fixed.
+4. **Dogfood proof** — build log evidence from mcp_flutter or an in-repo Flutter
+   fixture showing hook output timestamps preceding the first native compile line
+   for the app target.
+
+**Until the gate passes:**
+
+- `PlatformHookSpine` continues to render Gradle/Xcode snippets via
+  `intentcall platform hooks init` (templates generated from spine, not
+  hand-maintained).
+- `intentcall_hooks` ships for Jaspr and plain Dart hosts only (Phase 2a).
+- Gradle/Xcode templates may shrink to staleness checks **after** timing proof;
+  full removal requires ADR amendment.
+
+**Proof artifact:** recorded build logs or CI appendices under `docs/evidence/`
+demonstrating hook-before-compile ordering; optional steward scenario.
 
 ---
 
@@ -252,7 +289,7 @@ Parent blocks phase N+1 until phase N aggregate gate passes (except P3a after P0
 
 | Risk | Mitigation |
 |------|------------|
-| Flutter hook timing vs Xcode compile | Keep Gradle/Xcode until dogfood proof |
+| Flutter hook timing vs Xcode compile | Keep Gradle/Xcode until dogfood proof (§6.3) |
 | `DataAsset` not stable for Swift/XML artifacts | Hook writes project tree via `PlatformSync` (same as CLI) |
 | Pigeon breaks plugin consumers | Deprecation period; channel names unchanged |
 | mcp_flutter path deps | Land agentkit first; bump hosted versions |

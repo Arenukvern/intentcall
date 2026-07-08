@@ -92,6 +92,17 @@ void main() {
       expect(keys.keywordsKey, 'tags');
     });
 
+    test('entity open envelope DTO is declared in pigeon IDL', () {
+      final idl = _readRepoFile(
+        'packages/intentcall_bridge/pigeons/intentcall_platform_bridge.dart',
+      );
+
+      expect(idl, contains('class IntentCallEntityOpenEnvelopeDto'));
+      expect(idl, contains('String entityType;'));
+      expect(idl, contains('String entityId;'));
+      expect(idl, contains('takePendingEntityOpens()'));
+    });
+
     test('generated host APIs expose invocation and entity surfaces', () {
       final generated = _readRepoFile(
         'packages/intentcall_bridge/lib/src/intentcall_platform_bridge.g.dart',
@@ -105,10 +116,17 @@ void main() {
       expect(generated, contains('clearEntityTypeSnapshots('));
       expect(generated, contains('listEntitySnapshots('));
       expect(generated, contains('searchEntitySnapshots('));
+      expect(generated, contains('takePendingEntityOpens()'));
       expect(
         generated,
         contains(
           'dev.flutter.pigeon.intentcall_bridge.IntentCallInvocationsHostApi.takePendingInvocations',
+        ),
+      );
+      expect(
+        generated,
+        contains(
+          'dev.flutter.pigeon.intentcall_bridge.IntentCallEntitiesHostApi.takePendingEntityOpens',
         ),
       );
     });

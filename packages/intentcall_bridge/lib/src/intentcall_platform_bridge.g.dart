@@ -158,13 +158,74 @@ class IntentCallInvocationEnvelopeDto {
   int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
 }
 
+/// Native entity-open envelope drained from the entity snapshot store.
+class IntentCallEntityOpenEnvelopeDto {
+  IntentCallEntityOpenEnvelopeDto({
+    required this.id,
+    required this.entityType,
+    required this.entityId,
+    required this.source,
+    required this.createdAt,
+  });
+
+  String id;
+
+  String entityType;
+
+  String entityId;
+
+  String source;
+
+  String createdAt;
+
+  List<Object?> _toList() {
+    return <Object?>[
+      id,
+      entityType,
+      entityId,
+      source,
+      createdAt,
+    ];
+  }
+
+  Object encode() {
+    return _toList();  }
+
+  static IntentCallEntityOpenEnvelopeDto decode(Object result) {
+    result as List<Object?>;
+    return IntentCallEntityOpenEnvelopeDto(
+      id: result[0]! as String,
+      entityType: result[1]! as String,
+      entityId: result[2]! as String,
+      source: result[3]! as String,
+      createdAt: result[4]! as String,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! IntentCallEntityOpenEnvelopeDto || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(id, other.id) && _deepEquals(entityType, other.entityType) && _deepEquals(entityId, other.entityId) && _deepEquals(source, other.source) && _deepEquals(createdAt, other.createdAt);
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
+}
+
 /// Manifest-projected entity field keys for snapshot CRUD and search.
 class IntentCallEntityKeyBundle {
   IntentCallEntityKeyBundle({
-    required this.idKey,
-    required this.titleKey,
-    required this.subtitleKey,
-    required this.keywordsKey,
+    this.idKey = 'id',
+    this.titleKey = 'title',
+    this.subtitleKey = 'subtitle',
+    this.keywordsKey = 'keywords',
   });
 
   String idKey;
@@ -225,8 +286,11 @@ class _PigeonCodec extends StandardMessageCodec {
     }    else if (value is IntentCallInvocationEnvelopeDto) {
       buffer.putUint8(129);
       writeValue(buffer, value.encode());
-    }    else if (value is IntentCallEntityKeyBundle) {
+    }    else if (value is IntentCallEntityOpenEnvelopeDto) {
       buffer.putUint8(130);
+      writeValue(buffer, value.encode());
+    }    else if (value is IntentCallEntityKeyBundle) {
+      buffer.putUint8(131);
       writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
@@ -239,6 +303,8 @@ class _PigeonCodec extends StandardMessageCodec {
       case 129:
         return IntentCallInvocationEnvelopeDto.decode(readValue(buffer)!);
       case 130:
+        return IntentCallEntityOpenEnvelopeDto.decode(readValue(buffer)!);
+      case 131:
         return IntentCallEntityKeyBundle.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
@@ -385,5 +451,24 @@ class IntentCallEntitiesHostApi {
     )
     ;
     return (pigeonVar_replyValue! as List<Object?>).cast<Map<String?, Object?>>();
+  }
+
+  Future<List<IntentCallEntityOpenEnvelopeDto>> takePendingEntityOpens() async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.intentcall_bridge.IntentCallEntitiesHostApi.takePendingEntityOpens$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(null);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return (pigeonVar_replyValue! as List<Object?>).cast<IntentCallEntityOpenEnvelopeDto>();
   }
 }

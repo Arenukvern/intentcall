@@ -46,4 +46,7 @@ private class IntentCallPlatformBridgeStub :
     limit: Long,
     keys: IntentCallEntityKeyBundle,
   ): List<Map<String?, Any?>> = emptyList()
+
+  override fun takePendingEntityOpens(): List<IntentCallEntityOpenEnvelopeDto> =
+    emptyList()
 }

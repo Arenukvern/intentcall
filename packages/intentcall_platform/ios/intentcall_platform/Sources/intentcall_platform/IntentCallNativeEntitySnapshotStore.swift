@@ -159,6 +159,16 @@ public enum IntentCallNativeEntitySnapshotStore {
     return openId
   }
 
+  /// At-most-once drain semantics: clears pending rows before Dart reports success.
+  public static func takePendingEntityOpens() -> [[String: Any]] {
+    objc_sync_enter(UserDefaults.standard)
+    defer { objc_sync_exit(UserDefaults.standard) }
+    let pending =
+      UserDefaults.standard.array(forKey: pendingOpenKey) as? [[String: Any]] ?? []
+    UserDefaults.standard.set([], forKey: pendingOpenKey)
+    return pending
+  }
+
   public static func string(_ value: Any?) -> String? {
     if let value = value as? String { return value }
     if let value = value as? CustomStringConvertible { return value.description }

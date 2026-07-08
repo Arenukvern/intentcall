@@ -8,7 +8,7 @@ void main() {
         protocolScheme: 'demoapp',
         resourceName: 'cool_runtime_snapshot',
       ),
-      'demoapp://resource/spark/runtime/snapshot',
+      'demoapp://resource/cool/runtime/snapshot',
     );
   });
 

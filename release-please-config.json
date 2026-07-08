@@ -17,6 +17,7 @@
         "intentcall_codegen",
         "intentcall_platform_sync",
         "intentcall_hooks",
+        "intentcall_bridge",
         "intentcall_cli",
         "intentcall_platform",
         "intentcall_testing"
@@ -68,6 +69,11 @@
       "release-type": "dart",
       "package-name": "intentcall_hooks",
       "component": "intentcall_hooks"
+    },
+    "packages/intentcall_bridge": {
+      "release-type": "dart",
+      "package-name": "intentcall_bridge",
+      "component": "intentcall_bridge"
     },
     "packages/intentcall_cli": {
       "release-type": "dart",

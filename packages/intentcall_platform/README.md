@@ -270,11 +270,34 @@ Flutter MCP Toolkit consumers may delegate:
 flutter-mcp-toolkit codegen sync --platform web,ios,macos --project-dir <app>
 ```
 
-### One-time hooks
+### Build hooks (ADR 0024)
+
+| Host | Invocation surface |
+|------|-------------------|
+| **Flutter** (Android/iOS/macOS) | Gradle `preBuild` + Xcode Run Script from `PlatformHookSpine` — one-time init below |
+| **Jaspr / plain Dart web** | `intentcall_hooks` Dart SDK `hook/build.dart` (no Gradle/Xcode) |
+
+Flutter native hook migration to `intentcall_hooks` is **deferred** (Phase 2b)
+until `flutter build` is proven to run the Dart hook before `xcodebuild compile`
+/ Android native compile. Until then, keep spine-rendered Gradle/Xcode snippets.
+
+**Flutter — one-time init:**
 
 ```bash
 intentcall platform hooks init --host flutter --project-dir <flutter_app>
 ```
+
+Renders Gradle and Xcode Run Script blocks from `PlatformHookSpine` (not
+hand-maintained strings). Re-run after `intentcall.yaml` hook config changes.
+
+**Jaspr / plain Dart — add dev dependency:**
+
+```yaml
+dev_dependencies:
+  intentcall_hooks: ^0.6.0
+```
+
+See [intentcall_hooks README](../intentcall_hooks/README.md) for `user_defines`.
 
 ### Manifest generation
 

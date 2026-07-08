@@ -1,7 +1,7 @@
 /// Builds `$protocolScheme://resource/...` from underscore-separated segments.
 ///
 /// Example: `cool_runtime_snapshot` with scheme `demoapp` →
-/// `demoapp://resource/spark/runtime/snapshot`.
+/// `demoapp://resource/cool/runtime/snapshot`.
 ///
 /// Returns `$protocolScheme://resource/unknown` when [resourceName] is empty.
 String resourceUri({

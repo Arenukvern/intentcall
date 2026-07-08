@@ -85,7 +85,7 @@ final result = AgentResultEnvelope.resourceEnvelope(
   resourceName: 'cool_runtime_snapshot',
   snapshot: {'phase': 'playing'},
 );
-// result.data['resource_uri'] == 'demoapp://resource/spark/runtime/snapshot'
+// result.data['resource_uri'] == 'demoapp://resource/cool/runtime/snapshot'
 ```
 
 ### Entity snapshots (agent-visible app state)

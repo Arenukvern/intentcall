@@ -52,6 +52,10 @@ intentcall_webmcp-v{{version}}
 intentcall_apple-v{{version}}
 intentcall_android-v{{version}}
 intentcall_codegen-v{{version}}
+intentcall_platform_sync-v{{version}}
+intentcall_hooks-v{{version}}
+intentcall_bridge-v{{version}}
+intentcall_cli-v{{version}}
 intentcall_platform-v{{version}}
 intentcall_testing-v{{version}}
 ```
@@ -72,7 +76,7 @@ uses GitHub OIDC through `dart-lang/setup-dart`.
 2. `intentcall_core`
 3. `intentcall_session`
 4. `intentcall_mcp`, `intentcall_webmcp`, `intentcall_apple`, `intentcall_android`, `intentcall_codegen`
-5. `intentcall_platform_sync`, `intentcall_cli`
+5. `intentcall_platform_sync`, `intentcall_hooks`, `intentcall_bridge`, `intentcall_cli`
 6. `intentcall_platform` (Flutter plugin — may need `flutter pub publish`)
 7. `intentcall_testing`
 

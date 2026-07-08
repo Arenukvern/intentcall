@@ -79,6 +79,10 @@ private final class IntentCallPlatformBridgeHostApiImpl: IntentCallInvocationsHo
     )
   }
 
+  func takePendingEntityOpens() throws -> [IntentCallEntityOpenEnvelopeDto] {
+    IntentCallNativeEntitySnapshotStore.takePendingEntityOpens().compactMap(entityOpenDto(from:))
+  }
+
   private func envelopeDto(from row: [String: Any]) -> IntentCallInvocationEnvelopeDto? {
     guard
       let id = IntentCallNativeEntitySnapshotStore.string(row["id"]),
@@ -93,6 +97,25 @@ private final class IntentCallPlatformBridgeHostApiImpl: IntentCallInvocationsHo
       id: id,
       qualifiedName: qualifiedName,
       arguments: arguments,
+      source: source,
+      createdAt: createdAt
+    )
+  }
+
+  private func entityOpenDto(from row: [String: Any]) -> IntentCallEntityOpenEnvelopeDto? {
+    guard
+      let id = IntentCallNativeEntitySnapshotStore.string(row["id"]),
+      let entityType = IntentCallNativeEntitySnapshotStore.string(row["entityType"]),
+      let entityId = IntentCallNativeEntitySnapshotStore.string(row["entityId"]),
+      let source = IntentCallNativeEntitySnapshotStore.string(row["source"]),
+      let createdAt = IntentCallNativeEntitySnapshotStore.string(row["createdAt"])
+    else {
+      return nil
+    }
+    return IntentCallEntityOpenEnvelopeDto(
+      id: id,
+      entityType: entityType,
+      entityId: entityId,
       source: source,
       createdAt: createdAt
     )
