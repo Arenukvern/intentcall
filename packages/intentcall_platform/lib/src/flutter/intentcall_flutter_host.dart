@@ -93,10 +93,12 @@ final class IntentCallFlutterHost {
       ),
       takePendingInvocations:
           takePendingInvocations ??
-          const IntentCallPendingInvocations().takePending,
+          // ignore: prefer_const_constructors
+          IntentCallPendingInvocations().takePending,
       takePendingEntityOpens:
           takePendingEntityOpens ??
-          const IntentCallPendingEntityOpens().takePending,
+          // ignore: prefer_const_constructors
+          IntentCallPendingEntityOpens().takePending,
       registerWebMcp: registerWebMcp,
       webMcpSurfaceIndex: webMcpSurfaceIndex,
       onEnvelope: onEnvelope,
