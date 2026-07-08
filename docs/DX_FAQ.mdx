@@ -521,57 +521,43 @@ app concern.
 
 ---
 
-## 🧪 Testing
+## Flutter in-app host {#flutter-in-app-host}
 
-**Q: How do I test an adapter against the contract?**
+**Q: How do I wire `IntentCallFlutterHost` in a Flutter app?**
 
-Add `intentcall_testing` as a `dev_dependency` and call `verifyNativeAdapterContract(...)` from a package test. For example:
+Audience overview: [Who is this for? §1](/start_here/audiences#1-in-app--internal-flutter-host).
 
-```dart
-test('McpPublishAdapter satisfies the shared native contract', () async {
-  await verifyNativeAdapterContract(
-    attach: (registry, transport) async {
-      final adapter = McpPublishAdapter(registry: registry, transport: transport);
-      await adapter.attach();
-      return adapter.detach;
-    },
-  );
-});
-```
-
-See `packages/intentcall_mcp/test/mcp_adapter_contract_test.dart` for the current reference shape.
-
-**Q: How do I test session lifecycle without Flutter or MCP?**
-
-Use an in-memory fake connector and a temporary `StateStore` path. This proves persistence, lock handling, and session executor behavior without importing adapter internals.
+1. Depend on `intentcall_platform` (umbrella) + `intentcall_core` — not deleted
+   `intentcall_apple` / `intentcall_android`.
+2. Add `intentcall.yaml` with `host: flutter`, `protocolScheme`, and explicit
+   `platforms.enabled` (required — `intentcall config validate` errors if empty).
+3. Register tools once; bind the host:
 
 ```dart
-final manager = IntentSessionManager(
-  connector: FakeConnector(endpoint: 'runtime://test'),
-  stateStore: StateStore(path: '${tempDir.path}/state.json'),
+final host = IntentCallFlutterHost.bindRegistry(
+  registry: registry,
+  policy: productionPolicy, // never ship debugAllowAll in release
+  registerWebMcp: kIsWeb,
+  listenForDeepLinks: !kIsWeb,
+  protocolScheme: 'myapp',
 );
+await host.start();
 ```
 
-**Q: How do I run consumer regression checks against mcp_flutter?**
+4. Run hooks init + three-gate spine (`manifest export --check`,
+   `platform sync --check`) or the mcp_flutter `init intentcall-platform` /
+   `codegen sync` wrappers.
 
-```bash
-# from the mcp_flutter repo root:
-make check-intentcall-integration
-# (defaults INTENTCALL_ROOT=../agentkit when cloned as siblings)
-```
+**Q: What should a Flutter host check after moving to the current IntentCall train?**
 
-**Q: What should a Flutter host check after moving to the current hosted IntentCall train?**
-
-Use hosted `intentcall_*` packages from the same train, then bind the app
-registry once through `IntentCallFlutterHost.bindRegistry(...)`. Pass an
-explicit production policy, enable `registerWebMcp` only for pages that expose a
-compatible WebMCP host, enable `listenForDeepLinks` only with an app-owned
-`protocolScheme`, and drain on startup plus foreground/resume for open-app
-native handoff.
+Use the same train for all `intentcall_*` packages. Pass an explicit production
+policy, enable `registerWebMcp` only for pages that expose a compatible WebMCP
+host, enable `listenForDeepLinks` only with an app-owned `protocolScheme`, and
+drain on startup plus foreground/resume for open-app native handoff.
 
 For iOS and macOS open-app App Intents, the readiness checklist is:
 
-1. `agent_manifest.json` has the app-owned `protocolScheme`.
+1. `agent_manifest.json` / export has the app-owned `protocolScheme`.
 2. Apple entries that should appear in Shortcuts use `"dispatchMode": "openApp"`
    and curated `"surfaces": { "apple.appShortcuts": { "include": true } }`.
 3. `intentcall platform sync --platform ios,macos --check` passes, proving generated Swift,
@@ -637,6 +623,56 @@ For web runtime checks, prefer local Flutter web resources when the consumer
 fixture does not check in `web/canvaskit/`. In Flutter CLI terms, launch with
 `--no-web-resources-cdn` rather than pointing at a missing local CanvasKit
 override.
+
+**mcp_flutter dogfood:** web and macOS have the strongest runtime lanes today;
+iOS shares Apple emitters and is proven at sync/scaffold level until signed
+AppIntentsTesting runs. See [Platform support — mcp_flutter dogfood](/start_here/platform_support#mcp_flutter-dogfood-sibling-consumer).
+
+---
+
+## 🧪 Testing
+
+**Q: How do I test an adapter against the contract?**
+
+Add `intentcall_testing` as a `dev_dependency` and call `verifyNativeAdapterContract(...)` from a package test. For example:
+
+```dart
+test('McpPublishAdapter satisfies the shared native contract', () async {
+  await verifyNativeAdapterContract(
+    attach: (registry, transport) async {
+      final adapter = McpPublishAdapter(registry: registry, transport: transport);
+      await adapter.attach();
+      return adapter.detach;
+    },
+  );
+});
+```
+
+See `packages/intentcall_mcp/test/mcp_adapter_contract_test.dart` for the current reference shape.
+
+**Q: How do I test session lifecycle without Flutter or MCP?**
+
+Use an in-memory fake connector and a temporary `StateStore` path. This proves persistence, lock handling, and session executor behavior without importing adapter internals.
+
+```dart
+final manager = IntentSessionManager(
+  connector: FakeConnector(endpoint: 'runtime://test'),
+  stateStore: StateStore(path: '${tempDir.path}/state.json'),
+);
+```
+
+**Q: How do I run consumer regression checks against mcp_flutter?**
+
+```bash
+# from the mcp_flutter repo root:
+make check-contracts
+make dogfood-eval-static
+# web / macOS runtime dogfood:
+make web-showcase
+make showcase
+make macos-validate-runtime
+# (defaults INTENTCALL_ROOT=../agentkit when cloned as siblings)
+```
 
 **Q: Which app actions should become Apple App Shortcuts?**
 

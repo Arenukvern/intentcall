@@ -16,6 +16,7 @@ npx skills add arenukvern/skill_steward
 
 | Question | Go to |
 |---|---|
+| Which audience / setup lane? | [docs/start_here/audiences.mdx](docs/start_here/audiences.mdx) |
 | Where is the full doc map? | [docs/start_here/docs_map.mdx](docs/start_here/docs_map.mdx) |
 | What does this repo own? | [docs/NORTH_STAR.mdx](docs/NORTH_STAR.mdx) |
 | Why is it built this way? | [docs/DESIGN_FAQ.mdx](docs/DESIGN_FAQ.mdx) |

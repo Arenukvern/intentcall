@@ -146,3 +146,20 @@ DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer \
 ## Claim Rule
 
 Use “current” only for behavior covered by repo tests, generated artifacts, documented sync helpers, configuration checks, or local SDK typechecks. Use “experiment” for Apple `dartExtensionInline` scaffolds until a fixture app proves extension target membership, FlutterEngine boot, plugin allowlisting, App Group/shared storage or IPC, timeout/memory limits, and live OS invocation through AppIntentsTesting or Shortcuts. Use “roadmap” or “target” for Android AppFunctions, richer Android App Actions, Windows App Actions / Agent Launchers, AAIF alignment, native background Dart execution, and real OS assistant/launcher discovery. Apple Info.plist URL-scheme sync proves configuration drift only; live Shortcuts/App Intents proof still belongs to a signed consuming app. Generated entity/indexing artifacts and native cache storage prove projection shape only; live Spotlight, Siri, Shortcuts, donation, indexing, and product proof require a signed consuming app or AppIntentsTesting where applicable.
+
+## mcp_flutter dogfood (sibling consumer)
+
+The early consumer harness is [mcp_flutter](https://github.com/Arenukvern/mcp_flutter)
+(`flutter_test_app`). Clone as a sibling of this repo. Audience and setup:
+[Who is this for? §4](/start_here/audiences#4-sibling-harness--mcp_flutter).
+
+| Platform | Evidence in dogfood today | Command (from mcp_flutter) |
+|---|---|---|
+| Web | Strong — WebMCP + `IntentCallFlutterHost` | `make web-showcase` (+ `webmcp verify`) |
+| macOS | Runtime — generated Swift + host drain | `make showcase`, `make macos-validate-runtime` |
+| iOS | Scaffold + sync drift (shared Apple emitters) | `codegen sync --check`; live App Intents needs signed UI tests |
+| Contracts | Sibling path-dep + three-gate spine | `make check-contracts`, `make dogfood-eval-static` |
+
+**Honest “integration works” claim for migration:** federated `intentcall_platform`
+resolves; web and macOS dogfood targets pass; iOS shares Apple projection and
+passes sync `--check`. That is **not** App Store / unsigned Siri product proof.

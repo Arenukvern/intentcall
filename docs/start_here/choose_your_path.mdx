@@ -2,15 +2,19 @@
 
 Use this page when you know what you want to build, but not which IntentCall package or validation lane owns it.
 
+**Prefer audience routing first?** See [Who is this for?](/start_here/audiences) (in-app, external MCP agents, OS surfaces, mcp_flutter, Gemma).
+
 | Goal | Packages/imports | First move | Validate with | Next doc |
 |---|---|---|---|---|
 | Pure Dart callable registry | `intentcall_core`, `intentcall_schema` | Create `InMemoryAgentRegistry`, register `AgentCallEntry.tool(...)`, invoke by qualified name. | `dart test <your package>` and `steward probe --json --profile quick` in this repo when changing IntentCall itself. | [How it works](/start_here/how_it_works) |
-| Publish MCP tools/resources | `intentcall_mcp`, plus `intentcall_core` and `intentcall_schema` | Read registry entries, publish existing entries, listen to registry events, route calls back to `registry.invoke(...)`. | Add or extend `verifyNativeAdapterContract(...)`, then run `steward benchmark --scenario intentcall.adapter-contract --json`. | [DX FAQ](/DX_FAQ#writing-a-new-adapter) |
-| Browser WebMCP registration | `intentcall_webmcp`, `intentcall_platform` when using the Dart-first bootstrap | Register WebMCP tools from Dart and treat older `navigator.modelContext` behavior as compatibility only. | WebMCP emitter/bootstrap tests plus `steward probe --json --profile quick`; live browser-host interoperability needs separate proof. | [Platform support](/start_here/platform_support) |
+| Flutter in-app host (WebMCP, deep links, native drain) | `intentcall_platform`, `intentcall_core` | Add `intentcall.yaml` with `platforms.enabled`; `IntentCallFlutterHost.bindRegistry(...)`; hooks init + platform sync. | `intentcall config validate`; app start; mcp_flutter web/macOS dogfood when using the harness. | [Audiences §1](/start_here/audiences#1-in-app--internal-flutter-host) |
+| Publish MCP tools for Cursor / Claude / CLI agents | `intentcall_mcp`, plus `intentcall_core` and `intentcall_schema` | Attach `McpPublishAdapter` (or use mcp_flutter attach to a running app). | `verifyNativeAdapterContract(...)`, then live client `tools/call`. | [Audiences §2](/start_here/audiences#2-external-coding-agents-mcp-clients) |
+| Browser WebMCP registration | `intentcall_webmcp`, `intentcall_platform` when using the Dart-first bootstrap | Register WebMCP tools from Dart; treat older `navigator.modelContext` as compatibility only. | WebMCP emitter/bootstrap tests; `webmcp verify` in mcp_flutter for live page proof. | [Platform support](/start_here/platform_support) |
+| OS projection (App Intents, shortcuts, schemes) | `intentcall_platform_sync`, `intentcall_cli`, federated `intentcall_platform` | `manifest export --check` then `platform sync --check` for enabled platforms. | Emitter tests, fixture parity, evidence labels — not live Siri by default. | [Platform support](/start_here/platform_support) |
 | Runtime sessions for tools or CLIs | `intentcall_session`, `intentcall_core` | Implement `IntentSessionConnector`, compose `IntentSessionManager` and `IntentSessionExecutor`. | Package tests around connector selection, persistence, and executor behavior. | [DX FAQ](/DX_FAQ#runtime-sessions) |
-| Native/web artifacts and fallback invoke routes | `intentcall_platform_sync`, `intentcall_cli`, optional `intentcall_platform` (federated Flutter umbrella) | Run `build_runner`, `intentcall manifest export --check`, then `intentcall platform sync --check`. Depend on the umbrella only. | Emitter tests, fixture parity, platform sync check, adapter contract tests. | [Platform support](/start_here/platform_support) |
 | Optional typed registration helpers | `intentcall_codegen`, `build_runner`, `intentcall_core`, `intentcall_schema` | Annotate stable top-level functions with `@AgentTool`; keep handwritten entries first-class. | Generator fixture tests and normal package tests for generated registrations. | [DX FAQ](/DX_FAQ#codegen-agenttool) |
-| Adapter contract proof | `intentcall_testing` | Use `verifyNativeAdapterContract(...)` in adapter tests. | `steward benchmark --scenario intentcall.adapter-contract --json`. | [intentcall_testing README](https://github.com/Arenukvern/intentcall/blob/main/packages/intentcall_testing/README.md) |
+| Adapter contract proof / custom surface | `intentcall_testing`; example: `intentcall_gemma` | Use `verifyNativeAdapterContract(...)`; treat Gemma as example-only. | `steward benchmark --scenario intentcall.adapter-contract --json`. | [Audiences §5](/start_here/audiences#5-gemma-and-other-surface-adapters) |
+| Flutter product harness (CLI, inspector, dogfood) | Stay in [mcp_flutter](https://github.com/Arenukvern/mcp_flutter) | `mcp_toolkit` + `flutter-mcp-toolkit`; path or hosted IntentCall deps per role. | `make check-contracts`, `make web-showcase`, `make showcase` / `macos-validate-runtime`. | [Audiences §4](/start_here/audiences#4-sibling-harness--mcp_flutter) |
 
 ## Library, CLI, Server, and Adapter Paths
 
@@ -20,5 +24,8 @@ IntentCall is the direct platform layer when you are building a library, CLI, se
 2. Let adapters publish metadata and translate transport calls.
 3. Invoke by the stored registry key from `AgentRegistry.listEntries()`.
 4. Keep runtime discovery, product policy, and UI-specific behavior in the host app or tool.
+5. Use `intentcall_cli` for framework-neutral manifest export and platform sync.
 
-Flutter app authors who want the packaged product harness should start with [mcp_flutter](https://github.com/Arenukvern/mcp_flutter).
+Do **not** depend on deleted packages `intentcall_apple` / `intentcall_android`. Runtime = `intentcall_platform`; projection = `intentcall_platform_sync`.
+
+Flutter app authors who want the packaged product harness should start with [mcp_flutter](https://github.com/Arenukvern/mcp_flutter). Audience map: [Who is this for?](/start_here/audiences).

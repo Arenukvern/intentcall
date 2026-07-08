@@ -4,6 +4,8 @@ IntentCall gives a Dart or Flutter program one source of truth for agent-callabl
 
 The key idea is simple: adapters publish and route calls, but Dart remains the home of application behavior.
 
+**Not sure which lane you are in?** Start with [Who is this for?](/start_here/audiences) (in-app host, external MCP agents, OS surfaces, mcp_flutter, Gemma).
+
 ```mermaid
 flowchart LR
   author["App or package author"] --> registry["AgentRegistry\nAgentCallEntry + RegisteredAgentIntent"]
@@ -14,16 +16,20 @@ flowchart LR
   core --> mcp["intentcall_mcp\nMCP tools/resources"]
   core --> webmcp["intentcall_webmcp\nDart-first WebMCP registration"]
   core --> platformSync["intentcall_platform_sync\nnative/web emitters + PlatformSync"]
-  core --> platform["intentcall_platform\nFlutter runtime host / federated umbrella"]
+  core --> platform["intentcall_platform\nFlutter host + federated apple/android"]
+  core --> gemma["intentcall_gemma\nexample on-device adapter"]
   core --> codegen["intentcall_codegen\noptional @AgentTool helpers"]
   entitySnapshot --> platformSync
-  mcp --> callers["Agents, CLIs, assistants, app hosts"]
-  webmcp --> callers
-  platformSync --> callers
-  platform --> callers
-  session --> callers
-  toolkit["mcp_flutter / mcp_toolkit\nproduct harness for app authors"] -. consumes .-> core
-  steward["Skill Steward\nrepo governance + validation"] -. verifies .-> registry
+  mcp --> external["External coding agents\nCursor / Claude / MCP clients"]
+  webmcp --> inapp["In-app / browser\nWebMCP + Flutter host"]
+  platform --> inapp
+  platformSync --> os["OS-wide assistants\nApp Intents / shortcuts / schemes"]
+  platform --> os
+  gemma --> local["Local model runtime"]
+  session --> external
+  toolkit["mcp_flutter / mcp_toolkit\nproduct harness"] -. consumes .-> core
+  toolkit -. dogfoods .-> platform
+  steward["Skill Steward\nrepo governance"] -. verifies .-> registry
 ```
 
 ## One Minimal Intent
@@ -112,7 +118,8 @@ need a signed consuming app or AppIntentsTesting proof where applicable.
 | Surface | What it is for |
 |---|---|
 | IntentCall | Registry, wire contracts, adapters, platform artifact emitters, session primitives, and adapter contract tests. |
-| mcp_flutter / mcp_toolkit | Product harness for Flutter app authors: CLI, runtime discovery, Flutter VM integration, inspection, and app-side bootstrap. |
-| Skill Steward | Repository governance, declared actions, probes, benchmarks, and agent workflow discipline. |
+| mcp_flutter / mcp_toolkit | Product harness for Flutter app authors: CLI, runtime discovery, Flutter VM integration, inspection, and app-side bootstrap. Dogfoods IntentCall via `flutter_test_app` (web + macOS runtime; iOS sync/scaffold). |
+| Skill Steward | Repository governance, declared actions, probes, benchmarks, and agent workflow discipline — **not** your product MCP for Cursor. |
+| intentcall_gemma | Example-only on-device function-calling adapter (`publish_to: none`). |
 
-For implementation routes, continue to [Choose Your Path](/start_here/choose_your_path).
+Audience routing: [Who is this for?](/start_here/audiences). For implementation routes, continue to [Choose Your Path](/start_here/choose_your_path).
