@@ -561,16 +561,6 @@ Future<Directory> _createReleaseTrainFixture() async {
     _writePubspec(repo, packageName, version: '0.6.0', dependencies: deps);
   }
 
-  for (final packageName in ['intentcall_apple', 'intentcall_android']) {
-    _writePubspec(
-      repo,
-      packageName,
-      version: '0.6.0',
-      publishToNone: true,
-      dependencies: '  intentcall_core: ^0.5.0\n',
-    );
-  }
-
   _writePubspec(
     repo,
     'intentcall_gemma',

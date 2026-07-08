@@ -76,9 +76,8 @@ uses GitHub OIDC through `dart-lang/setup-dart`.
 4. `intentcall_mcp`, `intentcall_webmcp`, `intentcall_codegen`
 5. `intentcall_platform_sync`, `intentcall_hooks`, `intentcall_bridge`, `intentcall_cli`
 6. `intentcall_platform` (Flutter plugin — may need `flutter pub publish`)
-7. `intentcall_testing`
-
-Legacy `intentcall_apple` / `intentcall_android` are workspace-only (`publish_to: none`) and are not published.
+7. `intentcall_platform_apple`, `intentcall_platform_android` (federated impls)
+8. `intentcall_testing`
 
 ## Commands
 

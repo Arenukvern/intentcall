@@ -517,7 +517,7 @@ Explicit `defaults.surfaces` in yaml overrides platform-scoped defaults.
 Apps list the `intentcall_platform` umbrella only. Endorsed federated impls
 (`intentcall_platform_apple`, `intentcall_platform_android`) come in via
 `default_package`. Huawei/HyperOS use the `android` token — OEM packaging is an
-app concern. Do not depend on deprecated `intentcall_apple` / `intentcall_android`.
+app concern.
 
 ---
 
@@ -664,10 +664,8 @@ supported claim yet.
 3. `intentcall_session`
 4. `intentcall_mcp`, `intentcall_webmcp`, `intentcall_codegen` (parallel)
 5. `intentcall_platform_sync`, `intentcall_hooks`, `intentcall_bridge`, `intentcall_cli`
-6. `intentcall_platform`
+6. `intentcall_platform`, `intentcall_platform_apple`, `intentcall_platform_android`
 7. `intentcall_testing`
-
-Legacy `intentcall_apple` / `intentcall_android` are deprecated workspace-only packages — use `intentcall_platform_sync` emitters instead.
 
 **Q: How do I publish?**
 

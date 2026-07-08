@@ -10,8 +10,10 @@ Accepted
 
 IntentCall supports many projection targets (`web`, `android`, `ios`, `macos`,
 `linux`, `windows`) but consuming apps ship different subsets. Legacy packages
-`intentcall_apple` and `intentcall_android` implement an obsolete sparse-manifest
-path superseded by ADR 0019/0022 unified projection in `intentcall_platform_sync`.
+`intentcall_apple` and `intentcall_android` implemented an obsolete sparse-manifest
+path superseded by ADR 0019/0022 unified projection in `intentcall_platform_sync`
+and were **deleted** from the workspace (hardcut; not renamed into
+`intentcall_platform_*`).
 
 The monolithic `intentcall_platform` Flutter plugin bundles Android, iOS, and
 macOS native implementations. Apps that target only one mobile platform still
@@ -76,9 +78,11 @@ owns the Dart host surface; apple + android are the endorsed impl packages.
 
 ### 5. Legacy package sunset
 
-- Deprecate `intentcall_apple` and `intentcall_android` manifest generators.
-- Remove from release train after one deprecation cycle.
-- Do not port new features to legacy generators.
+- Delete `intentcall_apple` and `intentcall_android` from the workspace (hardcut:
+  zero pub consumers; do not rename into `intentcall_platform_*`).
+- Projection remains in `intentcall_platform_sync`; runtime remains federated
+  under `intentcall_platform` + endorsed impl packages.
+- Do not resurrect sparse-manifest generators.
 
 ## Consequences
 

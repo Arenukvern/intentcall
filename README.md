@@ -56,8 +56,6 @@ GitHub: [Arenukvern/intentcall](https://github.com/Arenukvern/intentcall)
 | `intentcall_codegen` | [![pub package](https://img.shields.io/pub/v/intentcall_codegen.svg?include_prereleases)](https://pub.dev/packages/intentcall_codegen) [![pub points](https://img.shields.io/pub/points/intentcall_codegen.svg)](https://pub.dev/packages/intentcall_codegen/score) | Optional `@AgentTool` codegen |
 | `intentcall_testing` | [![pub package](https://img.shields.io/pub/v/intentcall_testing.svg?include_prereleases)](https://pub.dev/packages/intentcall_testing) [![pub points](https://img.shields.io/pub/points/intentcall_testing.svg)](https://pub.dev/packages/intentcall_testing/score) | Contract / invoke test helpers |
 
-Deprecated workspace-only (not published): `intentcall_apple`, `intentcall_android` — use `intentcall_platform_sync` instead.
-
 `intentcall_gemma` is example-only and intentionally unpublished. `intentcall_cli`
 is the workspace maintainer tool and is not part of the hosted package train.
 

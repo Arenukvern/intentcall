@@ -18,11 +18,7 @@ const publishablePackages = [
   'intentcall_testing',
 ];
 
-const workspaceOnlyPackages = [
-  'intentcall_gemma',
-  'intentcall_apple',
-  'intentcall_android',
-];
+const workspaceOnlyPackages = ['intentcall_gemma'];
 
 const allInternalPackages = [...publishablePackages, ...workspaceOnlyPackages];
 

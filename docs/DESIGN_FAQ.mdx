@@ -62,8 +62,8 @@ A: `AgentRegistry`, `AgentCallEntry`, and `RegisteredAgentIntent` are the curren
 **Q: Why are additive actions, typed entities, and indexing lifecycle not a new core runtime?**
 A: They are a projection layer over the existing source concepts. Actions remain registry entries. Typed entities are app-owned Dart snapshots with stable ids, display fields, and search/index fields. Indexing or donation is a lifecycle that copies those snapshots into a platform projection cache. Keeping this additive avoids turning `intentcall_core` into an Apple-shaped runtime while still letting Apple be the first concrete typed-entity/indexing projection. See [ADR 0018](decisions/0018-additive-actions-typed-entities-indexing-lifecycle.md).
 
-**Q: Why were there separate `intentcall_apple` / `intentcall_android` packages, and what replaced them?**
-A: Those packages were sparse-manifest generators for platform-specific SDKs. They are **deprecated** (`publish_to: none`); canonical projection is `intentcall_platform_sync` (`PlatformSync` / `ManifestExporter`). Runtime native code will split into federated Flutter plugins per [ADR 0025](decisions/0025-platform-subset-federated-plugins.md). `intentcall_gemma` remains a separate surface adapter.
+**Q: Why were `intentcall_apple` / `intentcall_android` removed, and what replaced them?**
+A: Those packages were sparse-manifest generators. They were **deleted** (zero consumers, pre-1.0). Canonical projection is `intentcall_platform_sync` (`PlatformSync` / `ManifestExporter`). Runtime native code lives in federated Flutter plugins `intentcall_platform_apple` / `intentcall_platform_android` under the `intentcall_platform` umbrella ([ADR 0025](decisions/0025-platform-subset-federated-plugins.md)). `intentcall_gemma` remains a separate surface adapter.
 
 ## Runtime sessions
 

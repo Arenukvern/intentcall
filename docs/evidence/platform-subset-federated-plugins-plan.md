@@ -1,6 +1,6 @@
 # Platform Subset + Federated Plugins Implementation Plan
 
-**Status:** Implemented (compressed A/B/C) — ready for `delete_or_retire` after this PR  
+**Status:** Implemented (compressed A/B/C) + legacy hard-delete — ready for `delete_or_retire` after this PR  
 **Date:** 2026-07-08  
 **ADR target:** [0025 — Platform Subset and Federated Flutter Plugins](../decisions/0025-platform-subset-federated-plugins.md) (Accepted)  
 **Builds on:** [hooks-native-bridge-plan.md](hooks-native-bridge-plan.md), [ADR 0024](../decisions/0024-dart-hooks-and-pigeon-bridge-consistency.md)  
@@ -11,7 +11,8 @@
 - No separate `intentcall_platform_interface` package — host API lives in the umbrella
 - Darwin native code lives in `intentcall_platform_apple` (`darwin/…`), not the umbrella
 - SPM-only for Apple (no CocoaPods / podspecs)
-- Phase A+B+C landed (subset enforcement, legacy sunset, federated apple+android + umbrella)
+- Phase A+B+C landed (subset enforcement, federated apple+android + umbrella)
+- **`intentcall_apple` / `intentcall_android` hard-deleted** from workspace (not renamed into `platform_*`)
 
 **Flutter references (authoritative):**
 
