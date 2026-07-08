@@ -235,9 +235,42 @@ actions:
     evidence:
       redaction: steward/redaction/v1
       summary_fields: [exit_code, duration_ms, output_digest]
+  intentcall.platform-hooks-check:
+    kind: command
+    desc: Run platform hook spine init gates (ADR 0024 Phase 1).
+    command:
+      argv: [just, platform-hooks-check]
+      shell: false
+    cwd: .
+    effects:
+      fs_read:
+        - justfile
+        - packages/intentcall_platform_sync/**
+        - packages/intentcall_cli/**
+      fs_write: []
+      git: false
+      network: false
+      secrets: false
+      destructive: false
+    safety:
+      class: bounded_local
+      default_policy: auto
+      requires_confirmation: false
+    limits:
+      timeout_ms: 10000
+      max_output_bytes: 200000
+    outputs:
+      - id: stdout
+        kind: stream
+        required: true
+        retention: summary
+        format: text
+    evidence:
+      redaction: steward/redaction/v1
+      summary_fields: [exit_code, duration_ms, output_digest]
   intentcall.projection-pipeline-check:
     kind: command
-    desc: Run Layer 5 projection pipeline gates (merger, dense export, emitters, codegen example sync).
+    desc: Run Layer 5 projection pipeline gates (alignment matrix, dense export, emitters, entity export, codegen example sync).
     command:
       argv: [just, projection-pipeline-check]
       shell: false
@@ -384,7 +417,7 @@ actions:
 probes:
   quick:
     profile: quick
-    actions: [intentcall.validate, intentcall.adapter-contract-test, intentcall.manifest-export-check, intentcall.manifest-parity, intentcall.platform-sync-check]
+    actions: [intentcall.validate, intentcall.adapter-contract-test, intentcall.manifest-export-check, intentcall.manifest-parity, intentcall.platform-sync-check, intentcall.projection-pipeline-check]
 diagnostics:
   cases: {}
 unknown_cases:

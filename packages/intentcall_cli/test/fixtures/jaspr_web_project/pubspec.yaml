@@ -17,6 +17,15 @@ dependencies:
 
 dev_dependencies:
   build_runner: ^2.15.0
+  intentcall_hooks:
+    path: ../../../../intentcall_hooks
+
+hooks:
+  user_defines:
+    intentcall_hooks:
+      project_root: .
+      platforms: web
+      check_only: false
 
 dependency_overrides:
   intentcall_schema:
@@ -25,3 +34,5 @@ dependency_overrides:
     path: ../../../../intentcall_core
   intentcall_platform_sync:
     path: ../../../../intentcall_platform_sync
+  intentcall_hooks:
+    path: ../../../../intentcall_hooks

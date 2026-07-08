@@ -9,7 +9,7 @@ Platform bridge for dispatching generated native invocation envelopes into Dart.
   s.license          = { :file => '../LICENSE' }
   s.author           = { 'Arenukvern' => 'intentcall@example.invalid' }
   s.source           = { :path => '.' }
-  s.source_files     = 'Classes/**/*'
+  s.source_files     = 'intentcall_platform/Sources/**/*'
   s.dependency 'FlutterMacOS'
 
   s.platform = :osx, '10.14'

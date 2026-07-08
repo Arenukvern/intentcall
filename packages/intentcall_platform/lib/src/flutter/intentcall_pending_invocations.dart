@@ -1,28 +1,27 @@
-import 'package:flutter/services.dart';
-
+import 'package:intentcall_bridge/intentcall_bridge.dart';
 import 'package:intentcall_platform_sync/intentcall_platform_sync.dart';
 
 final class IntentCallPendingInvocations {
-  const IntentCallPendingInvocations({
-    this.channel = const MethodChannel('intentcall_platform/invocations'),
-  });
+  IntentCallPendingInvocations({
+    final IntentCallInvocationsHostApi? hostApi,
+  }) : _hostApi = hostApi ?? IntentCallInvocationsHostApi();
 
-  final MethodChannel channel;
+  final IntentCallInvocationsHostApi _hostApi;
 
   Future<List<IntentCallInvocationEnvelope>> takePending() async {
-    final rows = await channel.invokeListMethod<Object?>(
-      'takePendingInvocations',
-    );
-    if (rows == null) {
-      return const <IntentCallInvocationEnvelope>[];
-    }
-    return rows
-        .whereType<Map>()
-        .map(
-          (final row) => IntentCallInvocationEnvelope.fromJson(
-            Map<String, Object?>.from(row),
-          ),
-        )
-        .toList(growable: false);
+    final rows = await _hostApi.takePendingInvocations();
+    return rows.map(_toEnvelope).toList(growable: false);
   }
+}
+
+IntentCallInvocationEnvelope _toEnvelope(
+  final IntentCallInvocationEnvelopeDto dto,
+) {
+  return IntentCallInvocationEnvelope(
+    id: dto.id,
+    qualifiedName: dto.qualifiedName,
+    arguments: Map<String, Object?>.from(dto.arguments ?? const {}),
+    source: dto.source,
+    createdAt: DateTime.tryParse(dto.createdAt),
+  );
 }

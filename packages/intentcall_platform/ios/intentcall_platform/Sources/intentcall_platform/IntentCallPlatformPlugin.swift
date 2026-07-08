@@ -1,107 +1,130 @@
 import Flutter
 import UIKit
 
-private enum IntentCallHandoffStore {
-  private static let pendingKey = "intentcall.pending_invocations"
-
-  /// Current bridge semantics are at-most-once: taking pending rows clears them
-  /// before Dart execution reports success or failure.
-  static func takePendingInvocations() -> [[String: Any]] {
-    objc_sync_enter(UserDefaults.standard)
-    defer { objc_sync_exit(UserDefaults.standard) }
-    let pending = UserDefaults.standard.array(forKey: pendingKey) as? [[String: Any]] ?? []
-    UserDefaults.standard.set([], forKey: pendingKey)
-    return pending
-  }
-}
-
-/// Plugin bridge for pending native intent dispatch into Dart.
+/// Plugin bridge for pending native intent dispatch and entity snapshot cache.
 public class IntentCallPlatformPlugin: NSObject, FlutterPlugin {
   public static func register(with registrar: FlutterPluginRegistrar) {
-    let invocations = FlutterMethodChannel(
-      name: "intentcall_platform/invocations",
-      binaryMessenger: registrar.messenger()
+    let bridge = IntentCallPlatformBridgeHostApiImpl()
+    IntentCallInvocationsHostApiSetup.setUp(
+      binaryMessenger: registrar.messenger(),
+      api: bridge
     )
-    let entities = FlutterMethodChannel(
-      name: "intentcall_platform/entities",
-      binaryMessenger: registrar.messenger()
+    IntentCallEntitiesHostApiSetup.setUp(
+      binaryMessenger: registrar.messenger(),
+      api: bridge
     )
-    let instance = IntentCallPlatformPlugin()
-    registrar.addMethodCallDelegate(instance, channel: invocations)
-    registrar.addMethodCallDelegate(instance, channel: entities)
   }
 }
 
-extension IntentCallPlatformPlugin {
-  public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
-    switch call.method {
-    case "takePendingInvocations":
-      result(IntentCallHandoffStore.takePendingInvocations())
-    case "upsertEntitySnapshots":
-      withEntityArgs(call, result) { args, entityType in
-        let snapshots = args["snapshots"] as? [[String: Any]] ?? []
-        let idKey = args["idKey"] as? String ?? "id"
-        result(
-          IntentCallNativeEntitySnapshotStore.upsertSnapshots(
-            entityType: entityType,
-            snapshots: snapshots,
-            idKey: idKey
-          )
-        )
+private final class IntentCallPlatformBridgeHostApiImpl: IntentCallInvocationsHostApi,
+  IntentCallEntitiesHostApi
+{
+  func takePendingInvocations() throws -> [IntentCallInvocationEnvelopeDto] {
+    IntentCallNativeHandoffStore.takePendingInvocations().compactMap(envelopeDto(from:))
+  }
+
+  func upsertEntitySnapshots(
+    entityType: String,
+    snapshots: [[String?: Any?]],
+    keys: IntentCallEntityKeyBundle
+  ) throws -> Int64 {
+    Int64(
+      IntentCallNativeEntitySnapshotStore.upsertSnapshots(
+        entityType: entityType,
+        snapshots: snapshotRows(from: snapshots),
+        idKey: keys.idKey
+      )
+    )
+  }
+
+  func deleteEntitySnapshots(
+    entityType: String,
+    ids: [String],
+    keys: IntentCallEntityKeyBundle
+  ) throws -> Int64 {
+    Int64(
+      IntentCallNativeEntitySnapshotStore.deleteSnapshots(
+        entityType: entityType,
+        ids: ids,
+        idKey: keys.idKey
+      )
+    )
+  }
+
+  func clearEntityTypeSnapshots(entityType: String) throws -> Int64 {
+    Int64(IntentCallNativeEntitySnapshotStore.clearSnapshots(entityType: entityType))
+  }
+
+  func listEntitySnapshots(entityType: String) throws -> [[String?: Any?]] {
+    snapshotRowsToPigeon(
+      IntentCallNativeEntitySnapshotStore.snapshots(entityType: entityType)
+    )
+  }
+
+  func searchEntitySnapshots(
+    entityType: String,
+    query: String,
+    limit: Int64,
+    keys: IntentCallEntityKeyBundle
+  ) throws -> [[String?: Any?]] {
+    snapshotRowsToPigeon(
+      IntentCallNativeEntitySnapshotStore.search(
+        entityType: entityType,
+        query: query,
+        titleKey: keys.titleKey,
+        subtitleKey: keys.subtitleKey,
+        keywordsKey: keys.keywordsKey,
+        limit: Int(limit)
+      )
+    )
+  }
+
+  private func envelopeDto(from row: [String: Any]) -> IntentCallInvocationEnvelopeDto? {
+    guard
+      let id = IntentCallNativeEntitySnapshotStore.string(row["id"]),
+      let qualifiedName = IntentCallNativeEntitySnapshotStore.string(row["qualifiedName"]),
+      let source = IntentCallNativeEntitySnapshotStore.string(row["source"]),
+      let createdAt = IntentCallNativeEntitySnapshotStore.string(row["createdAt"])
+    else {
+      return nil
+    }
+    let arguments = pigeonMap(from: row["arguments"] as? [String: Any])
+    return IntentCallInvocationEnvelopeDto(
+      id: id,
+      qualifiedName: qualifiedName,
+      arguments: arguments,
+      source: source,
+      createdAt: createdAt
+    )
+  }
+
+  private func pigeonMap(from row: [String: Any]?) -> [String?: Any?]? {
+    guard let row else { return nil }
+    var normalized = [String?: Any?]()
+    for (key, value) in row {
+      normalized[key] = value
+    }
+    return normalized
+  }
+
+  private func snapshotRows(from rows: [[String?: Any?]]) -> [[String: Any]] {
+    rows.map { row in
+      var normalized = [String: Any]()
+      for (key, value) in row {
+        guard let key else { continue }
+        normalized[key] = value as Any
       }
-    case "deleteEntitySnapshots":
-      withEntityArgs(call, result) { args, entityType in
-        let ids = args["ids"] as? [String] ?? []
-        let idKey = args["idKey"] as? String ?? "id"
-        result(
-          IntentCallNativeEntitySnapshotStore.deleteSnapshots(
-            entityType: entityType,
-            ids: ids,
-            idKey: idKey
-          )
-        )
-      }
-    case "clearEntityTypeSnapshots":
-      withEntityArgs(call, result) { _, entityType in
-        result(IntentCallNativeEntitySnapshotStore.clearSnapshots(entityType: entityType))
-      }
-    case "listEntitySnapshots":
-      withEntityArgs(call, result) { _, entityType in
-        result(IntentCallNativeEntitySnapshotStore.snapshots(entityType: entityType))
-      }
-    case "searchEntitySnapshots":
-      withEntityArgs(call, result) { args, entityType in
-        let query = args["query"] as? String ?? ""
-        let limit = args["limit"] as? Int ?? 20
-        let titleKey = args["titleKey"] as? String ?? "title"
-        let subtitleKey = args["subtitleKey"] as? String ?? "subtitle"
-        let keywordsKey = args["keywordsKey"] as? String ?? "keywords"
-        result(
-          IntentCallNativeEntitySnapshotStore.search(
-            entityType: entityType,
-            query: query,
-            titleKey: titleKey,
-            subtitleKey: subtitleKey,
-            keywordsKey: keywordsKey,
-            limit: limit
-          )
-        )
-      }
-    default:
-      result(FlutterMethodNotImplemented)
+      return normalized
     }
   }
 
-  private func withEntityArgs(
-    _ call: FlutterMethodCall,
-    _ result: @escaping FlutterResult,
-    _ body: ([String: Any], String) -> Void
-  ) {
-    guard let args = call.arguments as? [String: Any],
-          let entityType = args["entityType"] as? String else {
-      result(FlutterError(code: "invalid_entity_index_request", message: "Entity index calls require entityType.", details: nil))
-      return
+  private func snapshotRowsToPigeon(_ rows: [[String: Any]]) -> [[String?: Any?]] {
+    rows.map { row in
+      var normalized = [String?: Any?]()
+      for (key, value) in row {
+        normalized[key] = value
+      }
+      return normalized
     }
-    body(args, entityType)
   }
 }

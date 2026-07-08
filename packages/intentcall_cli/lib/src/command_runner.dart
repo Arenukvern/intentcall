@@ -2,7 +2,8 @@ import 'dart:io';
 
 import 'package:args/args.dart';
 import 'package:args/command_runner.dart';
-import 'package:intentcall_platform_sync/intentcall_platform_sync.dart';
+import 'package:intentcall_platform_sync/intentcall_platform_sync.dart'
+    hide parsePlatformList;
 import 'package:path/path.dart' as p;
 
 import 'catalog/catalog_loader.dart';
@@ -24,6 +25,7 @@ final class IntentCallCommandRunner extends CommandRunner<int> {
     addCommand(_ManifestCommand());
     addCommand(_PlatformCommand());
     addCommand(_CodegenCommand());
+    addCommand(_HooksCommand());
     addCommand(_McpCommand());
     addCommand(_AppleAppIntentsTestingCommand());
   }
@@ -465,7 +467,8 @@ final class _PlatformHooksInitCommand extends Command<int> {
     final hookFile = File(
       p.join(projectRoot, '.intentcall', 'web_build_hook.sh'),
     );
-    final expected = '${kJasprWebCodegenHook.trim()}\n';
+    final spine = PlatformHookSpine.resolveFromProjectRoot(projectRoot);
+    final expected = '${spine.renderJasprWeb().trim()}\n';
     final exists = hookFile.existsSync();
     final current = exists ? hookFile.readAsStringSync() : '';
     final ok = exists && current.contains('intentcall-platform: begin');
@@ -515,25 +518,19 @@ final class _PlatformHooksPrintCommand extends Command<int> {
   @override
   int run() {
     final results = argResults!;
+    final projectRoot = _ProjectDirOption.read(results);
+    final spine = PlatformHookSpine.resolveFromProjectRoot(projectRoot);
     final host = normalizeHostName('${results['host']}');
     final platform = '${results['platform'] ?? ''}'.trim().toLowerCase();
 
-    final snippets = <String, String>{
-      'android': kAndroidGradleCodegenHook,
-      'ios': kAppleXcodeCodegenRunScript,
-      'macos': kAppleXcodeCodegenRunScript,
-      'jaspr': kJasprWebCodegenHook,
-      'web': kJasprWebCodegenHook,
-    };
-
     if (platform.isNotEmpty) {
-      final snippet = snippets[platform];
-      if (snippet == null) {
-        printUsageError('unknown platform "$platform" for hook print.');
+      try {
+        stdout.writeln(spine.renderTemplate(platform).trim());
+        return 0;
+      } on ArgumentError catch (error) {
+        printUsageError('$error');
         return usageExitCode();
       }
-      stdout.writeln(snippet.trim());
-      return 0;
     }
 
     final keys = host == IntentCallHost.jaspr.name
@@ -542,16 +539,135 @@ final class _PlatformHooksPrintCommand extends Command<int> {
     for (final key in keys) {
       stdout
         ..writeln('== $key ==')
-        ..writeln(snippets[key]!.trim())
+        ..writeln(spine.renderTemplate(key).trim())
         ..writeln();
     }
     return 0;
   }
 
   @override
-  ArgParser get argParser => ArgParser()
-    ..addOption('host', defaultsTo: 'flutter')
-    ..addOption('platform', help: 'Print one platform snippet.');
+  ArgParser get argParser {
+    final parser = ArgParser();
+    _ProjectDirOption.add(parser);
+    parser
+      ..addOption('host', defaultsTo: 'flutter')
+      ..addOption('platform', help: 'Print one platform snippet.');
+    return parser;
+  }
+}
+
+final class _HooksCommand extends Command<int> {
+  _HooksCommand() {
+    addSubcommand(_HooksSpineCommand());
+    addSubcommand(_HooksRenderCommand());
+  }
+
+  @override
+  String get name => 'hooks';
+
+  @override
+  String get description =>
+      'Resolve or render platform hook spine from intentcall.yaml.';
+}
+
+final class _HooksSpineCommand extends Command<int> {
+  @override
+  String get name => 'spine';
+
+  @override
+  String get description =>
+      'Print resolved hook spine phases and CLI invocation.';
+
+  @override
+  int run() {
+    final results = argResults!;
+    final projectRoot = _ProjectDirOption.read(results);
+    final spine = PlatformHookSpine.resolveFromProjectRoot(projectRoot);
+    final asJson = results['json'] as bool? ?? false;
+    if (asJson) {
+      stdout.write(spine.encodeJson());
+    } else {
+      stdout.writeln('host: ${spine.host}');
+      stdout.writeln('cliInvocation: ${spine.cliInvocation}');
+      stdout.writeln('platformList: ${spine.platformList}');
+      stdout.writeln('codegen: ${spine.codegenPhase.shellLine}');
+      stdout.writeln('manifest: ${spine.manifestPhase.shellLine}');
+      stdout.writeln('sync: ${spine.syncPhase.shellLine}');
+    }
+    return 0;
+  }
+
+  @override
+  ArgParser get argParser {
+    final parser = ArgParser();
+    _ProjectDirOption.add(parser);
+    parser.addFlag('json', negatable: false);
+    return parser;
+  }
+}
+
+final class _HooksRenderCommand extends Command<int> {
+  @override
+  String get name => 'render';
+
+  @override
+  String get description => 'Render hook snippets from the resolved spine.';
+
+  @override
+  int run() {
+    final results = argResults!;
+    final projectRoot = _ProjectDirOption.read(results);
+    final host = normalizeHostName('${results['host']}');
+    final platform = '${results['platform'] ?? ''}'.trim().toLowerCase();
+    final config = loadIntentCallConfig(projectRoot);
+    final spine = config == null
+        ? PlatformHookSpine.resolve(PlatformHookSpineInput(host: host))
+        : PlatformHookSpine.resolve(
+            PlatformHookSpineInput(
+              host: config.host.name,
+              enabledPlatforms: resolveEnabledPlatforms(config),
+              syncCommand: config.hooks.syncCommand,
+            ),
+          );
+
+    if (platform.isNotEmpty) {
+      try {
+        stdout.writeln(spine.renderTemplate(platform).trim());
+        return 0;
+      } on ArgumentError catch (error) {
+        printUsageError('$error');
+        return usageExitCode();
+      }
+    }
+
+    final keys = host == IntentCallHost.jaspr.name
+        ? spine.hookTemplateKeys
+        : (spine.hookTemplateKeys.isEmpty
+              ? <String>['android', 'ios', 'macos']
+              : spine.hookTemplateKeys);
+    for (final key in keys) {
+      stdout
+        ..writeln('== $key ==')
+        ..writeln(spine.renderTemplate(key).trim())
+        ..writeln();
+    }
+    return 0;
+  }
+
+  @override
+  ArgParser get argParser {
+    final parser = ArgParser();
+    _ProjectDirOption.add(parser);
+    parser
+      ..addOption(
+        'host',
+        help: 'Host profile: flutter or jaspr.',
+        defaultsTo: 'flutter',
+        allowed: <String>['flutter', 'jaspr'],
+      )
+      ..addOption('platform', help: 'Render one platform snippet.');
+    return parser;
+  }
 }
 
 final class _CodegenCommand extends Command<int> {

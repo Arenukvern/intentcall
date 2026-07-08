@@ -117,4 +117,61 @@ void main() {
       returnsNormally,
     );
   });
+
+  test('WebMcpJsEmitter output aligns with ManifestSurfaceIndex web.webMcp', () {
+    final manifest = AgentManifest.parse('''
+{
+  "version": 1,
+  "platform": "web",
+  "tools": [
+    {
+      "qualifiedName": "app_demo_ping",
+      "namespace": "app",
+      "name": "demo_ping",
+      "description": "ping",
+      "kind": "tool",
+      "inputSchema": {"type": "object"},
+      "surfaces": {
+        "web.webMcp": {"include": true},
+        "web.manifestShortcuts": {"include": false},
+        "web.protocolHandlers": {"include": false},
+        "android.shortcuts": {"include": false},
+        "apple.appShortcuts": {"include": false},
+        "windows.protocolActivation": {"include": false},
+        "windows.msixProtocol": {"include": false},
+        "linux.schemeHandler": {"include": false}
+      }
+    },
+    {
+      "qualifiedName": "app_demo_cart",
+      "namespace": "app",
+      "name": "demo_cart",
+      "description": "cart",
+      "kind": "tool",
+      "inputSchema": {"type": "object"},
+      "surfaces": {
+        "web.webMcp": {"include": false},
+        "web.manifestShortcuts": {"include": false},
+        "web.protocolHandlers": {"include": false},
+        "android.shortcuts": {"include": false},
+        "apple.appShortcuts": {"include": false},
+        "windows.protocolActivation": {"include": false},
+        "windows.msixProtocol": {"include": false},
+        "linux.schemeHandler": {"include": false}
+      }
+    }
+  ]
+}
+''');
+    final index = ManifestSurfaceIndex.fromManifest(manifest);
+    final js = const WebMcpJsEmitter().emit(manifest);
+
+    for (final entry in manifest.entries) {
+      if (index.includesWebMcp(entry.qualifiedName)) {
+        expect(js, contains(entry.qualifiedName));
+      } else {
+        expect(js, isNot(contains(entry.qualifiedName)));
+      }
+    }
+  });
 }

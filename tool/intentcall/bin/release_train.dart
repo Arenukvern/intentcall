@@ -11,6 +11,7 @@ const publishablePackages = [
   'intentcall_android',
   'intentcall_codegen',
   'intentcall_platform_sync',
+  'intentcall_hooks',
   'intentcall_cli',
   'intentcall_platform',
   'intentcall_testing',

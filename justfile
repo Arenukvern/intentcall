@@ -6,7 +6,7 @@ default:
 
 # Run tests for all packages in the workspace
 test:
-    dart test packages/intentcall_schema packages/intentcall_core packages/intentcall_session packages/intentcall_mcp packages/intentcall_webmcp packages/intentcall_gemma packages/intentcall_apple packages/intentcall_android packages/intentcall_platform_sync packages/intentcall_codegen packages/intentcall_cli packages/intentcall_platform packages/intentcall_testing tool/intentcall
+    dart test packages/intentcall_schema packages/intentcall_core packages/intentcall_session packages/intentcall_mcp packages/intentcall_webmcp packages/intentcall_gemma packages/intentcall_apple packages/intentcall_android packages/intentcall_platform_sync packages/intentcall_hooks packages/intentcall_codegen packages/intentcall_cli packages/intentcall_platform packages/intentcall_testing tool/intentcall
 
 # Manifest freshness gate (build_runner catalog + export --check)
 manifest-export-check:
@@ -25,12 +25,25 @@ adr-gates:
     just manifest-parity
     just platform-sync-check
 
-# Layer 5 projection pipeline gate (spec section 8)
+# Phase 1 hook spine gate (ADR 0024)
+platform-hooks-check:
+    dart test packages/intentcall_platform_sync/test/platform_hook_templates_test.dart
+    dart test packages/intentcall_platform_sync/test/platform_hooks_init_test.dart
+    dart test packages/intentcall_cli/test/command_runner_test.dart
+
+# Layer 5 projection pipeline gate (ADR 0022/0023/0024)
 projection-pipeline-check:
     dart test packages/intentcall_platform_sync/test/manifest_merger_test.dart
     dart test packages/intentcall_platform_sync/test/dense_manifest_test.dart
     dart test packages/intentcall_codegen/example/test/manifest_projection_test.dart
     dart test packages/intentcall_platform_sync/test/native_emitters_test.dart
+    dart test packages/intentcall_platform_sync/test/projection_alignment_test.dart
+    dart test packages/intentcall_platform_sync/test/apple_surface_matrix_test.dart
+    dart test packages/intentcall_platform_sync/test/partial_defaults_platform_scope_test.dart
+    dart test packages/intentcall_platform_sync/test/ios_shortcuts_opt_in_test.dart
+    dart test packages/intentcall_platform_sync/test/platform_sync_layout_test.dart
+    dart test packages/intentcall_platform_sync/test/webmcp_bootstrap_surface_test.dart
+    dart test packages/intentcall_cli/test/manifest_entity_export_test.dart
     cd packages/intentcall_codegen/example && dart pub get && dart run build_runner build
     cd packages/intentcall_codegen/example && dart run ../../intentcall_cli/bin/intentcall.dart manifest export --check
     cd packages/intentcall_codegen/example && dart run ../../intentcall_cli/bin/intentcall.dart platform sync --platform web --check
@@ -138,7 +151,13 @@ validate:
 
 # Run the shared native adapter and platform bridge contract tests
 adapter-contract-test:
-    dart test packages/intentcall_testing/test/adapter_contract_test.dart packages/intentcall_mcp/test/mcp_adapter_contract_test.dart packages/intentcall_webmcp/test/webmcp_adapter_contract_test.dart packages/intentcall_gemma/test/gemma_adapter_contract_test.dart packages/intentcall_platform_sync/test/intentcall_invocation_test.dart packages/intentcall_platform_sync/test/web_emitters_test.dart packages/intentcall_platform_sync/test/agent_web_mcp_bootstrap_test.dart packages/intentcall_platform_sync/test/native_emitters_test.dart packages/intentcall_platform_sync/test/native_platform_sync_test.dart packages/intentcall_platform/test/intentcall_flutter_host_test.dart packages/intentcall_platform/test/intentcall_entity_index_test.dart
+    dart test packages/intentcall_testing/test/adapter_contract_test.dart packages/intentcall_mcp/test/mcp_adapter_contract_test.dart packages/intentcall_webmcp/test/webmcp_adapter_contract_test.dart packages/intentcall_gemma/test/gemma_adapter_contract_test.dart packages/intentcall_platform_sync/test/intentcall_invocation_test.dart packages/intentcall_platform_sync/test/web_emitters_test.dart packages/intentcall_platform_sync/test/agent_web_mcp_bootstrap_test.dart packages/intentcall_platform_sync/test/native_emitters_test.dart packages/intentcall_platform_sync/test/native_platform_sync_test.dart packages/intentcall_platform/test/intentcall_flutter_host_test.dart packages/intentcall_platform/test/intentcall_entity_index_test.dart packages/intentcall_platform/test/pigeon_bridge_contract_test.dart
+
+# Regenerate and verify Pigeon bridge outputs are committed (Phase 3 gate)
+pigeon-codegen-check:
+    cd packages/intentcall_bridge && dart run pigeon --input pigeons/intentcall_platform_bridge.dart
+    cp packages/intentcall_platform/ios/intentcall_platform/Sources/intentcall_platform/IntentCallPlatformBridge.g.swift packages/intentcall_platform/macos/intentcall_platform/Sources/intentcall_platform/IntentCallPlatformBridge.g.swift
+    git diff --exit-code packages/intentcall_bridge/lib/src/intentcall_platform_bridge.g.dart packages/intentcall_platform/ios/intentcall_platform/Sources/intentcall_platform/IntentCallPlatformBridge.g.swift packages/intentcall_platform/macos/intentcall_platform/Sources/intentcall_platform/IntentCallPlatformBridge.g.swift packages/intentcall_platform/android/src/main/kotlin/dev/intentcall/intentcall_platform/IntentCallPlatformBridge.g.kt
 
 # List custom agent skills defined in this repository
 list-skills:

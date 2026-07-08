@@ -3,7 +3,7 @@
 Architecture Decision Records (ADRs) for IntentCall.
 Format: [MADR](https://adr.github.io/madr/) — see any existing ADR for the template.
 
-Next ADR number: **0024**
+Next ADR number: **0025**
 
 ---
 
@@ -25,6 +25,7 @@ Next ADR number: **0024**
 | [0021](0021-agent-catalog-annotation.md) | accepted | @AgentCatalog Annotation and Removal of Handwritten Catalog Path | 2026-07-07 |
 | [0022](0022-projection-pipeline-alignment.md) | accepted | Projection Pipeline Alignment — Dense Export and Apple Sub-Channels | 2026-07-07 |
 | [0023](0023-entity-three-slot-projection.md) | accepted | Entity Three-Slot Projection and Property Roles | 2026-07-07 |
+| [0024](0024-dart-hooks-and-pigeon-bridge-consistency.md) | accepted | Dart Hooks and Pigeon Bridge Consistency | 2026-07-08 |
 
 ---
 

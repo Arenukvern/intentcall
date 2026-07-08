@@ -146,6 +146,19 @@ Neutral:
 - [0018-additive-actions-typed-entities-indexing-lifecycle.md](0018-additive-actions-typed-entities-indexing-lifecycle.md)
 - [0021-agent-catalog-annotation.md](0021-agent-catalog-annotation.md)
 - [0022-projection-pipeline-alignment.md](0022-projection-pipeline-alignment.md)
-- [projection-pipeline-spec.md](../evidence/projection-pipeline-spec.md)
+- [0024-dart-hooks-and-pigeon-bridge-consistency.md](0024-dart-hooks-and-pigeon-bridge-consistency.md)
+- [hooks-native-bridge-plan.md](../evidence/hooks-native-bridge-plan.md)
+- [projection-pipeline-spec.md](../evidence/projection-pipeline-spec.md) (retired; see ADR 0024)
 - `packages/intentcall_core/lib/src/entity/agent_entity_snapshot_keys.dart`
 - `packages/intentcall_core/lib/src/entity/agent_entity_property_role.dart`
+
+## Verification inventory
+
+Primary test files for three-slot entity projection and manifest export:
+
+| Test file | Coverage |
+|-----------|----------|
+| [`manifest_entity_export_test.dart`](../../packages/intentcall_cli/test/manifest_entity_export_test.dart) | `entityTypes[]` export with `idKey` / `titleKey` / `subtitleKey` / `keywordsKey` slots |
+| [`intentcall_entity_index_test.dart`](../../packages/intentcall_platform/test/intentcall_entity_index_test.dart) | Native entity index search over manifest slot keys |
+| [`agent_entity_snapshot_projection_test.dart`](../../packages/intentcall_core/test/agent_entity_snapshot_projection_test.dart) | `projectAgentEntitySnapshot()` maps descriptor roles to cache rows |
+| [`projection_alignment_test.dart`](../../packages/intentcall_platform_sync/test/projection_alignment_test.dart) — `entityTypes in export` and `single native entity snapshot store` groups | Manifest `entityTypes` passthrough and Apple emitter entity store wiring |

@@ -45,6 +45,9 @@ jobs:
       - name: ADR 0019 validation gates
         run: just adr-gates
 
+      - name: projection pipeline check
+        run: just projection-pipeline-check
+
       - name: analyze
         run: dart analyze .
 

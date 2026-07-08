@@ -19,6 +19,7 @@ dependencies:
   app_links: ^6.4.0
   flutter:
     sdk: flutter
+  intentcall_bridge: ^0.6.0
   intentcall_core: ^0.6.0
   intentcall_platform_sync: ^0.6.0
   intentcall_schema: ^0.6.0

@@ -27,6 +27,12 @@
             "url": "/agent/invoke?name=app_demo_required_named"
         },
         {
+            "name": "Demo Set Greeting",
+            "short_name": "Demo Set Greeting",
+            "description": "Set greeting text for the codegen demo host.",
+            "url": "/agent/invoke?name=app_demo_set_greeting"
+        },
+        {
             "name": "Demo Inbox",
             "short_name": "Demo Inbox",
             "description": "Read inbox folder",
@@ -59,6 +65,10 @@
         {
             "protocol": "web+intentcall",
             "url": "/agent/invoke?name=app_demo_required_named&payload=%s"
+        },
+        {
+            "protocol": "web+intentcall",
+            "url": "/agent/invoke?name=app_demo_set_greeting&payload=%s"
         },
         {
             "protocol": "web+intentcall",

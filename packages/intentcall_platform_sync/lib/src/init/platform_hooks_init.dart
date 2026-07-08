@@ -4,6 +4,7 @@ import 'package:path/path.dart' as p;
 
 import '../emitters/android_shortcuts_xml_emitter.dart';
 import '../sync/platform_sync.dart';
+import '../templates/platform_hook_spine.dart';
 import '../templates/platform_hook_templates.dart';
 
 const _markerBegin = 'intentcall-platform: begin';
@@ -48,6 +49,7 @@ final class PlatformHooksInit {
     final bool checkOnly = false,
   }) async {
     final root = p.normalize(p.absolute(projectRoot));
+    final spine = PlatformHookSpine.resolveFromProjectRoot(root);
     final targets = <PlatformHookTargetResult>[
       await _patchFile(
         id: 'web_index_html',
@@ -58,7 +60,7 @@ final class PlatformHooksInit {
       await _patchFile(
         id: 'android_gradle',
         path: p.join(root, 'android', 'app', 'build.gradle.kts'),
-        snippet: kAndroidGradleCodegenHook.trim(),
+        snippet: spine.renderGradle().trim(),
         checkOnly: checkOnly,
         appendIfMissing: true,
       ),
@@ -79,14 +81,14 @@ final class PlatformHooksInit {
       await _patchFile(
         id: 'ios_codegen_script',
         path: p.join(root, 'ios', 'intentcall_codegen.sh'),
-        snippet: kAppleXcodeCodegenRunScript.trim(),
+        snippet: spine.renderAppleXcode().trim(),
         checkOnly: checkOnly,
         wholeFile: true,
       ),
       await _patchFile(
         id: 'macos_codegen_script',
         path: p.join(root, 'macos', 'intentcall_codegen.sh'),
-        snippet: kAppleXcodeCodegenRunScript.trim(),
+        snippet: spine.renderAppleXcode().trim(),
         checkOnly: checkOnly,
         wholeFile: true,
       ),

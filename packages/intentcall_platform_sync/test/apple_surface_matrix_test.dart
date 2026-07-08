@@ -100,6 +100,7 @@ void main() {
       expect(swift, isNot(contains('IntentCallAppEntityIndexer')));
       expect(swift, contains('enum IntentCallGeneratedEntityConfig'));
       expect(swift, isNot(contains('enum IntentCallNativeEntitySnapshotStore {')));
+      expect(swift, isNot(contains('enum IntentCallNativeHandoffStore {')));
     });
 
     test('appleSpotlight adds indexing helpers', () {

@@ -109,8 +109,14 @@ void main() {
       expect(swift, contains('arguments["currency"] = currency'));
       expect(swift, contains('IntentCallShortcutsProvider'));
       expect(swift, contains('IntentCallNativeBridge'));
-      expect(swift, contains('intentcall.pending_invocations'));
-      expect(swift, contains('objc_sync_enter(UserDefaults.standard)'));
+      expect(swift, contains('IntentCallNativeHandoffStore.append(item)'));
+      expect(
+        swift,
+        contains(
+          'IntentCallNativeHandoffStore is provided by the intentcall_platform plugin',
+        ),
+      );
+      expect(swift, isNot(contains('enum IntentCallNativeHandoffStore {')));
       expect(
         swift,
         contains(
@@ -191,6 +197,7 @@ void main() {
         swift,
         isNot(contains('enum IntentCallNativeEntitySnapshotStore {')),
       );
+      expect(swift, isNot(contains('enum IntentCallNativeHandoffStore {')));
       expect(swift, contains('static func indexAppEntities() async throws'));
       expect(swift, contains('CSSearchableIndex.default().indexAppEntities'));
       expect(swift, contains('static func deleteAppEntities('));
@@ -1169,18 +1176,7 @@ struct IntentCallShortcutsProvider: AppShortcutsProvider {
   }
 }
 
-enum IntentCallNativeHandoffStore {
-  private static let pendingKey = "intentcall.pending_invocations"
-
-  static func append(_ item: [String: Any]) {
-    objc_sync_enter(UserDefaults.standard)
-    defer { objc_sync_exit(UserDefaults.standard) }
-    var pending = UserDefaults.standard.array(forKey: pendingKey) as? [[String: Any]] ?? []
-    pending.append(item)
-    UserDefaults.standard.set(pending, forKey: pendingKey)
-  }
-}
-
+// IntentCallNativeHandoffStore is provided by the intentcall_platform plugin.
 enum IntentCallNativeBridge {
   private static let fallbackScheme: String? = "demoapp"
 

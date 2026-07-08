@@ -352,11 +352,19 @@ layout:
     });
 
     group('mcp_flutter three-gate (sibling consumer)', () {
+      // Three-gate spine (semantics unchanged across hosts):
+      //   1. dart run build_runner build --delete-conflicting-outputs
+      //   2. intentcall manifest export --check
+      //   3. intentcall platform sync --platform <resolved> --check
+      //
+      // mcp_flutter Jaspr recipe: `make check-contracts` →
+      //   tool/contracts/check_intentcall_jaspr_three_gate.sh
+      // Flutter consumer: `tool/contracts/check_intentcall_hosted_consumer.sh`
       test(
         'skipped in agentkit — run make check-contracts in mcp_flutter',
         () {},
         skip:
-            'L5b/L5c: mcp_flutter Jaspr + flutter_test_app gates run in sibling repo',
+            'L5b/L5c: mcp_flutter Jaspr + flutter_test_app gates run in sibling repo (make check-contracts)',
       );
     });
   });

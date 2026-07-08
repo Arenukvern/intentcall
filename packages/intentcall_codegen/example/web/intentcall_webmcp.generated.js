@@ -64,6 +64,22 @@
     }
   },
   {
+    "name": "app_demo_set_greeting",
+    "description": "Set greeting text for the codegen demo host.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string",
+          "description": "Greeting text"
+        }
+      },
+      "required": [
+        "text"
+      ]
+    }
+  },
+  {
     "name": "app_demo_inbox",
     "description": "Read inbox folder",
     "inputSchema": {

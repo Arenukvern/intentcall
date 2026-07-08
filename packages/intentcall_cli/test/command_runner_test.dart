@@ -108,6 +108,33 @@ void main() {
       ]);
       expect(exitCode, 0);
     });
+
+    test('hooks spine --json resolves from fixture', () async {
+      final runner = IntentCallCommandRunner();
+      final exitCode = await runner.run(<String>[
+        'hooks',
+        'spine',
+        '--json',
+        '--project-dir',
+        flutterFixture.path,
+      ]);
+      expect(exitCode, 0);
+    });
+
+    test('hooks render emits jaspr snippet for host', () async {
+      final runner = IntentCallCommandRunner();
+      final exitCode = await runner.run(<String>[
+        'hooks',
+        'render',
+        '--host',
+        'jaspr',
+        '--platform',
+        'web',
+        '--project-dir',
+        jasprFixture.path,
+      ]);
+      expect(exitCode, 0);
+    });
   });
 
   group('IntentCallConfig', () {

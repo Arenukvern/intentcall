@@ -1,64 +1,24 @@
+import 'platform_hook_spine.dart';
+
+export 'platform_hook_spine.dart';
+
+/// Default Flutter hook spine (no project `intentcall.yaml`).
+PlatformHookSpine get kDefaultFlutterHookSpine =>
+    PlatformHookSpine.resolve(const PlatformHookSpineInput(host: 'flutter'));
+
+/// Default Jaspr hook spine (no project `intentcall.yaml`).
+PlatformHookSpine get kDefaultJasprHookSpine =>
+    PlatformHookSpine.resolve(const PlatformHookSpineInput(host: 'jaspr'));
+
 /// Gradle `preBuild` hook — inject into `android/app/build.gradle.kts` once.
-const kAndroidGradleCodegenHook = '''
-// intentcall-platform: begin
-tasks.named("preBuild").configure {
-    doFirst {
-        exec {
-            workingDir = rootProject.layout.projectDirectory.dir("../../").asFile
-            commandLine(
-                "dart",
-                "run",
-                "build_runner",
-                "build",
-                "--delete-conflicting-outputs",
-            )
-        }
-        exec {
-            workingDir = rootProject.layout.projectDirectory.dir("../../").asFile
-            commandLine(
-                "intentcall",
-                "manifest",
-                "export",
-                "--check",
-            )
-        }
-        exec {
-            workingDir = rootProject.layout.projectDirectory.dir("../../").asFile
-            commandLine(
-                "intentcall",
-                "platform",
-                "sync",
-                "--platform",
-                "android",
-            )
-        }
-    }
-}
-// intentcall-platform: end
-''';
+String get kAndroidGradleCodegenHook => kDefaultFlutterHookSpine.renderGradle();
 
 /// Xcode Run Script build phase — add to iOS/macOS target once.
-const kAppleXcodeCodegenRunScript = r'''
-# intentcall-platform: begin
-cd "${SRCROOT}/.."
-dart run build_runner build --delete-conflicting-outputs
-intentcall manifest export --check
-intentcall platform sync --platform ios,macos || exit 1
-# intentcall-platform: end
-''';
+String get kAppleXcodeCodegenRunScript =>
+    kDefaultFlutterHookSpine.renderAppleXcode();
 
 /// Jaspr / web-only hook snippet for CI or custom build steps.
-///
-/// Hooks call bare `intentcall` on PATH; for local development use
-/// `dart run intentcall_cli:intentcall` or `dart pub global activate intentcall_cli`.
-/// mcp_flutter delegation: see ADR 0019.
-const kJasprWebCodegenHook = '''
-# intentcall-platform: begin
-dart run build_runner build --delete-conflicting-outputs
-intentcall manifest export --check
-intentcall platform sync --platform web || exit 1
-# intentcall-platform: end
-''';
+String get kJasprWebCodegenHook => kDefaultJasprHookSpine.renderJasprWeb();
 
 /// Documents where hook templates live for `init intentcall-platform`.
 const kPlatformHookTemplatePaths = <String, String>{
@@ -67,9 +27,3 @@ const kPlatformHookTemplatePaths = <String, String>{
   'macos': 'intentcall_platform Xcode Run Script (kAppleXcodeCodegenRunScript)',
   'jaspr': 'intentcall_platform web hook (kJasprWebCodegenHook)',
 };
-
-/// Legacy hook marker still accepted during migration.
-const kLegacyFlutterMcpToolkitSyncMarker = 'flutter-mcp-toolkit codegen sync';
-
-/// Current hook marker for [PlatformHooksInit] detection.
-const kIntentcallPlatformSyncMarker = 'intentcall platform sync';

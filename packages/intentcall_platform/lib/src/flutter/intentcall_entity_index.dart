@@ -3,9 +3,31 @@ import 'package:intentcall_schema/intentcall_schema.dart';
 
 import 'intentcall_entity_index_channel_stub.dart'
     if (dart.library.ui) 'intentcall_entity_index_channel.dart';
+import 'intentcall_entity_key_bundle.dart';
 
 typedef IntentCallPlatformInvoke =
     Future<Object?> Function(String method, Object? arguments);
+
+/// Manifest-projected entity field keys for native snapshot channels.
+IntentCallEntityKeyBundle entityKeyBundleFromDescriptor(
+  final AgentEntityTypeDescriptor descriptor,
+) {
+  String? byRole(final AgentEntityPropertyRole role) {
+    for (final property in descriptor.properties) {
+      if (property.role == role) {
+        return property.name;
+      }
+    }
+    return null;
+  }
+
+  return IntentCallEntityKeyBundle(
+    idKey: descriptor.identifierName,
+    titleKey: byRole(AgentEntityPropertyRole.title) ?? 'title',
+    subtitleKey: byRole(AgentEntityPropertyRole.subtitle) ?? 'subtitle',
+    keywordsKey: byRole(AgentEntityPropertyRole.keywords) ?? 'keywords',
+  );
+}
 
 /// Dart-facing writer for native entity snapshots used by platform projections.
 ///
@@ -26,14 +48,20 @@ final class IntentCallPlatformEntityIndex {
     snapshots: snapshots.map(
       (final snapshot) => projectAgentEntitySnapshot(snapshot, descriptor),
     ),
+    keys: entityKeyBundleFromDescriptor(descriptor),
   );
 
   Future<int> deleteAgentRefs({
     required final Iterable<AgentEntityRef> refs,
+    final IntentCallEntityKeyBundle? keys,
   }) async {
     var count = 0;
     for (final entry in _refsByEntityType(refs).entries) {
-      count += await deleteSnapshots(entityType: entry.key, ids: entry.value);
+      count += await deleteSnapshots(
+        entityType: entry.key,
+        ids: entry.value,
+        keys: keys,
+      );
     }
     return count;
   }
@@ -41,11 +69,13 @@ final class IntentCallPlatformEntityIndex {
   Future<int> upsertSnapshots({
     required final String entityType,
     required final Iterable<Map<String, Object?>> snapshots,
+    final IntentCallEntityKeyBundle? keys,
   }) async {
     final rows = snapshots.map(_snapshotRow).toList(growable: false);
     final result = await _invoke('upsertEntitySnapshots', <String, Object?>{
       'entityType': _entityType(entityType),
       'snapshots': rows,
+      'keys': keys ?? intentCallDefaultEntityKeyBundle(),
     });
     return _intResult(result, fallback: rows.length);
   }
@@ -53,11 +83,13 @@ final class IntentCallPlatformEntityIndex {
   Future<int> deleteSnapshots({
     required final String entityType,
     required final Iterable<String> ids,
+    final IntentCallEntityKeyBundle? keys,
   }) async {
     final idRows = ids.map(_entityId).toList(growable: false);
     final result = await _invoke('deleteEntitySnapshots', <String, Object?>{
       'entityType': _entityType(entityType),
       'ids': idRows,
+      'keys': keys ?? intentCallDefaultEntityKeyBundle(),
     });
     return _intResult(result, fallback: idRows.length);
   }
@@ -82,10 +114,12 @@ final class IntentCallPlatformEntityIndex {
     required final String entityType,
     required final String query,
     final int? limit,
+    final IntentCallEntityKeyBundle? keys,
   }) async {
     final arguments = <String, Object?>{
       'entityType': _entityType(entityType),
       'query': query.trim(),
+      'keys': keys ?? intentCallDefaultEntityKeyBundle(),
     };
     if (limit != null) {
       arguments['limit'] = limit;

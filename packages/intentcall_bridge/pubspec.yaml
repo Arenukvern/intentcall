@@ -1,0 +1,27 @@
+name: intentcall_bridge
+description: >-
+  PRE-RELEASE — Pigeon IDL and generated Dart bindings for IntentCall platform
+  bridge channels (invocations + entity snapshots).
+version: 0.6.0
+license: MIT
+repository: https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_bridge
+issue_tracker: https://github.com/Arenukvern/intentcall/issues
+homepage: https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_bridge
+topics:
+  - mcp
+  - flutter
+  - agents
+
+environment:
+  sdk: ">=3.12.0 <4.0.0"
+  flutter: ">=3.24.0"
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  lints: ^6.1.0
+  pigeon: ^26.0.0
+  xsoulspace_lints: ^0.1.2

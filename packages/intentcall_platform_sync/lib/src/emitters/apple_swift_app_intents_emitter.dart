@@ -179,22 +179,9 @@ final class AppleSwiftAppIntentsEmitter {
     }
     if (intentTools.isNotEmpty) {
       buffer
-      ..writeln('enum IntentCallNativeHandoffStore {')
       ..writeln(
-        '  private static let pendingKey = "intentcall.pending_invocations"',
+        '// IntentCallNativeHandoffStore is provided by the intentcall_platform plugin.',
       )
-      ..writeln()
-      ..writeln('  static func append(_ item: [String: Any]) {')
-      ..writeln('    objc_sync_enter(UserDefaults.standard)')
-      ..writeln('    defer { objc_sync_exit(UserDefaults.standard) }')
-      ..writeln(
-        '    var pending = UserDefaults.standard.array(forKey: pendingKey) as? [[String: Any]] ?? []',
-      )
-      ..writeln('    pending.append(item)')
-      ..writeln('    UserDefaults.standard.set(pending, forKey: pendingKey)')
-      ..writeln('  }')
-      ..writeln('}')
-      ..writeln()
       ..writeln('enum IntentCallNativeBridge {')
       ..writeln(
         '  private static let fallbackScheme: String? = ${_swiftOptionalString(bridgeProtocolScheme)}',

@@ -19,6 +19,7 @@ const publishOrder = [
   'intentcall_android',
   'intentcall_codegen',
   'intentcall_platform_sync',
+  'intentcall_hooks',
   'intentcall_cli',
   'intentcall_platform',
   'intentcall_testing',
@@ -1010,9 +1011,9 @@ Future<List<String>> swiftPackageManagerFindings(
           '${spec.packageDir} SwiftPM source is missing IntentCallPlatformPlugin',
         );
       }
-      if (!source.contains('"intentcall_platform/invocations"')) {
+      if (!source.contains('IntentCallInvocationsHostApiSetup.setUp')) {
         findings.add(
-          '${spec.packageDir} SwiftPM source is missing the invocation channel',
+          '${spec.packageDir} SwiftPM source is missing the Pigeon invocation bridge',
         );
       }
     }

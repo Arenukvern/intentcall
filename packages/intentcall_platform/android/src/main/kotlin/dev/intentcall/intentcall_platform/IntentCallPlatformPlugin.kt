@@ -2,9 +2,48 @@ package dev.intentcall.intentcall_platform
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 
-/** Thin plugin anchor; deep links use [app_links] from Dart. */
+/** Android stub for the Pigeon bridge; entity/invocation stores are iOS/macOS today. */
 class IntentCallPlatformPlugin : FlutterPlugin {
-  override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {}
+  private val bridge = IntentCallPlatformBridgeStub()
 
-  override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {}
+  override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+    IntentCallInvocationsHostApi.setUp(binding.binaryMessenger, bridge)
+    IntentCallEntitiesHostApi.setUp(binding.binaryMessenger, bridge)
+  }
+
+  override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+    IntentCallInvocationsHostApi.setUp(binding.binaryMessenger, null)
+    IntentCallEntitiesHostApi.setUp(binding.binaryMessenger, null)
+  }
+}
+
+private class IntentCallPlatformBridgeStub :
+  IntentCallInvocationsHostApi,
+  IntentCallEntitiesHostApi {
+  override fun takePendingInvocations(): List<IntentCallInvocationEnvelopeDto> =
+    emptyList()
+
+  override fun upsertEntitySnapshots(
+    entityType: String,
+    snapshots: List<Map<String?, Any?>>,
+    keys: IntentCallEntityKeyBundle,
+  ): Long = 0
+
+  override fun deleteEntitySnapshots(
+    entityType: String,
+    ids: List<String>,
+    keys: IntentCallEntityKeyBundle,
+  ): Long = 0
+
+  override fun clearEntityTypeSnapshots(entityType: String): Long = 0
+
+  override fun listEntitySnapshots(entityType: String): List<Map<String?, Any?>> =
+    emptyList()
+
+  override fun searchEntitySnapshots(
+    entityType: String,
+    query: String,
+    limit: Long,
+    keys: IntentCallEntityKeyBundle,
+  ): List<Map<String?, Any?>> = emptyList()
 }
