@@ -1,5 +1,7 @@
 name: intentcall_platform
-description: "PRE-RELEASE — Platform emitters and sync for intentcall: web manifests, WebMCP JS, native handoff, and Apple App Intents scaffolds."
+description: >-
+  PRE-RELEASE — Federated Flutter runtime umbrella for IntentCall: Dart host
+  APIs, WebMCP bootstrap, and endorsed native platform implementations.
 version: 0.6.0
 license: MIT
 repository: https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_platform
@@ -21,6 +23,8 @@ dependencies:
     sdk: flutter
   intentcall_bridge: ^0.6.0
   intentcall_core: ^0.6.0
+  intentcall_platform_android: ^0.6.0
+  intentcall_platform_apple: ^0.6.0
   intentcall_platform_sync: ^0.6.0
   intentcall_schema: ^0.6.0
   meta: ^1.18.0
@@ -31,12 +35,11 @@ flutter:
   plugin:
     platforms:
       android:
-        package: dev.intentcall.intentcall_platform
-        pluginClass: IntentCallPlatformPlugin
+        default_package: intentcall_platform_android
       ios:
-        pluginClass: IntentCallPlatformPlugin
+        default_package: intentcall_platform_apple
       macos:
-        pluginClass: IntentCallPlatformPlugin
+        default_package: intentcall_platform_apple
 
 dev_dependencies:
   lints: ^6.1.0

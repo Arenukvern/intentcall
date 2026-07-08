@@ -15,16 +15,22 @@ const publishOrder = [
   'intentcall_session',
   'intentcall_mcp',
   'intentcall_webmcp',
-  'intentcall_apple',
-  'intentcall_android',
   'intentcall_codegen',
   'intentcall_platform_sync',
   'intentcall_hooks',
   'intentcall_bridge',
   'intentcall_cli',
   'intentcall_platform',
+  'intentcall_platform_apple',
+  'intentcall_platform_android',
   'intentcall_testing',
 ];
+
+const flutterPublishPackages = {
+  'intentcall_platform',
+  'intentcall_platform_apple',
+  'intentcall_platform_android',
+};
 
 void main(List<String> arguments) async {
   final parser = ArgParser()
@@ -309,10 +315,10 @@ void printUsage(ArgParser parser) {
     '  validate              Validate path dependencies and version consistency.',
   );
   print(
-    '  check-release-train   Verify train versions, internal floors, and podspecs.',
+    '  check-release-train   Verify train versions and internal floors.',
   );
   print(
-    '  sync-release-train    Rewrite train versions, internal floors, and podspecs.',
+    '  sync-release-train    Rewrite train versions and internal floors.',
   );
   print(
     '  check-path-deps       Scan workspace for invalid path dependencies.',
@@ -828,10 +834,7 @@ Future<int> runValidate(Directory repoRoot) async {
   print('OK: All packages are synchronized at version $synchronizedVersion.');
 
   // 3. Check native package metadata for Flutter plugin hygiene
-  final nativePackageCode = await runNativePackageHygieneCheck(
-    repoRoot,
-    version: synchronizedVersion,
-  );
+  final nativePackageCode = await runNativePackageHygieneCheck(repoRoot);
   if (nativePackageCode != 0) {
     return nativePackageCode;
   }
@@ -897,32 +900,41 @@ Future<int> runValidate(Directory repoRoot) async {
   return 0;
 }
 
-Future<int> runNativePackageHygieneCheck(
-  Directory repoRoot, {
-  required String version,
-}) async {
+Future<int> runNativePackageHygieneCheck(Directory repoRoot) async {
   print('\nChecking native package hygiene...');
-  final packageRoot = Directory(
-    p.join(repoRoot.path, 'packages', 'intentcall_platform'),
-  );
   final mismatches = <String>[];
-  for (final relativePath in <String>[
-    p.join('ios', 'intentcall_platform.podspec'),
-    p.join('macos', 'intentcall_platform.podspec'),
-  ]) {
-    final file = File(p.join(packageRoot.path, relativePath));
-    final content = await file.readAsString();
-    final actual = podspecVersion(content);
-    if (actual == null) {
-      mismatches.add('$relativePath is missing s.version');
-      continue;
-    }
-    if (actual != version) {
-      mismatches.add('$relativePath has s.version $actual, expected $version');
-    }
+
+  final applePackageRoot = Directory(
+    p.join(repoRoot.path, 'packages', 'intentcall_platform_apple'),
+  );
+  if (!applePackageRoot.existsSync()) {
+    mismatches.add('packages/intentcall_platform_apple is missing');
+  } else {
+    mismatches.addAll(await swiftPackageManagerFindings(applePackageRoot));
   }
 
-  mismatches.addAll(await swiftPackageManagerFindings(packageRoot));
+  mismatches.addAll(await federatedPlatformPodspecFindings(repoRoot));
+
+  final androidPlugin = File(
+    p.join(
+      repoRoot.path,
+      'packages',
+      'intentcall_platform_android',
+      'android',
+      'src',
+      'main',
+      'kotlin',
+      'dev',
+      'intentcall',
+      'intentcall_platform',
+      'IntentCallPlatformPlugin.kt',
+    ),
+  );
+  if (!androidPlugin.existsSync()) {
+    mismatches.add(
+      'packages/intentcall_platform_android/android/src/main/kotlin/dev/intentcall/intentcall_platform/IntentCallPlatformPlugin.kt is missing',
+    );
+  }
 
   if (mismatches.isNotEmpty) {
     stderr.writeln('FAIL: Native package hygiene drift detected.');
@@ -932,98 +944,115 @@ Future<int> runNativePackageHygieneCheck(
     return 1;
   }
   print(
-    'OK: native podspec versions and SwiftPM package layout are synchronized.',
+    'OK: federated Apple SPM layout and Android plugin sources are synchronized.',
   );
   return 0;
 }
 
-String? podspecVersion(final String content) {
-  final match = RegExp(
-    r"^\s*s\.version\s*=\s*'([^']+)'",
-    multiLine: true,
-  ).firstMatch(content);
-  return match?.group(1);
+Future<List<String>> federatedPlatformPodspecFindings(
+  final Directory repoRoot,
+) async {
+  final findings = <String>[];
+  final packagesDir = Directory(p.join(repoRoot.path, 'packages'));
+  if (!packagesDir.existsSync()) {
+    return findings;
+  }
+  for (final entity in packagesDir.listSync()) {
+    if (entity is! Directory) {
+      continue;
+    }
+    final name = p.basename(entity.path);
+    if (!name.startsWith('intentcall_platform')) {
+      continue;
+    }
+    for (final file in entity.listSync(recursive: true)) {
+      if (file is! File) {
+        continue;
+      }
+      if (p.extension(file.path) != '.podspec') {
+        continue;
+      }
+      findings.add(
+        '${p.relative(file.path, from: repoRoot.path)} must not exist (SPM-only hardcut)',
+      );
+    }
+  }
+  return findings;
 }
 
 Future<List<String>> swiftPackageManagerFindings(
   final Directory packageRoot,
 ) async {
   final findings = <String>[];
-  final specs = <({String platform, String version, String packageDir})>[
-    (platform: 'iOS', version: '13.0', packageDir: 'ios'),
-    (platform: 'macOS', version: '10.14', packageDir: 'macos'),
+  final spmRoot = Directory(
+    p.join(packageRoot.path, 'darwin', 'intentcall_platform_apple'),
+  );
+  final packageFile = File(p.join(spmRoot.path, 'Package.swift'));
+  final sourcesDir = p.join(
+    spmRoot.path,
+    'Sources',
+    'intentcall_platform_apple',
+  );
+  final sourceFile = File(
+    p.join(sourcesDir, 'IntentCallPlatformPlugin.swift'),
+  );
+  final privacyFile = File(p.join(sourcesDir, 'PrivacyInfo.xcprivacy'));
+  final bridgeFile = File(
+    p.join(sourcesDir, 'IntentCallPlatformBridge.g.swift'),
+  );
+
+  if (!packageFile.existsSync()) {
+    findings.add(
+      'darwin/intentcall_platform_apple/Package.swift is missing',
+    );
+    return findings;
+  }
+
+  final content = await packageFile.readAsString();
+  final requiredSnippets = <String>[
+    'name: "intentcall_platform_apple"',
+    '.library(name: "intentcall-platform-apple", targets: ["intentcall_platform_apple"])',
+    '.package(name: "FlutterFramework", path: "../FlutterFramework")',
+    '.product(name: "FlutterFramework", package: "FlutterFramework")',
+    '.iOS("13.0")',
+    '.macOS("10.14")',
   ];
-
-  for (final spec in specs) {
-    final spmRoot = Directory(
-      p.join(packageRoot.path, spec.packageDir, 'intentcall_platform'),
-    );
-    final packageFile = File(p.join(spmRoot.path, 'Package.swift'));
-    final sourceFile = File(
-      p.join(
-        spmRoot.path,
-        'Sources',
-        'intentcall_platform',
-        'IntentCallPlatformPlugin.swift',
-      ),
-    );
-    final privacyFile = File(
-      p.join(
-        spmRoot.path,
-        'Sources',
-        'intentcall_platform',
-        'PrivacyInfo.xcprivacy',
-      ),
-    );
-
-    if (!packageFile.existsSync()) {
+  for (final snippet in requiredSnippets) {
+    if (!content.contains(snippet)) {
       findings.add(
-        '${spec.packageDir}/intentcall_platform/Package.swift is missing',
-      );
-      continue;
-    }
-    final content = await packageFile.readAsString();
-    final platformDeclaration = spec.platform == 'iOS'
-        ? '.iOS("${spec.version}")'
-        : '.macOS("${spec.version}")';
-    final requiredSnippets = <String>[
-      'name: "intentcall_platform"',
-      '.library(name: "intentcall-platform", targets: ["intentcall_platform"])',
-      '.package(name: "FlutterFramework", path: "../FlutterFramework")',
-      '.product(name: "FlutterFramework", package: "FlutterFramework")',
-      platformDeclaration,
-    ];
-    for (final snippet in requiredSnippets) {
-      if (!content.contains(snippet)) {
-        findings.add(
-          '${spec.packageDir}/intentcall_platform/Package.swift is missing `$snippet`',
-        );
-      }
-    }
-
-    if (!sourceFile.existsSync()) {
-      findings.add(
-        '${spec.packageDir}/intentcall_platform/Sources/intentcall_platform/IntentCallPlatformPlugin.swift is missing',
-      );
-    } else {
-      final source = await sourceFile.readAsString();
-      if (!source.contains('public class IntentCallPlatformPlugin')) {
-        findings.add(
-          '${spec.packageDir} SwiftPM source is missing IntentCallPlatformPlugin',
-        );
-      }
-      if (!source.contains('IntentCallInvocationsHostApiSetup.setUp')) {
-        findings.add(
-          '${spec.packageDir} SwiftPM source is missing the Pigeon invocation bridge',
-        );
-      }
-    }
-
-    if (!privacyFile.existsSync()) {
-      findings.add(
-        '${spec.packageDir}/intentcall_platform/Sources/intentcall_platform/PrivacyInfo.xcprivacy is missing',
+        'darwin/intentcall_platform_apple/Package.swift is missing `$snippet`',
       );
     }
+  }
+
+  if (!sourceFile.existsSync()) {
+    findings.add(
+      'darwin/intentcall_platform_apple/Sources/intentcall_platform_apple/IntentCallPlatformPlugin.swift is missing',
+    );
+  } else {
+    final source = await sourceFile.readAsString();
+    if (!source.contains('public class IntentCallPlatformPlugin')) {
+      findings.add(
+        'darwin SwiftPM source is missing IntentCallPlatformPlugin',
+      );
+    }
+    if (!source.contains('IntentCallInvocationsHostApiSetup.setUp')) {
+      findings.add(
+        'darwin SwiftPM source is missing the Pigeon invocation bridge',
+      );
+    }
+  }
+
+  if (!privacyFile.existsSync()) {
+    findings.add(
+      'darwin/intentcall_platform_apple/Sources/intentcall_platform_apple/PrivacyInfo.xcprivacy is missing',
+    );
+  }
+
+  if (!bridgeFile.existsSync()) {
+    findings.add(
+      'darwin/intentcall_platform_apple/Sources/intentcall_platform_apple/IntentCallPlatformBridge.g.swift is missing',
+    );
   }
 
   return findings;
@@ -1514,7 +1543,7 @@ Future<int> runPublishAll(
     final dirPath = p.join(repoRoot.path, 'packages', pkg);
     print('\n== Publishing package: $pkg ==');
 
-    final isPlatform = pkg == 'intentcall_platform';
+    final isPlatform = flutterPublishPackages.contains(pkg);
     final exec = isPlatform ? 'flutter' : 'dart';
     final args = buildPublishArgs(
       dryRun: dryRun,
@@ -1579,7 +1608,7 @@ Future<int> runPublishTag(
   }
 
   final packageDir = p.join(repoRoot.path, 'packages', release.package);
-  final isPlatform = release.package == 'intentcall_platform';
+  final isPlatform = flutterPublishPackages.contains(release.package);
   final exec = isPlatform ? 'flutter' : 'dart';
 
   if (dryRun) {

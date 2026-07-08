@@ -7,18 +7,22 @@ const publishablePackages = [
   'intentcall_session',
   'intentcall_mcp',
   'intentcall_webmcp',
-  'intentcall_apple',
-  'intentcall_android',
   'intentcall_codegen',
   'intentcall_platform_sync',
   'intentcall_hooks',
   'intentcall_bridge',
   'intentcall_cli',
   'intentcall_platform',
+  'intentcall_platform_apple',
+  'intentcall_platform_android',
   'intentcall_testing',
 ];
 
-const workspaceOnlyPackages = ['intentcall_gemma'];
+const workspaceOnlyPackages = [
+  'intentcall_gemma',
+  'intentcall_apple',
+  'intentcall_android',
+];
 
 const allInternalPackages = [...publishablePackages, ...workspaceOnlyPackages];
 
@@ -176,17 +180,6 @@ Future<List<String>> releaseTrainFindings(
     }
   }
 
-  for (final relativePath in [
-    'packages/intentcall_platform/ios/intentcall_platform.podspec',
-    'packages/intentcall_platform/macos/intentcall_platform.podspec',
-  ]) {
-    final file = File(joinPath([repoRoot.path, relativePath]));
-    final actual = podspecVersion(await file.readAsString());
-    if (actual != version) {
-      findings.add('$relativePath has s.version $actual, expected $version');
-    }
-  }
-
   return findings;
 }
 
@@ -225,21 +218,6 @@ Future<List<String>> syncReleaseTrainMetadata(
     }
   }
 
-  for (final relative in [
-    'packages/intentcall_platform/ios/intentcall_platform.podspec',
-    'packages/intentcall_platform/macos/intentcall_platform.podspec',
-  ]) {
-    final file = File(joinPath([repoRoot.path, relative]));
-    final original = await file.readAsString();
-    final updated = replacePodspecVersion(original, version);
-    if (updated != original) {
-      edits.add('$relative s.version -> $version');
-      if (write) {
-        await file.writeAsString(updated);
-      }
-    }
-  }
-
   return edits;
 }
 
@@ -271,13 +249,6 @@ String replaceInternalDependencyFloors(
   return updated;
 }
 
-String replacePodspecVersion(String content, String version) {
-  return content.replaceFirstMapped(
-    RegExp(r"^(\s*s\.version\s*=\s*)'[^']+'", multiLine: true),
-    (match) => "${match.group(1)}'$version'",
-  );
-}
-
 String? pubspecVersion(String content) {
   return RegExp(
     r'^version:\s*([^\s]+)',
@@ -288,13 +259,6 @@ String? pubspecVersion(String content) {
 String? dependencyFloor(String content, String dependency) {
   return RegExp(
     '^\\s{2}${RegExp.escape(dependency)}:\\s*\\^([^\\s#]+)',
-    multiLine: true,
-  ).firstMatch(content)?.group(1);
-}
-
-String? podspecVersion(String content) {
-  return RegExp(
-    r"^\s*s\.version\s*=\s*'([^']+)'",
     multiLine: true,
   ).firstMatch(content)?.group(1);
 }
@@ -340,7 +304,7 @@ int _usage() {
   );
   stderr.writeln('  check                 Verify release train metadata.');
   stderr.writeln(
-    '  sync [--version X]    Rewrite train versions/floors/podspecs.',
+    '  sync [--version X]    Rewrite train versions and internal floors.',
   );
   stderr.writeln('  sync --check          Report the edits sync would make.');
   return 64;

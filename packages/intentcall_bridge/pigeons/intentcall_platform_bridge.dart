@@ -5,10 +5,10 @@ import 'package:pigeon/pigeon.dart';
     dartOut: 'lib/src/intentcall_platform_bridge.g.dart',
     dartPackageName: 'intentcall_bridge',
     swiftOut:
-        '../intentcall_platform/ios/intentcall_platform/Sources/intentcall_platform/IntentCallPlatformBridge.g.swift',
+        '../intentcall_platform_apple/darwin/intentcall_platform_apple/Sources/intentcall_platform_apple/IntentCallPlatformBridge.g.swift',
     swiftOptions: SwiftOptions(),
     kotlinOut:
-        '../intentcall_platform/android/src/main/kotlin/dev/intentcall/intentcall_platform/IntentCallPlatformBridge.g.kt',
+        '../intentcall_platform_android/android/src/main/kotlin/dev/intentcall/intentcall_platform/IntentCallPlatformBridge.g.kt',
     kotlinOptions: KotlinOptions(package: 'dev.intentcall.intentcall_platform'),
   ),
 )

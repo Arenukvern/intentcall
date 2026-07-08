@@ -133,14 +133,23 @@ final class _DoctorCommand extends Command<int> {
 final class _ConfigCommand extends Command<int> {
   _ConfigCommand() {
     addSubcommand(_ConfigShowCommand());
+    addSubcommand(_ConfigValidateCommand());
   }
 
   @override
   String get name => 'config';
 
   @override
-  String get description => 'Show intentcall.yaml host wiring.';
+  String get description => 'Show or validate intentcall.yaml host wiring.';
 }
+
+bool _requiresExplicitPlatforms(final IntentCallHost host) =>
+    host == IntentCallHost.flutter || host == IntentCallHost.jaspr;
+
+String _emptyPlatformsRemediation(final IntentCallHost host) =>
+    'host: ${host.name} requires platforms.enabled (e.g. '
+    'platforms.enabled: [android, ios]). '
+    'Empty lists fall back at sync/hooks time but fail config validate.';
 
 final class _ConfigShowCommand extends Command<int> {
   @override
@@ -159,14 +168,80 @@ final class _ConfigShowCommand extends Command<int> {
       printUsageError('intentcall.yaml not found under $projectRoot');
       return inputMissingExitCode();
     }
+    final emptyEnabled =
+        _requiresExplicitPlatforms(config.host) &&
+        config.platforms.enabled.isEmpty;
     final enriched = Map<String, Object?>.from(config.toJson())
       ..['resolvedPlatforms'] = resolveEnabledPlatforms(config);
+    if (emptyEnabled) {
+      stderr.writeln('WARN: ${_emptyPlatformsRemediation(config.host)}');
+    }
     if (results['json'] as bool? ?? false) {
       printJson(enriched);
     } else {
       stdout
         ..writeln('# intentcall.yaml (${config.sourcePath})')
         ..writeln(encodePrettyJson(enriched));
+    }
+    return 0;
+  }
+
+  @override
+  ArgParser get argParser {
+    final parser = ArgParser();
+    _ProjectDirOption.add(parser);
+    parser.addFlag('json', negatable: false);
+    return parser;
+  }
+}
+
+final class _ConfigValidateCommand extends Command<int> {
+  @override
+  String get name => 'validate';
+
+  @override
+  String get description =>
+      'Validate intentcall.yaml host wiring (platforms.enabled contract).';
+
+  @override
+  int run() => _runValidate(argResults!);
+
+  int _runValidate(final ArgResults results) {
+    final projectRoot = _ProjectDirOption.read(results);
+    final config = loadIntentCallConfig(projectRoot);
+    if (config == null) {
+      printUsageError('intentcall.yaml not found under $projectRoot');
+      return inputMissingExitCode();
+    }
+
+    if (_requiresExplicitPlatforms(config.host) &&
+        config.platforms.enabled.isEmpty) {
+      final message = _emptyPlatformsRemediation(config.host);
+      if (results['json'] as bool? ?? false) {
+        printJson(<String, Object?>{
+          'ok': false,
+          'path': config.sourcePath,
+          'host': config.host.name,
+          'error': message,
+        });
+      } else {
+        printUsageError(message);
+      }
+      return dataErrorExitCode();
+    }
+
+    if (results['json'] as bool? ?? false) {
+      printJson(<String, Object?>{
+        'ok': true,
+        'path': config.sourcePath,
+        'host': config.host.name,
+        'enabledPlatforms': config.platforms.enabled,
+      });
+    } else {
+      stdout.writeln(
+        'OK: intentcall.yaml valid'
+        '${config.sourcePath == null ? '' : ' (${config.sourcePath})'}',
+      );
     }
     return 0;
   }

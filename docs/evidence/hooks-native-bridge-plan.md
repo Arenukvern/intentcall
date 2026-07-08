@@ -2,11 +2,13 @@
 
 **Status:** Active implementation plan  
 **Date:** 2026-07-08  
-**Supersedes:** [projection-pipeline-spec.md](projection-pipeline-spec.md) (retired)  
+**Superseded by:** [projection-pipeline-spec.md](projection-pipeline-spec.md) (retired)  
+**Supersedes:** —  
+**See also:** [platform-subset-federated-plugins-plan.md](platform-subset-federated-plugins-plan.md)  
 **ADR:** [0024 — Dart Hooks and Pigeon Bridge Consistency](../decisions/0024-dart-hooks-and-pigeon-bridge-consistency.md)  
 **Disposition:** `promote_to_artifact`
 
-**Related ADRs:** [0015](../decisions/0015-dart-first-native-bridge.md), [0016](../decisions/0016-dispatch-mode-handoff-contract.md), [0017](../decisions/0017-apple-inline-runtime-tracks.md), [0019](../decisions/0019-framework-neutral-intentcall-cli.md), [0022](../decisions/0022-projection-pipeline-alignment.md), [0023](../decisions/0023-entity-three-slot-projection.md)
+**Related ADRs:** [0015](../decisions/0015-dart-first-native-bridge.md), [0016](../decisions/0016-dispatch-mode-handoff-contract.md), [0017](../decisions/0017-apple-inline-runtime-tracks.md), [0019](../decisions/0019-framework-neutral-intentcall-cli.md), [0022](../decisions/0022-projection-pipeline-alignment.md), [0023](../decisions/0023-entity-three-slot-projection.md), [0025](../decisions/0025-platform-subset-federated-plugins.md) (federated plugins — see [platform-subset-federated-plugins-plan.md](platform-subset-federated-plugins-plan.md))
 
 ---
 

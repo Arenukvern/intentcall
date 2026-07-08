@@ -50,57 +50,85 @@ final class PlatformHooksInit {
   }) async {
     final root = p.normalize(p.absolute(projectRoot));
     final spine = PlatformHookSpine.resolveFromProjectRoot(root);
-    final targets = <PlatformHookTargetResult>[
-      await _patchFile(
-        id: 'web_index_html',
-        path: p.join(root, 'web', 'index.html'),
-        snippet: kIntentCallWebIndexSnippet.trim(),
-        checkOnly: checkOnly,
-      ),
-      await _patchFile(
-        id: 'android_gradle',
-        path: p.join(root, 'android', 'app', 'build.gradle.kts'),
-        snippet: spine.renderGradle().trim(),
-        checkOnly: checkOnly,
-        appendIfMissing: true,
-      ),
-      await _patchFile(
-        id: 'android_manifest',
-        path: p.join(
-          root,
-          'android',
-          'app',
-          'src',
-          'main',
-          'AndroidManifest.xml',
+    final enabled = spine.platformList.toSet();
+    // Host template keys (android/ios/macos/…) ∩ enabled, plus web when enabled.
+    final patchable = enabled.intersection(spine.hookTemplateKeys.toSet());
+    if (enabled.contains('web')) {
+      patchable.add('web');
+    }
+
+    final targets = <PlatformHookTargetResult>[];
+    if (patchable.contains('web')) {
+      targets.add(
+        await _patchFile(
+          id: 'web_index_html',
+          path: p.join(root, 'web', 'index.html'),
+          snippet: kIntentCallWebIndexSnippet.trim(),
+          checkOnly: checkOnly,
         ),
-        snippet: kAndroidShortcutsManifestSnippet.trim(),
-        checkOnly: checkOnly,
-        insertBefore: '</application>',
-      ),
-      await _patchFile(
-        id: 'ios_codegen_script',
-        path: p.join(root, 'ios', 'intentcall_codegen.sh'),
-        snippet: spine.renderAppleXcode().trim(),
-        checkOnly: checkOnly,
-        wholeFile: true,
-      ),
-      await _patchFile(
-        id: 'macos_codegen_script',
-        path: p.join(root, 'macos', 'intentcall_codegen.sh'),
-        snippet: spine.renderAppleXcode().trim(),
-        checkOnly: checkOnly,
-        wholeFile: true,
-      ),
-      _checkXcodeRunScript(
-        id: 'ios_xcode_run_script',
-        path: p.join(root, 'ios', 'Runner.xcodeproj', 'project.pbxproj'),
-      ),
-      _checkXcodeRunScript(
-        id: 'macos_xcode_run_script',
-        path: p.join(root, 'macos', 'Runner.xcodeproj', 'project.pbxproj'),
-      ),
-    ];
+      );
+    }
+    if (patchable.contains('android')) {
+      targets.add(
+        await _patchFile(
+          id: 'android_gradle',
+          path: p.join(root, 'android', 'app', 'build.gradle.kts'),
+          snippet: spine.renderGradle().trim(),
+          checkOnly: checkOnly,
+          appendIfMissing: true,
+        ),
+      );
+      targets.add(
+        await _patchFile(
+          id: 'android_manifest',
+          path: p.join(
+            root,
+            'android',
+            'app',
+            'src',
+            'main',
+            'AndroidManifest.xml',
+          ),
+          snippet: kAndroidShortcutsManifestSnippet.trim(),
+          checkOnly: checkOnly,
+          insertBefore: '</application>',
+        ),
+      );
+    }
+    if (patchable.contains('ios')) {
+      targets.add(
+        await _patchFile(
+          id: 'ios_codegen_script',
+          path: p.join(root, 'ios', 'intentcall_codegen.sh'),
+          snippet: spine.renderAppleXcode().trim(),
+          checkOnly: checkOnly,
+          wholeFile: true,
+        ),
+      );
+      targets.add(
+        _checkXcodeRunScript(
+          id: 'ios_xcode_run_script',
+          path: p.join(root, 'ios', 'Runner.xcodeproj', 'project.pbxproj'),
+        ),
+      );
+    }
+    if (patchable.contains('macos')) {
+      targets.add(
+        await _patchFile(
+          id: 'macos_codegen_script',
+          path: p.join(root, 'macos', 'intentcall_codegen.sh'),
+          snippet: spine.renderAppleXcode().trim(),
+          checkOnly: checkOnly,
+          wholeFile: true,
+        ),
+      );
+      targets.add(
+        _checkXcodeRunScript(
+          id: 'macos_xcode_run_script',
+          path: p.join(root, 'macos', 'Runner.xcodeproj', 'project.pbxproj'),
+        ),
+      );
+    }
 
     return PlatformHooksInitReport(
       projectRoot: root,

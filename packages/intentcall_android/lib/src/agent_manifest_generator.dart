@@ -3,6 +3,9 @@ import 'dart:convert';
 import 'package:intentcall_core/intentcall_core.dart';
 
 /// Builds `agent_manifest.json` for Android App Actions / shortcuts (Phase 3).
+@Deprecated(
+  'Use intentcall_platform_sync PlatformSync / ManifestExporter',
+)
 String generateAndroidAgentManifest(
   final Iterable<AgentIntentDescriptor> descriptors, {
   final String? protocolScheme,

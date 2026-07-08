@@ -4,13 +4,13 @@
   "packages/intentcall_session": "0.6.0",
   "packages/intentcall_mcp": "0.6.0",
   "packages/intentcall_webmcp": "0.6.0",
-  "packages/intentcall_apple": "0.6.0",
-  "packages/intentcall_android": "0.6.0",
   "packages/intentcall_codegen": "0.6.0",
   "packages/intentcall_platform_sync": "0.6.0",
   "packages/intentcall_hooks": "0.6.0",
   "packages/intentcall_bridge": "0.6.0",
   "packages/intentcall_cli": "0.6.0",
   "packages/intentcall_platform": "0.6.0",
+  "packages/intentcall_platform_apple": "0.6.0",
+  "packages/intentcall_platform_android": "0.6.0",
   "packages/intentcall_testing": "0.6.0"
 }

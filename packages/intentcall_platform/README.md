@@ -33,11 +33,16 @@ that app-owned scheme. That is an artifact/project-sync/configuration claim:
 successful Xcode builds, signing, installation, Apple system discovery, and live
 invocation need proof in the consuming app.
 
-Swift Package Manager support is declared for the iOS/macOS Flutter plugin under
-`ios/intentcall_platform/Package.swift` and
-`macos/intentcall_platform/Package.swift`. CocoaPods remains supported through
-the existing podspecs so current Flutter projects can use either native package
-integration path.
+This package is the **federated Flutter umbrella**: apps depend on
+`intentcall_platform` only. Endorsed native impls are
+`intentcall_platform_apple` and `intentcall_platform_android` via
+`default_package`.
+
+Apple native integration is **SPM-only** (no CocoaPods / podspecs). The shared
+Darwin tree lives under
+`packages/intentcall_platform_apple/darwin/intentcall_platform_apple/`
+(`Package.swift`, `sharedDarwinSource` for iOS + macOS). Android native code
+lives in `packages/intentcall_platform_android/`.
 
 ## Invocation policy
 

@@ -18,6 +18,8 @@ workspace:
   - packages/intentcall_hooks
   - packages/intentcall_bridge
   - packages/intentcall_platform
+  - packages/intentcall_platform_android
+  - packages/intentcall_platform_apple
   - packages/intentcall_cli
   - packages/intentcall_testing
   - packages/intentcall_session

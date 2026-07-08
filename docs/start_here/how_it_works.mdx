@@ -13,11 +13,13 @@ flowchart LR
   registry --> entitySnapshot["Dart-owned snapshots\nentities + index records"]
   core --> mcp["intentcall_mcp\nMCP tools/resources"]
   core --> webmcp["intentcall_webmcp\nDart-first WebMCP registration"]
-  core --> platform["intentcall_platform\nnative/web artifacts + invocation envelopes"]
+  core --> platformSync["intentcall_platform_sync\nnative/web emitters + PlatformSync"]
+  core --> platform["intentcall_platform\nFlutter runtime host / federated umbrella"]
   core --> codegen["intentcall_codegen\noptional @AgentTool helpers"]
-  entitySnapshot --> platform
+  entitySnapshot --> platformSync
   mcp --> callers["Agents, CLIs, assistants, app hosts"]
   webmcp --> callers
+  platformSync --> callers
   platform --> callers
   session --> callers
   toolkit["mcp_flutter / mcp_toolkit\nproduct harness for app authors"] -. consumes .-> core

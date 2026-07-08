@@ -43,8 +43,21 @@ void main() {
   tearDown(() => tmp.deleteSync(recursive: true));
 
   test('apply then check passes for core hooks', () async {
+    // No intentcall.yaml → flutter host defaults (web/android/ios/macos/…).
     const init = PlatformHooksInit();
     final applied = await init.run(projectRoot: tmp.path);
+    expect(
+      applied.targets.map((final t) => t.id).toSet(),
+      containsAll(<String>{
+        'web_index_html',
+        'android_gradle',
+        'android_manifest',
+        'ios_codegen_script',
+        'ios_xcode_run_script',
+        'macos_codegen_script',
+        'macos_xcode_run_script',
+      }),
+    );
     expect(
       applied.targets.firstWhere((final t) => t.id == 'web_index_html').ok,
       isTrue,
@@ -52,5 +65,34 @@ void main() {
 
     final checked = await init.run(projectRoot: tmp.path, checkOnly: true);
     expect(checked.ok, isTrue);
+  });
+
+  test('only patches platforms in platforms.enabled', () async {
+    File(p.join(tmp.path, 'intentcall.yaml')).writeAsStringSync('''
+host: flutter
+platforms:
+  enabled:
+    - android
+''');
+
+    const init = PlatformHooksInit();
+    final applied = await init.run(projectRoot: tmp.path);
+    final ids = applied.targets.map((final t) => t.id).toSet();
+
+    expect(ids, containsAll(<String>{'android_gradle', 'android_manifest'}));
+    expect(
+      ids.intersection(<String>{
+        'web_index_html',
+        'ios_codegen_script',
+        'ios_xcode_run_script',
+        'macos_codegen_script',
+        'macos_xcode_run_script',
+      }),
+      isEmpty,
+    );
+    expect(
+      applied.targets.every((final t) => t.ok),
+      isTrue,
+    );
   });
 }

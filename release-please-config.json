@@ -12,14 +12,14 @@
         "intentcall_session",
         "intentcall_mcp",
         "intentcall_webmcp",
-        "intentcall_apple",
-        "intentcall_android",
         "intentcall_codegen",
         "intentcall_platform_sync",
         "intentcall_hooks",
         "intentcall_bridge",
         "intentcall_cli",
         "intentcall_platform",
+        "intentcall_platform_apple",
+        "intentcall_platform_android",
         "intentcall_testing"
       ]
     }
@@ -44,16 +44,6 @@
       "release-type": "dart",
       "package-name": "intentcall_webmcp",
       "component": "intentcall_webmcp"
-    },
-    "packages/intentcall_apple": {
-      "release-type": "dart",
-      "package-name": "intentcall_apple",
-      "component": "intentcall_apple"
-    },
-    "packages/intentcall_android": {
-      "release-type": "dart",
-      "package-name": "intentcall_android",
-      "component": "intentcall_android"
     },
     "packages/intentcall_codegen": {
       "release-type": "dart",
@@ -84,6 +74,16 @@
       "release-type": "dart",
       "package-name": "intentcall_platform",
       "component": "intentcall_platform"
+    },
+    "packages/intentcall_platform_apple": {
+      "release-type": "dart",
+      "package-name": "intentcall_platform_apple",
+      "component": "intentcall_platform_apple"
+    },
+    "packages/intentcall_platform_android": {
+      "release-type": "dart",
+      "package-name": "intentcall_platform_android",
+      "component": "intentcall_platform_android"
     },
     "packages/intentcall_testing": {
       "release-type": "dart",

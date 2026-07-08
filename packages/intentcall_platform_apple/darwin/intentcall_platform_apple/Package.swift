@@ -3,26 +3,25 @@
 import PackageDescription
 
 let package = Package(
-    name: "intentcall_platform",
+    name: "intentcall_platform_apple",
     platforms: [
-        .macOS("10.14")
+        .iOS("13.0"),
+        .macOS("10.14"),
     ],
     products: [
-        .library(name: "intentcall-platform", targets: ["intentcall_platform"])
+        .library(name: "intentcall-platform-apple", targets: ["intentcall_platform_apple"])
     ],
     dependencies: [
         .package(name: "FlutterFramework", path: "../FlutterFramework")
     ],
     targets: [
         .target(
-            name: "intentcall_platform",
+            name: "intentcall_platform_apple",
             dependencies: [
                 .product(name: "FlutterFramework", package: "FlutterFramework")
             ],
             resources: [
-                // The plugin does not currently collect data. Keep the
-                // manifest ready for future changes.
-                // .process("PrivacyInfo.xcprivacy"),
+                .process("PrivacyInfo.xcprivacy"),
             ]
         )
     ]

@@ -1,3 +1,5 @@
+> ⚠️ **DEPRECATED** — Use [`intentcall_platform_sync`](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_platform_sync) `PlatformSync` / `ManifestExporter` instead. This package is workspace-only (`publish_to: none`) and will be removed after one deprecation cycle. See [ADR 0025](../../docs/decisions/0025-platform-subset-federated-plugins.md).
+
 > ⚠️ **Pre-release train** — Highly experimental. APIs may change without notice. Not for production. [Details](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md).
 
 

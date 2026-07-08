@@ -50,10 +50,12 @@ Support tiers are explicit on purpose. Apple App Intents are currently parameter
 | `intentcall_session` — runtime session lifecycle, persistence, snapshots | Runtime discovery and inspection inside concrete apps → **mcp_flutter / mcp_toolkit** |
 | `intentcall_mcp` — MCP publish adapter and MCP mapping only | Embedding / RAG / LLM backends |
 | `intentcall_webmcp` — WebMCP hot-sync adapter | UI rendering, visual harness reconstruction |
-| `intentcall_platform` — native/web emitters + Flutter plugin | Any production app serving end users |
+| `intentcall_platform_sync` — native/web emitters, `PlatformSync`, `ManifestExporter` | Any production app serving end users |
+| `intentcall_platform` — Flutter runtime host / federated umbrella (not emitters) | |
 | `intentcall_codegen` — optional `@AgentTool` code generation | |
 | `intentcall_testing` — contract / invoke test helpers | |
-| `intentcall_gemma` / `intentcall_apple` / `intentcall_android` — surface adapters | |
+| `intentcall_gemma` — surface adapter | |
+| ~~`intentcall_apple` / `intentcall_android`~~ — deprecated legacy generators; use `intentcall_platform_sync` | |
 
 **Do not own:** harness tooling (CLI, inspector UI), skill governance, LLM prompt engineering, or any product that wraps IntentCall for end users.
 

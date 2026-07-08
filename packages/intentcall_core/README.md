@@ -100,7 +100,9 @@ Use this import for `MigrateAgentEntriesMigrator`,
   core registration value objects for compatibility
 - `intentcall_webmcp` — WebMCP `modelContext` publish adapter
 - `intentcall_gemma` — on-device Gemma function-calling adapter
-- `intentcall_apple` / `intentcall_android` — `agent_manifest.json` codegen
+- `intentcall_platform_sync` — canonical manifest projection / emitters
+- `intentcall_apple` / `intentcall_android` — **deprecated** legacy generators
+  (`publish_to: none`; use `intentcall_platform_sync`)
 - `intentcall_testing` — registry contract helpers
 
 Canonical design docs: [North Star](../../docs/NORTH_STAR.mdx), [Design FAQ](../../docs/DESIGN_FAQ.mdx), and [DX FAQ](../../docs/DX_FAQ.mdx).

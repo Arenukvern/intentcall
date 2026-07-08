@@ -504,6 +504,21 @@ them — see [ADR 0020](decisions/0020-platform-scoped-manifest-surfaces.md).
 default manifest surface families at export time (not just platform sync targets).
 Explicit `defaults.surfaces` in yaml overrides platform-scoped defaults.
 
+**Platform subset author matrix** ([ADR 0025](decisions/0025-platform-subset-federated-plugins.md)):
+
+| App profile | `platforms.enabled` | `pubspec` deps | Hooks |
+|-------------|---------------------|----------------|-------|
+| iOS + Android mobile | `[android, ios]` | `intentcall_platform` (+ codegen stack) | Gradle + Xcode from spine |
+| macOS + Windows desktop | `[macos, windows]` | `intentcall_platform` | CI sync for windows/linux |
+| Android + Huawei stores | `[android]` | `intentcall_platform` | Gradle only |
+| Web Jaspr | `[web]` | `intentcall_hooks` as a dev dep; no Flutter platform plugin | Dart SDK hook |
+| iOS-only | `[ios]` | `intentcall_platform` (federated; android impl not compiled into the app binary) | Xcode only |
+
+Apps list the `intentcall_platform` umbrella only. Endorsed federated impls
+(`intentcall_platform_apple`, `intentcall_platform_android`) come in via
+`default_package`. Huawei/HyperOS use the `android` token — OEM packaging is an
+app concern. Do not depend on deprecated `intentcall_apple` / `intentcall_android`.
+
 ---
 
 ## 🧪 Testing
@@ -647,9 +662,12 @@ supported claim yet.
 1. `intentcall_schema`
 2. `intentcall_core`
 3. `intentcall_session`
-4. `intentcall_mcp`, `intentcall_webmcp`, `intentcall_apple`, `intentcall_android`, `intentcall_codegen` (parallel)
-5. `intentcall_platform`
-6. `intentcall_testing`
+4. `intentcall_mcp`, `intentcall_webmcp`, `intentcall_codegen` (parallel)
+5. `intentcall_platform_sync`, `intentcall_hooks`, `intentcall_bridge`, `intentcall_cli`
+6. `intentcall_platform`
+7. `intentcall_testing`
+
+Legacy `intentcall_apple` / `intentcall_android` are deprecated workspace-only packages — use `intentcall_platform_sync` emitters instead.
 
 **Q: How do I publish?**
 

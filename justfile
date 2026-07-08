@@ -121,7 +121,7 @@ check-path-deps:
 check-release-train:
     dart tool/intentcall/bin/release_train.dart check
 
-# Synchronize release train versions, internal floors, and native podspecs
+# Synchronize release train versions and internal floors
 sync-release-train:
     dart run tool/intentcall/bin/intentcall.dart sync-release-train
 
@@ -156,8 +156,7 @@ adapter-contract-test:
 # Regenerate and verify Pigeon bridge outputs are committed (Phase 3 gate)
 pigeon-codegen-check:
     cd packages/intentcall_bridge && dart run pigeon --input pigeons/intentcall_platform_bridge.dart
-    cp packages/intentcall_platform/ios/intentcall_platform/Sources/intentcall_platform/IntentCallPlatformBridge.g.swift packages/intentcall_platform/macos/intentcall_platform/Sources/intentcall_platform/IntentCallPlatformBridge.g.swift
-    git diff --exit-code packages/intentcall_bridge/lib/src/intentcall_platform_bridge.g.dart packages/intentcall_platform/ios/intentcall_platform/Sources/intentcall_platform/IntentCallPlatformBridge.g.swift packages/intentcall_platform/macos/intentcall_platform/Sources/intentcall_platform/IntentCallPlatformBridge.g.swift packages/intentcall_platform/android/src/main/kotlin/dev/intentcall/intentcall_platform/IntentCallPlatformBridge.g.kt
+    git diff --exit-code packages/intentcall_bridge/lib/src/intentcall_platform_bridge.g.dart packages/intentcall_platform_apple/darwin/intentcall_platform_apple/Sources/intentcall_platform_apple/IntentCallPlatformBridge.g.swift packages/intentcall_platform_android/android/src/main/kotlin/dev/intentcall/intentcall_platform/IntentCallPlatformBridge.g.kt
 
 # List custom agent skills defined in this repository
 list-skills:

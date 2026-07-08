@@ -167,33 +167,13 @@ INTENTCALL_ROOT="\$(pwd)/../agentkit" make check-intentcall-integration
       expect(findings, isEmpty);
     });
 
-    test('reads CocoaPods podspec versions', () {
-      expect(
-        intentcall_cli.podspecVersion(
-          "Pod::Spec.new do |s|\n  s.version          = '0.3.0'\nend\n",
-        ),
-        '0.3.0',
-      );
-    });
-
     test('validates Swift Package Manager plugin layout', () async {
       final packageRoot = await Directory.systemTemp.createTemp(
-        'intentcall_platform_spm_',
+        'intentcall_platform_apple_spm_',
       );
       addTearDown(() => packageRoot.deleteSync(recursive: true));
 
-      await _writeSwiftPackageFixture(
-        packageRoot,
-        packageDir: 'ios',
-        platform: '.iOS("13.0")',
-        importLine: 'import Flutter',
-      );
-      await _writeSwiftPackageFixture(
-        packageRoot,
-        packageDir: 'macos',
-        platform: '.macOS("10.14")',
-        importLine: 'import FlutterMacOS',
-      );
+      await _writeSwiftPackageFixture(packageRoot);
 
       expect(
         await intentcall_cli.swiftPackageManagerFindings(packageRoot),
@@ -203,10 +183,10 @@ INTENTCALL_ROOT="\$(pwd)/../agentkit" make check-intentcall-integration
       File(
         p.join(
           packageRoot.path,
-          'macos',
-          'intentcall_platform',
+          'darwin',
+          'intentcall_platform_apple',
           'Sources',
-          'intentcall_platform',
+          'intentcall_platform_apple',
           'IntentCallPlatformPlugin.swift',
         ),
       ).deleteSync();
@@ -214,7 +194,7 @@ INTENTCALL_ROOT="\$(pwd)/../agentkit" make check-intentcall-integration
       expect(
         await intentcall_cli.swiftPackageManagerFindings(packageRoot),
         contains(
-          'macos/intentcall_platform/Sources/intentcall_platform/IntentCallPlatformPlugin.swift is missing',
+          'darwin/intentcall_platform_apple/Sources/intentcall_platform_apple/IntentCallPlatformPlugin.swift is missing',
         ),
       );
     });
@@ -400,7 +380,7 @@ INTENTCALL_ROOT="\$(pwd)/../agentkit" make check-intentcall-integration
   });
 
   group('release train sync', () {
-    test('checks and synchronizes dependency floors and podspecs', () async {
+    test('checks and synchronizes dependency floors', () async {
       final repo = await _createReleaseTrainFixture();
       addTearDown(() => repo.deleteSync(recursive: true));
 
@@ -421,18 +401,6 @@ INTENTCALL_ROOT="\$(pwd)/../agentkit" make check-intentcall-integration
           p.join(repo.path, 'packages', 'intentcall_gemma', 'pubspec.yaml'),
         ).readAsStringSync(),
         contains('  intentcall_testing: ^0.6.0'),
-      );
-      expect(
-        File(
-          p.join(
-            repo.path,
-            'packages',
-            'intentcall_platform',
-            'ios',
-            'intentcall_platform.podspec',
-          ),
-        ).readAsStringSync(),
-        contains("s.version          = '0.6.0'"),
       );
     });
 
@@ -558,12 +526,14 @@ Future<Directory> _createReleaseTrainFixture() async {
   "packages/intentcall_session": "0.6.0",
   "packages/intentcall_mcp": "0.6.0",
   "packages/intentcall_webmcp": "0.6.0",
-  "packages/intentcall_apple": "0.6.0",
-  "packages/intentcall_android": "0.6.0",
   "packages/intentcall_codegen": "0.6.0",
   "packages/intentcall_platform_sync": "0.6.0",
+  "packages/intentcall_hooks": "0.6.0",
+  "packages/intentcall_bridge": "0.6.0",
   "packages/intentcall_cli": "0.6.0",
   "packages/intentcall_platform": "0.6.0",
+  "packages/intentcall_platform_apple": "0.6.0",
+  "packages/intentcall_platform_android": "0.6.0",
   "packages/intentcall_testing": "0.6.0"
 }
 ''');
@@ -578,17 +548,27 @@ Future<Directory> _createReleaseTrainFixture() async {
         '  intentcall_core: ^0.5.0\n  intentcall_schema: ^0.5.0\n',
       'intentcall_webmcp' =>
         '  intentcall_core: ^0.5.0\n  intentcall_testing: ^0.5.0\n',
-      'intentcall_apple' => '  intentcall_core: ^0.5.0\n',
-      'intentcall_android' => '  intentcall_core: ^0.5.0\n',
       'intentcall_codegen' =>
         '  intentcall_core: ^0.5.0\n  intentcall_schema: ^0.5.0\n',
-      'intentcall_platform' =>
+      'intentcall_platform' ||
+      'intentcall_platform_apple' ||
+      'intentcall_platform_android' =>
         '  intentcall_core: ^0.5.0\n  intentcall_schema: ^0.5.0\n',
       'intentcall_testing' =>
         '  intentcall_core: ^0.5.0\n  intentcall_schema: ^0.5.0\n',
       _ => '',
     };
     _writePubspec(repo, packageName, version: '0.6.0', dependencies: deps);
+  }
+
+  for (final packageName in ['intentcall_apple', 'intentcall_android']) {
+    _writePubspec(
+      repo,
+      packageName,
+      version: '0.6.0',
+      publishToNone: true,
+      dependencies: '  intentcall_core: ^0.5.0\n',
+    );
   }
 
   _writePubspec(
@@ -601,24 +581,6 @@ Future<Directory> _createReleaseTrainFixture() async {
         '  intentcall_schema: ^0.5.0\n'
         '  intentcall_testing: ^0.5.0\n',
   );
-
-  for (final platform in ['ios', 'macos']) {
-    final podspec = File(
-      p.join(
-        repo.path,
-        'packages',
-        'intentcall_platform',
-        platform,
-        'intentcall_platform.podspec',
-      ),
-    )..createSync(recursive: true);
-    podspec.writeAsStringSync('''
-Pod::Spec.new do |s|
-  s.name             = 'intentcall_platform'
-  s.version          = '0.5.0'
-end
-''');
-  }
 
   return repo;
 }
@@ -648,17 +610,12 @@ Future<void> _runGit(Directory repo, List<String> args) async {
   }
 }
 
-Future<void> _writeSwiftPackageFixture(
-  Directory packageRoot, {
-  required String packageDir,
-  required String platform,
-  required String importLine,
-}) async {
+Future<void> _writeSwiftPackageFixture(Directory packageRoot) async {
   final spmRoot = Directory(
-    p.join(packageRoot.path, packageDir, 'intentcall_platform'),
+    p.join(packageRoot.path, 'darwin', 'intentcall_platform_apple'),
   );
   final sourceDir = Directory(
-    p.join(spmRoot.path, 'Sources', 'intentcall_platform'),
+    p.join(spmRoot.path, 'Sources', 'intentcall_platform_apple'),
   )..createSync(recursive: true);
 
   File(p.join(spmRoot.path, 'Package.swift')).writeAsStringSync('''
@@ -666,19 +623,20 @@ Future<void> _writeSwiftPackageFixture(
 import PackageDescription
 
 let package = Package(
-    name: "intentcall_platform",
+    name: "intentcall_platform_apple",
     platforms: [
-        $platform
+        .iOS("13.0"),
+        .macOS("10.14")
     ],
     products: [
-        .library(name: "intentcall-platform", targets: ["intentcall_platform"])
+        .library(name: "intentcall-platform-apple", targets: ["intentcall_platform_apple"])
     ],
     dependencies: [
         .package(name: "FlutterFramework", path: "../FlutterFramework")
     ],
     targets: [
         .target(
-            name: "intentcall_platform",
+            name: "intentcall_platform_apple",
             dependencies: [
                 .product(name: "FlutterFramework", package: "FlutterFramework")
             ]
@@ -690,7 +648,7 @@ let package = Package(
   File(
     p.join(sourceDir.path, 'IntentCallPlatformPlugin.swift'),
   ).writeAsStringSync('''
-$importLine
+import Flutter
 
 public class IntentCallPlatformPlugin: NSObject, FlutterPlugin {
   public static func register(with registrar: FlutterPluginRegistrar) {
@@ -708,4 +666,8 @@ public class IntentCallPlatformPlugin: NSObject, FlutterPlugin {
 <?xml version="1.0" encoding="UTF-8"?>
 <plist version="1.0"><dict/></plist>
 ''');
+
+  File(
+    p.join(sourceDir.path, 'IntentCallPlatformBridge.g.swift'),
+  ).writeAsStringSync('// Generated pigeon bridge fixture\n');
 }

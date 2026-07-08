@@ -1,6 +1,7 @@
 name: intentcall_android
-description: PRE-RELEASE — Android shortcuts XML manifest generator from intentcall agent manifest JSON.
+description: DEPRECATED — Use intentcall_platform_sync. Legacy Android shortcuts XML manifest generator.
 version: 0.6.0
+publish_to: none
 license: MIT
 repository: https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_android
 issue_tracker: https://github.com/Arenukvern/intentcall/issues

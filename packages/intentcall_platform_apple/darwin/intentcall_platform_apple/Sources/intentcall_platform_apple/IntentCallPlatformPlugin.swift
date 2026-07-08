@@ -1,16 +1,24 @@
+#if os(macOS)
+import FlutterMacOS
+#else
 import Flutter
-import UIKit
+#endif
 
 /// Plugin bridge for pending native intent dispatch and entity snapshot cache.
 public class IntentCallPlatformPlugin: NSObject, FlutterPlugin {
   public static func register(with registrar: FlutterPluginRegistrar) {
     let bridge = IntentCallPlatformBridgeHostApiImpl()
+#if os(macOS)
+    let binaryMessenger = registrar.messenger
+#else
+    let binaryMessenger = registrar.messenger()
+#endif
     IntentCallInvocationsHostApiSetup.setUp(
-      binaryMessenger: registrar.messenger(),
+      binaryMessenger: binaryMessenger,
       api: bridge
     )
     IntentCallEntitiesHostApiSetup.setUp(
-      binaryMessenger: registrar.messenger(),
+      binaryMessenger: binaryMessenger,
       api: bridge
     )
   }

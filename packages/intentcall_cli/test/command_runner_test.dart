@@ -32,6 +32,70 @@ void main() {
       expect(exitCode, 0);
     });
 
+    test('config validate fails for flutter with empty platforms.enabled',
+        () async {
+      final root = _tempConfigProject(
+        'host: flutter\nplatforms:\n  enabled: []\n',
+      );
+      addTearDown(() => root.deleteSync(recursive: true));
+      final exitCode = await IntentCallCommandRunner().run(<String>[
+        'config',
+        'validate',
+        '--project-dir',
+        root.path,
+      ]);
+      expect(exitCode, 65);
+    });
+
+    test('config validate passes for flutter with explicit platforms.enabled',
+        () async {
+      final root = _tempConfigProject(
+        'host: flutter\n'
+        'platforms:\n'
+        '  enabled:\n'
+        '    - android\n'
+        '    - ios\n',
+      );
+      addTearDown(() => root.deleteSync(recursive: true));
+      final exitCode = await IntentCallCommandRunner().run(<String>[
+        'config',
+        'validate',
+        '--project-dir',
+        root.path,
+      ]);
+      expect(exitCode, 0);
+    });
+
+    test('config validate fails for jaspr with empty platforms.enabled',
+        () async {
+      final root = _tempConfigProject(
+        'host: jaspr\nplatforms:\n  enabled: []\n',
+      );
+      addTearDown(() => root.deleteSync(recursive: true));
+      final exitCode = await IntentCallCommandRunner().run(<String>[
+        'config',
+        'validate',
+        '--project-dir',
+        root.path,
+      ]);
+      expect(exitCode, 65);
+    });
+
+    test('config validate passes for dart with empty platforms.enabled',
+        () async {
+      final root = _tempConfigProject(
+        'host: dart\nplatforms:\n  enabled: []\n',
+      );
+      addTearDown(() => root.deleteSync(recursive: true));
+      final exitCode = await IntentCallCommandRunner().run(<String>[
+        'config',
+        'validate',
+        '--project-dir',
+        root.path,
+      ]);
+      expect(exitCode, 0);
+    });
+
     test('manifest validate accepts fixture manifest', () async {
       final runner = IntentCallCommandRunner();
       final exitCode = await runner.run(<String>[
@@ -160,4 +224,10 @@ Directory _fixtureRoot(final String name) {
     }
   }
   throw StateError('Missing fixture directory for $name');
+}
+
+Directory _tempConfigProject(final String yaml) {
+  final root = Directory.systemTemp.createTempSync('intentcall_config_validate_');
+  File(p.join(root.path, 'intentcall.yaml')).writeAsStringSync(yaml);
+  return root;
 }

@@ -3,6 +3,9 @@ import 'dart:convert';
 import 'package:intentcall_core/intentcall_core.dart';
 
 /// Builds `agent_manifest.json` for App Intents / Shortcuts codegen (Phase 3).
+@Deprecated(
+  'Use intentcall_platform_sync PlatformSync / ManifestExporter',
+)
 String generateAppleAgentManifest(
   final Iterable<AgentIntentDescriptor> descriptors, {
   final Iterable<AgentEntityTypeDescriptor> entityTypeDescriptors = const [],
