@@ -21,11 +21,11 @@ flowchart TB
 |---|---|---|---|---|---|
 | MCP | `McpPublishAdapter` maps registry tools/resources to `dart_mcp`. | Dart `AgentRegistry` handler. | Shared adapter contract tests. | Transport host policy plus registry validation. | Not an LLM backend, RAG system, or Flutter runtime inspector. |
 | WebMCP | Dart-first in-page registration and JS emitter/bootstrap helpers. | Dart registry when bound; optional network fallback only when configured. | Emitter/bootstrap tests. | Deny unavailable runtime by default; network fallback is opt-in. | Live browser-host interoperability needs separate proof. |
-| Apple App Intents / Shortcuts | Generated parameter wrappers and artifacts; explicit `nativeInline` can call app-owned Swift handlers; Apple inline runtimes can generate primitive typed App Intents returns; additive typed app entity and indexing/donation scaffolds may project Dart-owned snapshots through a durable native cache; `dartExtensionInline` has an experimental extension scaffold; Apple 27+ AppIntentsTesting UI-test scaffolds can be generated for live proof; `PlatformSync` patches/checks Runner target membership and `CFBundleURLTypes` for app-owned fallback schemes. | `openApp` launches or wakes app and dispatches envelope to Dart; `nativeInline` completes in generated Swift/native handler; entity query/indexing code reads native projection cache because Flutter may be cold; scaffolded `dartExtensionInline` is not wired by default. | Artifact/project-sync/configuration tests, emitter tests, typed return generation tests, native cache behavior tests, Dart extension runtime bridge tests, AppIntentsTesting scaffold tests, and local SDK typechecks. | `IntentCallAuthorizationPolicy` for Dart handoff and Dart extension bridge; native inline handlers must enforce app-owned permission policy; native entity caches are projection caches, not product databases. | No stable claim of automatic app-extension target generation, proven app-extension-hosted Dart, app signing, Shortcuts/Spotlight/Siri discovery, accepted donation/indexing, or completed live OS invocation in a real app. |
+| Apple App Intents / Shortcuts | Generated `AppIntent` structs in `Runner/Generated/IntentCallGenerated.swift`; handoff facade (`IntentCallNativeBridge.enqueue`), handoff queue, and entity snapshot stores live in the federated `intentcall_platform_apple` plugin (generated Runner Swift imports that module — no duplicated bridge enum); explicit `nativeInline` can call app-owned Swift handlers; Apple inline runtimes can generate primitive typed App Intents returns; additive typed app entity and indexing/donation scaffolds may project Dart-owned snapshots through a durable native cache; `dartExtensionInline` has an experimental extension scaffold; Apple 27+ AppIntentsTesting UI-test scaffolds can be generated for live proof; `PlatformSync` patches/checks Runner target membership and `CFBundleURLTypes` for app-owned fallback schemes. | `openApp` enqueues via plugin facade and may open app-owned `protocolScheme` URL; Dart host drains `IntentCallNativeHandoffStore` on startup/resume; `nativeInline` completes in generated Swift/native handler; entity query/indexing code reads native projection cache because Flutter may be cold; scaffolded `dartExtensionInline` is not wired by default. | Artifact/project-sync/configuration tests, emitter tests, federated plugin compile proof (`flutter build macos --config-only` in mcp_flutter dogfood), typed return generation tests, native cache behavior tests, Dart extension runtime bridge tests, AppIntentsTesting scaffold tests, and local SDK typechecks. | `IntentCallAuthorizationPolicy` for Dart handoff and Dart extension bridge; native inline handlers must enforce app-owned permission policy; native entity caches are projection caches, not product databases. | No stable claim of automatic app-extension target generation, proven app-extension-hosted Dart, app signing, Shortcuts/Spotlight/Siri discovery, accepted donation/indexing, or completed live OS invocation in a real app. |
 | Android shortcuts / deep links | Manifest and shortcut/deep-link metadata. | App receives route and dispatches to Dart. | Manifest generator tests. | Treat plain deep links as untrusted unless generated wrapper or app allowlist marks source trusted. | Android AppFunctions and fuller App Actions capability generation are roadmap. |
 | Windows protocol activation | Protocol activation artifacts. | App route dispatches to Dart when wired by host. | Artifact-level support. | Fallback routes are untrusted by default. | Windows App Actions / Agent Launchers are roadmap. |
 | Linux `x-scheme-handler` | Desktop protocol handler artifacts for the app-owned scheme. | App route dispatches to Dart when wired by host. | Artifact-level support. | Fallback routes are untrusted by default. | No Linux OS-level native intent API claim. |
-| Native/WebMCP bridge | `IntentCallInvocationEnvelope` and authorization policy. | Dart registry through `IntentCallNativeBridge.bindRegistry(...)`. | Platform bridge tests. | Deny-by-default in compiled builds; `debugAllowAll()` is local dogfood only. | Host apps own product-specific permissions and UX. |
+| Native/WebMCP bridge | `IntentCallInvocationEnvelope` and authorization policy. | Dart registry through `IntentCallNativeBridge.bindRegistry(...)` in `intentcall_platform_sync` (distinct from the Swift `IntentCallNativeBridge.enqueue` facade in `intentcall_platform_apple`). | Platform bridge tests. | Deny-by-default in compiled builds; `debugAllowAll()` is local dogfood only. | Host apps own product-specific permissions and UX. |
 
 ## Dispatch Mode Claims
 
@@ -77,8 +77,11 @@ AppIntentsTesting proof where that API covers the scenario.
 
 Keep Apple evidence labels separate:
 
-- Generated Swift compile proof: generated App Intents code compiles against the
-  active SDK, but this is not runtime behavior.
+- Generated Swift compile proof: generated `Runner/Generated/IntentCallGenerated.swift`
+  compiles against `import intentcall_platform_apple` and calls the plugin's
+  `IntentCallNativeBridge.enqueue` facade (handoff queue + optional deep-link open).
+  `platform sync --check` alone is text drift only — use the mcp_flutter dogfood
+  compile gate below for module-visibility regressions.
 - AppIntentsTesting runtime proof: the primary automated regression lane for
   Apple App Intents behavior, including actions, supported entity queries, and
   Spotlight query paths where Apple's testing API covers the scenario.
@@ -156,9 +159,9 @@ The early consumer harness is [mcp_flutter](https://github.com/Arenukvern/mcp_fl
 | Platform | Evidence in dogfood today | Command (from mcp_flutter) |
 |---|---|---|
 | Web | Strong — WebMCP + `IntentCallFlutterHost` | `make web-showcase` (+ `webmcp verify`) |
-| macOS | Runtime — generated Swift + host drain | `make showcase`, `make macos-validate-runtime` |
+| macOS | Runtime — generated Swift + plugin facade compile + host drain | `bash tool/contracts/check_apple_runner_compile.sh`, `make showcase`, `make macos-validate-runtime` |
 | iOS | Scaffold + sync drift (shared Apple emitters) | `codegen sync --check`; live App Intents needs signed UI tests |
-| Contracts | Sibling path-dep + three-gate spine | `make check-contracts`, `make dogfood-eval-static` |
+| Contracts | Sibling path-dep + three-gate spine + Apple compile gate | `make check-contracts`, `make dogfood-eval-static` |
 
 **Honest “integration works” claim for migration:** federated `intentcall_platform`
 resolves; web and macOS dogfood targets pass; iOS shares Apple projection and

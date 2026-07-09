@@ -62,3 +62,4 @@ When writing code, documentation, or planning features:
 3. Run `steward probe --json --profile quick` for the safe first pass.
 4. Run `steward benchmark --scenario intentcall.adapter-contract --json` for the first dogfood loop.
 5. The repository uses standardized agent skills under `.agents/skills/` and distributable skills under `skills/`; skills remain installed separately from hook/plugin wiring.
+6. Apple generated Swift compile proof runs in the mcp_flutter dogfood repo (`tool/contracts/check_apple_runner_compile.sh`, wired into `make check-contracts`). From agentkit with a sibling checkout: `just apple-runner-compile-check`.

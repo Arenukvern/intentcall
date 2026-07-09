@@ -27,6 +27,15 @@ pnpm install   # once
 just docs-check
 ```
 
+If you changed Apple projection (`intentcall_platform_sync` emitters or
+`intentcall_platform_apple` Swift facades), also run the dogfood compile gate
+with sibling [mcp_flutter](https://github.com/Arenukvern/mcp_flutter) checked
+out next to this repo:
+
+```bash
+just apple-runner-compile-check   # delegates to mcp_flutter/tool/contracts/check_apple_runner_compile.sh
+```
+
 Agent/operator preflight starts with the declared Steward surface:
 
 ```bash

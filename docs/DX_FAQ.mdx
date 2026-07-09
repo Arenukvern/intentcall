@@ -562,6 +562,9 @@ For iOS and macOS open-app App Intents, the readiness checklist is:
    and curated `"surfaces": { "apple.appShortcuts": { "include": true } }`.
 3. `intentcall platform sync --platform ios,macos --check` passes, proving generated Swift,
    Runner target membership, and `Runner/Info.plist` `CFBundleURLTypes` drift.
+   For module visibility (generated Runner code vs federated plugin), also run
+   the mcp_flutter compile gate: `bash tool/contracts/check_apple_runner_compile.sh`
+   (or `just apple-runner-compile-check` from agentkit when `../mcp_flutter` exists).
 4. The app is signed and installed before claiming manual Shortcuts or Spotlight
    product proof.
 5. Automated Apple App Intents regression proof uses AppIntentsTesting where the

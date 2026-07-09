@@ -60,7 +60,7 @@ Split runtime native code into endorsed federated packages:
 | Package | Role |
 |---------|------|
 | `intentcall_platform` | App-facing umbrella with `default_package` map and Dart host API |
-| `intentcall_platform_apple` | iOS + macOS native (Pigeon + Swift), SPM under `darwin/` |
+| `intentcall_platform_apple` | iOS + macOS native (Pigeon + Swift), SPM under `darwin/`; public Swift facades `IntentCallNativeBridge`, `IntentCallNativeHandoffStore`, `IntentCallNativeEntitySnapshotStore` |
 | `intentcall_platform_android` | Android native (Pigeon + Kotlin) |
 | `intentcall_bridge` | Shared Pigeon IDL and generated bindings |
 
@@ -95,6 +95,9 @@ Good:
 - Flutter-aligned federated plugin model; domain experts can extend per platform.
 - Single Darwin Swift tree under `intentcall_platform_apple/darwin/`; SPM-only
   (no CocoaPods dual path).
+- Apple cross-target contract: `intentcall_platform_sync` emits `AppIntent`
+  structs into `Runner/Generated/`; generated Swift imports
+  `intentcall_platform_apple` and calls plugin facades (no per-app bridge enum).
 - No separate interface package — fewer packages, umbrella remains the only
   app-facing dependency for most authors.
 - Projection pipeline unchanged — three-gate spine preserved.

@@ -128,6 +128,9 @@ dart run mcp_server_dart/bin/flutter_mcp_toolkit.dart codegen sync \
 **Federated note:** apps do **not** depend on `intentcall_platform_apple` /
 `intentcall_platform_android` directly unless overriding endorsed packages.
 Projection stays in `intentcall_platform_sync` (pulled transitively / via CLI).
+Generated Apple `AppIntent` structs land in the app `Runner` target; they
+`import intentcall_platform_apple` and call `IntentCallNativeBridge.enqueue` —
+handoff queue and deep-link open logic live in the plugin, not duplicated per app.
 
 Deep checklist: [DX FAQ — Flutter in-app host](/DX_FAQ#flutter-in-app-host).
 
@@ -179,7 +182,7 @@ Siri/Shortcuts/Spotlight behavior. Artifact + sync proof ≠ live OS proof.
 
 | Surface | Package / tool | Typical proof |
 |---|---|---|
-| Apple App Intents / Shortcuts | `intentcall_platform_sync` emitters + `intentcall_platform_apple` | `platform sync --check`; AppIntentsTesting / signed app for runtime |
+| Apple App Intents / Shortcuts | `intentcall_platform_sync` emitters → `Runner/Generated/`; runtime facade + stores in `intentcall_platform_apple` | `platform sync --check` (drift); `check_apple_runner_compile.sh` in mcp_flutter (compile); AppIntentsTesting / signed app for runtime |
 | Android shortcuts / deep links | emitters + `intentcall_platform_android` | Manifest/XML drift checks |
 | Web / PWA / WebMCP | emitters + `intentcall_webmcp` / host `registerWebMcp` | Emitter tests + browser verify |
 | Windows / Linux protocol | emitters | Artifact `--check` only |
@@ -222,7 +225,7 @@ flowchart LR
 
 | Role | Dependency style | Gate |
 |---|---|---|
-| **mcp_flutter maintainers** (sibling dogfood) | Path deps to `../agentkit/packages/intentcall_*` | `make check-contracts`, `make dogfood-eval-static` |
+| **mcp_flutter maintainers** (sibling dogfood) | Path deps to `../agentkit/packages/intentcall_*` | `make check-contracts` (includes Apple compile gate), `make dogfood-eval-static` |
 | **External app authors** | Hosted `intentcall_*: ^0.6.0` from pub.dev | App tests + `intentcall platform sync --check` |
 
 ### Dogfood proof in `flutter_test_app` (sibling checkout)
@@ -232,7 +235,7 @@ Clone as siblings: `mcp_flutter` next to `agentkit` (`INTENTCALL_ROOT=../agentki
 | Platform | What is proven today | How |
 |---|---|---|
 | **Web** | Strong — WebMCP JS + host bind + verify | `make web-showcase`, `flutter-mcp-toolkit webmcp verify` |
-| **macOS** | Runtime — generated Swift + host drain + validate | `make showcase`, `make macos-validate-runtime` |
+| **macOS** | Runtime — plugin facade compile + host drain + validate | `bash tool/contracts/check_apple_runner_compile.sh`, `make showcase`, `make macos-validate-runtime` |
 | **iOS** | Scaffold + codegen drift (same Apple emitters as macOS) | Xcode hooks + `codegen sync --check`; **live** App Intents needs signed `xcodebuild test` / AppIntentsTesting |
 | Android / Linux / Windows | Codegen / protocol artifacts | `codegen sync --check` |
 
