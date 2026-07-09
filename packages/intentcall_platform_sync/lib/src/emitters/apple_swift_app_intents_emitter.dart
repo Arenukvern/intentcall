@@ -88,9 +88,12 @@ final class AppleSwiftAppIntentsEmitter {
         buffer.writeln('    $line');
       }
       if (inlineRuntime == null) {
+        final schemeArgument = opensApp && bridgeProtocolScheme != null
+            ? ', fallbackProtocolScheme: ${_swiftOptionalString(bridgeProtocolScheme)}'
+            : '';
         buffer
           ..writeln(
-            '    let invocationId = await IntentCallNativeBridge.enqueue(qualifiedName: "${escapeSwiftString(tool.qualifiedName)}", arguments: arguments, openApp: $opensApp)',
+            '    let invocationId = await IntentCallNativeBridge.enqueue(qualifiedName: "${escapeSwiftString(tool.qualifiedName)}", arguments: arguments, openApp: $opensApp$schemeArgument)',
           )
           ..writeln(
             r'    return .result(dialog: IntentDialog("Queued invocation \(invocationId) for app dispatch."))',
@@ -180,48 +183,6 @@ final class AppleSwiftAppIntentsEmitter {
           ),
         );
     }
-    if (intentTools.isNotEmpty) {
-      buffer
-        ..writeln(
-          '// IntentCallNativeHandoffStore is provided by the intentcall_platform_apple federated plugin.',
-        )
-        ..writeln('enum IntentCallNativeBridge {')
-        ..writeln(
-          '  private static let fallbackScheme: String? = ${_swiftOptionalString(bridgeProtocolScheme)}',
-        )
-        ..writeln()
-        ..writeln(
-          '  static func enqueue(qualifiedName: String, arguments: [String: Any], openApp: Bool) async -> String {',
-        )
-        ..writeln('    let invocationId = UUID().uuidString')
-        ..writeln('    let item: [String: Any] = [')
-        ..writeln('      "id": invocationId,')
-        ..writeln('      "qualifiedName": qualifiedName,')
-        ..writeln('      "arguments": arguments,')
-        ..writeln('      "source": "native.generated",')
-        ..writeln(
-          '      "createdAt": ISO8601DateFormatter().string(from: Date())',
-        )
-        ..writeln('    ]')
-        ..writeln('    IntentCallNativeHandoffStore.append(item)')
-        ..writeln('    var allowedPath = CharacterSet.alphanumerics')
-        ..writeln('    allowedPath.insert(charactersIn: "_-.~")')
-        ..writeln(
-          '    let encodedName = qualifiedName.addingPercentEncoding(withAllowedCharacters: allowedPath) ?? qualifiedName',
-        )
-        ..writeln(
-          r'    guard openApp, let scheme = fallbackScheme, let url = URL(string: "\(scheme)://invoke/\(encodedName)") else { return invocationId }',
-        )
-        ..writeln('    #if canImport(UIKit)')
-        ..writeln('    await UIApplication.shared.open(url)')
-        ..writeln('    #elseif canImport(AppKit)')
-        ..writeln('    NSWorkspace.shared.open(url)')
-        ..writeln('    #endif')
-        ..writeln('    return invocationId')
-        ..writeln('  }')
-        ..writeln('}');
-    }
-
     return buffer.toString();
   }
 }

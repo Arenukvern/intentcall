@@ -110,12 +110,10 @@ void main() {
       expect(swift, contains('IntentCallShortcutsProvider'));
       expect(swift, contains('import intentcall_platform_apple'));
       expect(swift, contains('IntentCallNativeBridge'));
-      expect(swift, contains('IntentCallNativeHandoffStore.append(item)'));
+      expect(swift, isNot(contains('enum IntentCallNativeBridge {')));
       expect(
         swift,
-        contains(
-          'IntentCallNativeHandoffStore is provided by the intentcall_platform_apple federated plugin',
-        ),
+        isNot(contains('IntentCallNativeHandoffStore.append(item)')),
       );
       expect(swift, isNot(contains('enum IntentCallNativeHandoffStore {')));
       expect(
@@ -128,14 +126,10 @@ void main() {
       expect(
         swift,
         contains(
-          'IntentCallNativeBridge.enqueue(qualifiedName: "app_cart_total", arguments: arguments, openApp: true)',
+          'IntentCallNativeBridge.enqueue(qualifiedName: "app_cart_total", arguments: arguments, openApp: true, fallbackProtocolScheme: "demoapp")',
         ),
       );
       expect(swift, contains('IntentDialog("Queued invocation'));
-      expect(
-        swift,
-        contains('private static let fallbackScheme: String? = "demoapp"'),
-      );
       expect(swift, contains('demoapp'));
     });
 
@@ -246,8 +240,11 @@ void main() {
       expect(swift, contains('static var openAppWhenRun: Bool = true'));
       expect(
         swift,
-        contains('private static let fallbackScheme: String? = nil'),
+        contains(
+          'IntentCallNativeBridge.enqueue(qualifiedName: "app_ping", arguments: arguments, openApp: true)',
+        ),
       );
+      expect(swift, isNot(contains('fallbackProtocolScheme:')));
       expect(swift, isNot(contains('demoapp://invoke/')));
     });
 
@@ -284,11 +281,8 @@ void main() {
           'IntentCallNativeBridge.enqueue(qualifiedName: "app_ping", arguments: arguments, openApp: false)',
         ),
       );
-      expect(
-        swift,
-        contains('private static let fallbackScheme: String? = nil'),
-      );
-      expect(swift, contains('guard openApp, let scheme = fallbackScheme'));
+      expect(swift, isNot(contains('fallbackProtocolScheme:')));
+      expect(swift, isNot(contains('enum IntentCallNativeBridge {')));
     });
 
     test('nativeInline emits handler invocation without app wake', () {
@@ -344,10 +338,7 @@ void main() {
           'return .result(dialog: IntentDialog(stringLiteral: inlineResult.dialog))',
         ),
       );
-      expect(
-        swift,
-        contains('private static let fallbackScheme: String? = nil'),
-      );
+      expect(swift, isNot(contains('enum IntentCallNativeBridge {')));
       expect(
         swift,
         isNot(contains('app_inline", arguments: arguments, openApp')),
@@ -1166,7 +1157,7 @@ struct AppCartTotalIntent: AppIntent {
     var arguments: [String: Any] = [:]
     arguments["currency"] = currency
     if let value = includeTax { arguments["includeTax"] = value }
-    let invocationId = await IntentCallNativeBridge.enqueue(qualifiedName: "app_cart_total", arguments: arguments, openApp: true)
+    let invocationId = await IntentCallNativeBridge.enqueue(qualifiedName: "app_cart_total", arguments: arguments, openApp: true, fallbackProtocolScheme: "demoapp")
     return .result(dialog: IntentDialog("Queued invocation \(invocationId) for app dispatch."))
   }
 }
@@ -1175,33 +1166,6 @@ struct AppCartTotalIntent: AppIntent {
 struct IntentCallShortcutsProvider: AppShortcutsProvider {
   static var appShortcuts: [AppShortcut] {
     AppShortcut(intent: AppCartTotalIntent(), phrases: ["\(.applicationName) Cart Total"])
-  }
-}
-
-// IntentCallNativeHandoffStore is provided by the intentcall_platform_apple federated plugin.
-enum IntentCallNativeBridge {
-  private static let fallbackScheme: String? = "demoapp"
-
-  static func enqueue(qualifiedName: String, arguments: [String: Any], openApp: Bool) async -> String {
-    let invocationId = UUID().uuidString
-    let item: [String: Any] = [
-      "id": invocationId,
-      "qualifiedName": qualifiedName,
-      "arguments": arguments,
-      "source": "native.generated",
-      "createdAt": ISO8601DateFormatter().string(from: Date())
-    ]
-    IntentCallNativeHandoffStore.append(item)
-    var allowedPath = CharacterSet.alphanumerics
-    allowedPath.insert(charactersIn: "_-.~")
-    let encodedName = qualifiedName.addingPercentEncoding(withAllowedCharacters: allowedPath) ?? qualifiedName
-    guard openApp, let scheme = fallbackScheme, let url = URL(string: "\(scheme)://invoke/\(encodedName)") else { return invocationId }
-    #if canImport(UIKit)
-    await UIApplication.shared.open(url)
-    #elseif canImport(AppKit)
-    NSWorkspace.shared.open(url)
-    #endif
-    return invocationId
   }
 }''';
 
