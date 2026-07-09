@@ -278,6 +278,7 @@ layout:
           }),
         );
 
+        expect(swift, contains('import intentcall_platform_apple'));
         expect(swift, contains('struct AppPingIntent: AppIntent'));
         expect(swift, isNot(contains('AppShortcut(intent: AppPingIntent()')));
       });
@@ -338,6 +339,7 @@ layout:
             }),
           );
 
+          expect(swift, contains('import intentcall_platform_apple'));
           expect(swift, contains('enum IntentCallGeneratedEntityConfig'));
           expect(
             swift,

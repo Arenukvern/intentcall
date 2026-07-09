@@ -62,6 +62,12 @@ platform-sync-check:
 mcp-flutter-apple-sync-check:
     dart test packages/intentcall_platform_sync/test/mcp_flutter_apple_sync_test.dart
 
+# Compile-proof: Runner Generated Swift builds against intentcall_platform_apple.
+# Requires sibling mcp_flutter, Flutter, and Xcode — skips gracefully when absent
+# (CI on ubuntu has no Xcode/mcp_flutter). Not wired into projection-pipeline-check.
+apple-runner-compile-check:
+    bash tool/intentcall/check_apple_runner_compile.sh
+
 # Manifest/registry parity gate
 manifest-parity:
     dart test packages/intentcall_cli/test/manifest_registry_parity_test.dart

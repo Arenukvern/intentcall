@@ -46,6 +46,7 @@ void main() {
         _appleManifest(toolSurfaces: _appleAppIntentsOnly),
       );
 
+      expect(swift, contains('import intentcall_platform_apple'));
       expect(swift, contains('struct AppPingIntent: AppIntent'));
       expect(swift, isNot(contains('AppShortcut(intent: AppPingIntent()')));
       expect(swift, contains('static var appShortcuts: [AppShortcut] {'));
@@ -57,6 +58,7 @@ void main() {
         _appleManifest(toolSurfaces: _appleShortcutsOnly),
       );
 
+      expect(swift, contains('import intentcall_platform_apple'));
       expect(swift, isNot(contains('struct AppPingIntent: AppIntent')));
       expect(swift, isNot(contains('AppShortcut(intent: AppPingIntent()')));
       expect(swift, contains('return []'));
@@ -72,6 +74,7 @@ void main() {
         ),
       );
 
+      expect(swift, contains('import intentcall_platform_apple'));
       expect(swift, contains('struct AppPingIntent: AppIntent'));
       expect(swift, contains('AppShortcut(intent: AppPingIntent(), phrases:'));
     });
@@ -94,6 +97,7 @@ void main() {
         ),
       );
 
+      expect(swift, contains('import intentcall_platform_apple'));
       expect(swift, contains('struct AppProjectEntity: AppEntity {'));
       expect(swift, isNot(contains('IndexedEntity')));
       expect(swift, isNot(contains('import CoreSpotlight')));
@@ -119,6 +123,7 @@ void main() {
         ),
       );
 
+      expect(swift, contains('import intentcall_platform_apple'));
       expect(
         swift,
         contains('struct AppProjectEntity: AppEntity, IndexedEntity'),

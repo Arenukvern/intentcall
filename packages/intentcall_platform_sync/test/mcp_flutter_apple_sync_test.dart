@@ -58,6 +58,7 @@ void main() {
           final swift = File(swiftPath);
           expect(swift.existsSync(), isTrue, reason: swiftPath);
           final source = swift.readAsStringSync();
+          expect(source, contains('import intentcall_platform_apple'));
           expect(source, contains('struct AppSetGreetingIntent: AppIntent'));
           expect(
             source,
