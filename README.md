@@ -21,7 +21,7 @@ Transport-agnostic agent intent platform for Dart/Flutter: define intent truth o
 
 ![Watercolor comic explainer showing IntentCall as four steps: write one intent, register it once, project it to Web agents desktop OS shortcuts and deep links, then people and agents use it.](docs/assets/intentcall-watercolor-explainer-v2.png)
 
-[![Live Demo with Flutter MCP Toolkit and Grok Build](https://www.youtube.com/watch?v=mX4xxVeImq0)](https://www.youtube.com/watch?v=mX4xxVeImq0)
+[Live Demo with Flutter MCP Toolkit and Grok Build](https://www.youtube.com/watch?v=mX4xxVeImq0)
 
 
 Conceptual map: write one Dart intent, register it once, project it to useful surfaces, then people and agents use it.
