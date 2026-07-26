@@ -9,6 +9,7 @@ _Register intents. Call them everywhere._
 [![Publish pub.dev package](https://github.com/Arenukvern/intentcall/actions/workflows/pub_publish.yml/badge.svg?branch=main)](https://github.com/Arenukvern/intentcall/actions/workflows/pub_publish.yml)
 [![Release Please](https://github.com/Arenukvern/intentcall/actions/workflows/release-please.yml/badge.svg?branch=main)](https://github.com/Arenukvern/intentcall/actions/workflows/release-please.yml)
 [![Docs](https://img.shields.io/badge/docs-docs.page-blue)](https://docs.page/Arenukvern/intentcall)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/arenukvern/intentcall)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![All Contributors](https://img.shields.io/github/all-contributors/Arenukvern/intentcall?color=ee8449&style=flat-square)](#contributors-)
 [![maintained with Skill Steward](https://raw.githubusercontent.com/Arenukvern/skill_steward/main/docs/brand/assets/svg/badge-solid.svg)](https://github.com/Arenukvern/skill_steward)
