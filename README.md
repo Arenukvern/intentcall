@@ -9,6 +9,7 @@ _Register intents. Call them everywhere._
 [![Publish pub.dev package](https://github.com/Arenukvern/intentcall/actions/workflows/pub_publish.yml/badge.svg?branch=main)](https://github.com/Arenukvern/intentcall/actions/workflows/pub_publish.yml)
 [![Release Please](https://github.com/Arenukvern/intentcall/actions/workflows/release-please.yml/badge.svg?branch=main)](https://github.com/Arenukvern/intentcall/actions/workflows/release-please.yml)
 [![Docs](https://img.shields.io/badge/docs-docs.page-blue)](https://docs.page/Arenukvern/intentcall)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/arenukvern/intentcall)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![All Contributors](https://img.shields.io/github/all-contributors/Arenukvern/intentcall?color=ee8449&style=flat-square)](#contributors-)
 [![maintained with Skill Steward](https://raw.githubusercontent.com/Arenukvern/skill_steward/main/docs/brand/assets/svg/badge-solid.svg)](https://github.com/Arenukvern/skill_steward)
@@ -20,6 +21,9 @@ _Register intents. Call them everywhere._
 Transport-agnostic agent intent platform for Dart/Flutter: define intent truth once in `AgentRegistry`, then project it into the strongest available surface: MCP/WebMCP, native action metadata where supported, assistant/shortcut fulfillment, and canonical deep-link fallback where native support is incomplete.
 
 ![Watercolor comic explainer showing IntentCall as four steps: write one intent, register it once, project it to Web agents desktop OS shortcuts and deep links, then people and agents use it.](docs/assets/intentcall-watercolor-explainer-v2.png)
+
+[Live Demo with Flutter MCP Toolkit and Grok Build](https://www.youtube.com/watch?v=mX4xxVeImq0)
+
 
 Conceptual map: write one Dart intent, register it once, project it to useful surfaces, then people and agents use it.
 
