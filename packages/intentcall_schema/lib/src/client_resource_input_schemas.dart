@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 import 'agent_result.dart';
+import 'json_utils.dart';
 
 /// Extracts an [InputSchema] from a dynamic resource registration map.
 ///
@@ -20,7 +21,7 @@ InputSchema inputSchemaFromDynamicRegistrationMap(
   if (raw is! Map) {
     throw ArgumentError('Resource registration inputSchema must be a Map');
   }
-  return _deepCopySchemaMap(Map<Object?, Object?>.from(raw));
+  return deepCopySchemaMap(Map<Object?, Object?>.from(raw));
 }
 
 /// Default JSON Schema for reading a dynamic client resource by URI.
@@ -67,25 +68,4 @@ InputSchema clientResourceTemplateReadInputSchema({
     'required': <String>['uri'],
     'properties': properties,
   };
-}
-
-InputSchema _deepCopySchemaMap(final Map<Object?, Object?> raw) => raw.map(
-  (final key, final value) =>
-      MapEntry(key.toString(), _normalizeSchemaValue(value)),
-);
-
-Object? _normalizeSchemaValue(final Object? value) {
-  if (value is Map) {
-    return _deepCopySchemaMap(Map<Object?, Object?>.from(value));
-  }
-  if (value is Iterable && value is! String) {
-    return value
-        .map<Object?>(
-          (final item) => item is Map
-              ? _deepCopySchemaMap(Map<Object?, Object?>.from(item))
-              : item,
-        )
-        .toList();
-  }
-  return value;
 }

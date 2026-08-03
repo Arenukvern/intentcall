@@ -4,6 +4,7 @@
 import 'dart:convert';
 import 'dart:io' as io;
 
+import 'package:collection/collection.dart';
 import 'package:from_json_to_json/from_json_to_json.dart';
 
 import 'json_helpers.dart';
@@ -76,7 +77,7 @@ final class IntentSnapshotStore {
         if (!verifyMapDecodability(raw.trim())) {
           continue;
         }
-        final json = jsonObjectOrEmpty(raw);
+        final json = jsonDecodeObjectOrEmpty(raw);
         snapshots.add({
           'id': jsonDecodeString(json['id']),
           'createdAt': json['createdAt'],
@@ -195,11 +196,6 @@ final class IntentSnapshotStore {
     out.add({'path': path, 'type': 'changed', 'before': left, 'after': right});
   }
 
-  static bool _jsonEquals(final Object? left, final Object? right) {
-    try {
-      return jsonEncode(left) == jsonEncode(right);
-    } on Object {
-      return left == right;
-    }
-  }
+  static bool _jsonEquals(final Object? left, final Object? right) =>
+      const DeepCollectionEquality().equals(left, right);
 }

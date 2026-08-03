@@ -4,7 +4,7 @@ export 'platform_hook_spine.dart';
 
 /// Default Flutter hook spine (no project `intentcall.yaml`).
 PlatformHookSpine get kDefaultFlutterHookSpine =>
-    PlatformHookSpine.resolve(const PlatformHookSpineInput(host: 'flutter'));
+    PlatformHookSpine.resolve(const PlatformHookSpineInput());
 
 /// Default Jaspr hook spine (no project `intentcall.yaml`).
 PlatformHookSpine get kDefaultJasprHookSpine =>

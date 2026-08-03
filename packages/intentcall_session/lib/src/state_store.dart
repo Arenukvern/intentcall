@@ -35,9 +35,9 @@ final class SessionState {
           DateTime.tryParse(jsonDecodeString(json['lastUsedAt']))?.toUtc() ??
           DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
       mode: mode.isEmpty ? 'auto' : mode,
-      host: _optionalJsonString(json['host']),
+      host: jsonDecodeNullableString(json['host']),
       port: jsonDecodeNullableInt(json['port']),
-      uri: _optionalJsonString(json['uri']),
+      uri: jsonDecodeNullableString(json['uri']),
     );
   }
 
@@ -84,21 +84,21 @@ final class PersistedState {
   });
 
   factory PersistedState.fromJson(final Map<String, Object?> json) {
-    final rawSessions = jsonObjectOrEmpty(json['sessions']);
+    final rawSessions = jsonDecodeObjectOrEmpty(json['sessions']);
     final sessions = <String, SessionState>{};
     for (final entry in rawSessions.entries) {
       final key = jsonDecodeString(entry.key);
       final value = entry.value;
       if (value is Map || verifyMapDecodability(value)) {
-        sessions[key] = SessionState.fromJson(jsonObjectOrEmpty(value));
+        sessions[key] = SessionState.fromJson(jsonDecodeObjectOrEmpty(value));
       }
     }
 
     return PersistedState(
       schemaVersion: jsonDecodeNullableInt(json['schemaVersion']) ?? 1,
-      activeSessionId: _optionalJsonString(json['activeSessionId']),
-      stickyEndpoint: _optionalJsonString(json['stickyEndpoint']),
-      lastMode: _optionalJsonString(json['lastMode']),
+      activeSessionId: jsonDecodeNullableString(json['activeSessionId']),
+      stickyEndpoint: jsonDecodeNullableString(json['stickyEndpoint']),
+      lastMode: jsonDecodeNullableString(json['lastMode']),
       sessions: sessions,
     );
   }
@@ -180,7 +180,7 @@ final class StateStore {
         return const PersistedState();
       }
 
-      return PersistedState.fromJson(jsonObjectOrEmpty(raw));
+      return PersistedState.fromJson(jsonDecodeObjectOrEmpty(raw));
     } on Exception {
       return const PersistedState();
     }
@@ -195,11 +195,4 @@ final class StateStore {
       io.Process.runSync('chmod', ['600', p.normalize(file.path)]);
     }
   }
-}
-
-String? _optionalJsonString(final Object? value) {
-  if (value == null) {
-    return null;
-  }
-  return jsonDecodeString(value);
 }

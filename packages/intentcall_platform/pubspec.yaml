@@ -21,6 +21,7 @@ dependencies:
   app_links: ^6.4.0
   flutter:
     sdk: flutter
+  from_json_to_json: ^0.5.0
   intentcall_bridge: ^0.6.0
   intentcall_core: ^0.6.0
   intentcall_platform_android: ^0.6.0

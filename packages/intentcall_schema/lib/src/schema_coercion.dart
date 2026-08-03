@@ -1,6 +1,9 @@
 import 'dart:convert';
 
+import 'package:from_json_to_json/from_json_to_json.dart';
+
 import 'agent_result.dart';
+import 'json_utils.dart';
 
 /// Coerces wire [arguments] to types expected by [validateAgainstSchema].
 ///
@@ -64,10 +67,10 @@ Object? _coercePropertyValue(
     }
     return switch (type) {
       'string' => value,
-      'integer' => int.tryParse(trimmed) ?? value,
+      'integer' => jsonDecodeNullableInt(trimmed) ?? value,
       'number' => num.tryParse(trimmed) ?? value,
-      'boolean' => _parseWireBool(trimmed) ?? value,
-      'object' => _parseWireJsonMap(trimmed) ?? value,
+      'boolean' => jsonDecodeNullableBool(trimmed) ?? value,
+      'object' => jsonDecodeNullableMapAs<String, Object>(trimmed) ?? value,
       'array' => _parseWireJsonList(trimmed, propertySchema) ?? value,
       _ => value,
     };
@@ -126,7 +129,8 @@ Map<String, Object?> _coerceOpenObjectMap(final Map<String, Object?> value) {
 Object? _coerceOpenObjectEntryValue(final Object? value) {
   if (value is String) {
     final trimmed = value.trim();
-    if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+    // TODO(arenukvern): add trim case for jsonDecodeString
+    if (verifyMapDecodability(trimmed)) {
       final parsed = _parseWireJsonMap(trimmed);
       if (parsed != null) {
         return _coerceOpenObjectMap(parsed);
@@ -166,27 +170,8 @@ List<Object?>? _parseWireJsonList(
   return _coerceArrayValue(arraySchema, decoded);
 }
 
-Map<String, Object?>? _parseWireJsonMap(final String trimmed) {
-  final decoded = jsonDecode(trimmed);
-  if (decoded is Map<String, Object?>) {
-    return decoded;
-  }
-  if (decoded is Map) {
-    return Map<String, Object?>.from(decoded);
-  }
-  return null;
-}
-
-bool? _parseWireBool(final String normalized) {
-  final lower = normalized.toLowerCase();
-  if (lower == '1' || lower == 'true' || lower == 'yes') {
-    return true;
-  }
-  if (lower == '0' || lower == 'false' || lower == 'no') {
-    return false;
-  }
-  return null;
-}
+Map<String, Object?>? _parseWireJsonMap(final String trimmed) =>
+    jsonDecodeNullableMapAs(json);
 
 Map<String, Map<String, Object?>> _propertySchemas(
   final Map<String, Object?> schema,

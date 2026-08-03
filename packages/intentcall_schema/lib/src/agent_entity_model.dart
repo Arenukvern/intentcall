@@ -1,4 +1,7 @@
+import 'package:collection/collection.dart';
 import 'package:meta/meta.dart';
+
+import 'json_utils.dart';
 
 /// Stable identity for an indexable app object exposed to agents.
 ///
@@ -108,7 +111,7 @@ final class AgentEntitySnapshot {
            return trimmed;
          }),
        ),
-       properties = _jsonObject(properties);
+       properties = jsonDecodeNullableStringKeyMap(properties);
 
   /// Parses [json] produced by [toJson].
   ///
@@ -129,7 +132,9 @@ final class AgentEntitySnapshot {
     }
     return AgentEntitySnapshot(
       ref: AgentEntityRef.fromJson(Map<String, Object?>.from(rawRef)),
-      properties: _jsonObject(Map<String, Object?>.from(rawProperties)),
+      properties: jsonDecodeNullableStringKeyMap(
+        Map<String, Object?>.from(rawProperties),
+      ),
       title: _optionalString(json, 'title'),
       subtitle: _optionalString(json, 'subtitle'),
       keywords: _optionalStringList(json, 'keywords'),
@@ -280,14 +285,8 @@ List<String> _optionalStringList(
 }
 
 bool? _optionalBool(final Map<String, Object?> json, final String key) {
-  final value = json[key];
-  if (value == null) {
-    return null;
-  }
-  if (value is bool) {
-    return value;
-  }
-  throw ArgumentError.value(value, key, 'Expected a boolean.');
+  final rawValue = json[key];
+  return jsonDecodeNullableThrowableBool(rawValue);
 }
 
 DateTime? _optionalDateTime(final Map<String, Object?> json, final String key) {
@@ -296,82 +295,13 @@ DateTime? _optionalDateTime(final Map<String, Object?> json, final String key) {
     return null;
   }
   if (value is String) {
-    return DateTime.parse(value).toUtc();
+    return DateTime.tryParse(value)?.toUtc();
   }
   throw ArgumentError.value(value, key, 'Expected an ISO-8601 string.');
 }
 
-Map<String, Object?> _jsonObject(final Map<String, Object?> value) =>
-    Map<String, Object?>.unmodifiable(
-      value.map((final key, final value) => MapEntry(key, _jsonValue(value))),
-    );
+bool _jsonEquals(final Object? left, final Object? right) =>
+    const DeepCollectionEquality().equals(left, right);
 
-Object? _jsonValue(final Object? value) {
-  if (value == null || value is String || value is bool || value is int) {
-    return value;
-  }
-  if (value is double) {
-    if (!value.isFinite) {
-      throw ArgumentError.value(value, 'value', 'Expected a finite number.');
-    }
-    return value;
-  }
-  if (value is List) {
-    return List<Object?>.unmodifiable(value.map(_jsonValue));
-  }
-  if (value is Map) {
-    return Map<String, Object?>.unmodifiable(
-      value.map((final key, final value) {
-        if (key is! String) {
-          throw ArgumentError.value(key, 'key', 'Expected a string key.');
-        }
-        return MapEntry(key, _jsonValue(value));
-      }),
-    );
-  }
-  throw ArgumentError.value(value, 'value', 'Expected a JSON-safe value.');
-}
-
-bool _jsonEquals(final Object? left, final Object? right) {
-  if (identical(left, right)) {
-    return true;
-  }
-  if (left is Map && right is Map) {
-    if (left.length != right.length) {
-      return false;
-    }
-    for (final entry in left.entries) {
-      if (!right.containsKey(entry.key) ||
-          !_jsonEquals(entry.value, right[entry.key])) {
-        return false;
-      }
-    }
-    return true;
-  }
-  if (left is List && right is List) {
-    if (left.length != right.length) {
-      return false;
-    }
-    for (var i = 0; i < left.length; i += 1) {
-      if (!_jsonEquals(left[i], right[i])) {
-        return false;
-      }
-    }
-    return true;
-  }
-  return left == right;
-}
-
-int _jsonHash(final Object? value) {
-  if (value is Map) {
-    return Object.hashAllUnordered(
-      value.entries.map(
-        (final entry) => Object.hash(entry.key, _jsonHash(entry.value)),
-      ),
-    );
-  }
-  if (value is List) {
-    return Object.hashAll(value.map(_jsonHash));
-  }
-  return value.hashCode;
-}
+int _jsonHash(final Object? value) =>
+    const DeepCollectionEquality().hash(value);

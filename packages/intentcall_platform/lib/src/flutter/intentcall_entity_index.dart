@@ -1,3 +1,4 @@
+import 'package:from_json_to_json/from_json_to_json.dart';
 import 'package:intentcall_core/intentcall_core.dart';
 import 'package:intentcall_schema/intentcall_schema.dart';
 
@@ -165,15 +166,8 @@ Map<String, Object?> _snapshotRow(final Map<String, Object?> snapshot) {
   return <String, Object?>{...snapshot, 'id': id};
 }
 
-int _intResult(final Object? result, {required final int fallback}) {
-  if (result is int) {
-    return result;
-  }
-  if (result is num) {
-    return result.toInt();
-  }
-  return fallback;
-}
+int _intResult(final Object? result, {required final int fallback}) =>
+    jsonDecodeNullableInt(result) ?? fallback;
 
 List<Map<String, Object?>> _snapshotRows(final Object? result) {
   if (result is! List) {

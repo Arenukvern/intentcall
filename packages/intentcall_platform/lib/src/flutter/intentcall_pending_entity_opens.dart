@@ -2,9 +2,8 @@ import 'package:intentcall_bridge/intentcall_bridge.dart';
 import 'package:intentcall_platform_sync/intentcall_platform_sync.dart';
 
 final class IntentCallPendingEntityOpens {
-  IntentCallPendingEntityOpens({
-    final IntentCallEntitiesHostApi? hostApi,
-  }) : _hostApi = hostApi ?? IntentCallEntitiesHostApi();
+  IntentCallPendingEntityOpens({final IntentCallEntitiesHostApi? hostApi})
+    : _hostApi = hostApi ?? IntentCallEntitiesHostApi();
 
   final IntentCallEntitiesHostApi _hostApi;
 
@@ -16,12 +15,10 @@ final class IntentCallPendingEntityOpens {
 
 IntentCallEntityOpenEnvelope _toEnvelope(
   final IntentCallEntityOpenEnvelopeDto dto,
-) {
-  return IntentCallEntityOpenEnvelope(
-    id: dto.id,
-    entityType: dto.entityType,
-    entityId: dto.entityId,
-    source: dto.source,
-    createdAt: DateTime.tryParse(dto.createdAt),
-  );
-}
+) => IntentCallEntityOpenEnvelope(
+  id: dto.id,
+  entityType: dto.entityType,
+  entityId: dto.entityId,
+  source: dto.source,
+  createdAt: DateTime.tryParse(dto.createdAt),
+);

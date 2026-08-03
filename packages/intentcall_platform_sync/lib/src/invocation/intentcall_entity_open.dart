@@ -15,15 +15,13 @@ final class IntentCallEntityOpenEnvelope {
 
   factory IntentCallEntityOpenEnvelope.fromJson(
     final Map<String, Object?> json,
-  ) {
-    return IntentCallEntityOpenEnvelope(
-      id: '${json['id'] ?? ''}',
-      entityType: '${json['entityType'] ?? ''}',
-      entityId: '${json['entityId'] ?? ''}',
-      source: '${json['source'] ?? ''}',
-      createdAt: DateTime.tryParse('${json['createdAt'] ?? ''}'),
-    );
-  }
+  ) => IntentCallEntityOpenEnvelope(
+    id: '${json['id'] ?? ''}',
+    entityType: '${json['entityType'] ?? ''}',
+    entityId: '${json['entityId'] ?? ''}',
+    source: '${json['source'] ?? ''}',
+    createdAt: DateTime.tryParse('${json['createdAt'] ?? ''}'),
+  );
 
   final String id;
   final String entityType;
