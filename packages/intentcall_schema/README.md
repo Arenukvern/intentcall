@@ -123,11 +123,11 @@ final json = snapshot.toJson(); // round-trips via AgentEntitySnapshot.fromJson
 | Root `type: object` | Yes |
 | `required`, `properties` | Yes |
 | `additionalProperties: false` | Yes |
-| Property types: `string`, `integer`, `number`, `boolean`, `object`, `array` | Yes |
+| Property types: `string`, `integer`, `number`, `boolean`, `object`, `list` | Yes |
 | `enum` on strings | Yes |
 | `minimum` / `maximum` on numbers | Yes |
 | Array `items` when each item is `type: object` with `required` / `properties` | Yes |
-| `pattern`, `format`, `oneOf`, nested object property validation (except array items) | No |
+| `pattern`, `format`, `oneOf`, nested object property validation (except list items) | No |
 | Type coercion | Use `coerceArgumentsForSchema` first |
 
 Properties without a `type` are skipped. Unknown keys are allowed unless `additionalProperties` is `false`.

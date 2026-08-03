@@ -1,8 +1,9 @@
 import Foundation
+
 #if canImport(UIKit)
-import UIKit
+  import UIKit
 #elseif canImport(AppKit)
-import AppKit
+  import AppKit
 #endif
 
 /// Shared native cache for Dart-projected entity snapshots.
@@ -152,9 +153,9 @@ public enum IntentCallNativeEntitySnapshotStore {
       return openId
     }
     #if canImport(UIKit)
-    await UIApplication.shared.open(url)
+      await UIApplication.shared.open(url)
     #elseif canImport(AppKit)
-    NSWorkspace.shared.open(url)
+      NSWorkspace.shared.open(url)
     #endif
     return openId
   }

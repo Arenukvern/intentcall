@@ -19,11 +19,7 @@ extension type const AgentWireArgs(AgentWireMap _raw) {
   String? string(final String key) {
     // TODO: migrate to from_json_to_json jsonDecodeNullableString
     final value = _raw[key];
-    if (value == null) {
-      return null;
-    }
-    final trimmed = value.trim();
-    return trimmed.isEmpty ? null : trimmed;
+    return jsonDecodeNullableNotEmptyString(value?.trim());
   }
 
   /// Parses common wire boolean literals: `1`/`0`, `true`/`false`, `yes`/`no`.

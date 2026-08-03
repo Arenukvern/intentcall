@@ -35,5 +35,5 @@ String _jsonSchemaType(final AgentEntityPropertyValueType type) =>
       AgentEntityPropertyValueType.number => 'number',
       AgentEntityPropertyValueType.boolean => 'boolean',
       AgentEntityPropertyValueType.object => 'object',
-      AgentEntityPropertyValueType.array => 'array',
+      AgentEntityPropertyValueType.list => 'list',
     };

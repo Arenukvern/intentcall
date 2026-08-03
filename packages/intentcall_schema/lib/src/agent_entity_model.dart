@@ -272,7 +272,7 @@ List<String> _optionalStringList(
     return const <String>[];
   }
   if (value is! List) {
-    throw ArgumentError.value(value, key, 'Expected an array of strings.');
+    throw ArgumentError.value(value, key, 'Expected an list of strings.');
   }
   return List<String>.unmodifiable(
     value.map((final item) {

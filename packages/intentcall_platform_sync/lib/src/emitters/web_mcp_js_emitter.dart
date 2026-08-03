@@ -98,14 +98,14 @@ final class WebMcpJsEmitter {
           return validationError(path + ' must be an object.');
         }
         return null;
-      case 'array':
-        if (!Array.isArray(value)) return validationError(path + ' must be an array.');
-        var arrayPath = path;
-        if (arrayPath.length >= 2 && arrayPath.charAt(0) === '"' &&
-            arrayPath.charAt(arrayPath.length - 1) === '"') {
-          arrayPath = arrayPath.slice(1, -1);
+      case 'list':
+        if (!Array.isArray(value)) return validationError(path + ' must be an list.');
+        var listPath = path;
+        if (listPath.length >= 2 && listPath.charAt(0) === '"' &&
+            listPath.charAt(listPath.length - 1) === '"') {
+          listPath = listPath.slice(1, -1);
         }
-        return validateArrayItems(arrayPath, schema, value);
+        return validateArrayItems(listPath, schema, value);
       default:
         return null;
     }

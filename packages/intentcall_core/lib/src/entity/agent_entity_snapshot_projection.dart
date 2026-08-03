@@ -14,8 +14,7 @@ Map<String, Object?> projectAgentEntitySnapshot(
 ) {
   final keys = AgentEntitySnapshotKeys.fromDescriptor(descriptor);
   final title = _fieldValue(snapshot, keys.titleKey) ?? snapshot.effectiveTitle;
-  final subtitle =
-      _fieldValue(snapshot, keys.subtitleKey) ?? snapshot.subtitle;
+  final subtitle = _fieldValue(snapshot, keys.subtitleKey) ?? snapshot.subtitle;
   final keywords =
       _fieldValue(snapshot, keys.keywordsKey) ??
       (snapshot.keywords.isNotEmpty ? snapshot.keywords : null);

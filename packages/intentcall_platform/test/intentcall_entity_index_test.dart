@@ -115,7 +115,7 @@ void main() {
           ),
           AgentEntityPropertyDescriptor(
             name: 'tags',
-            valueType: AgentEntityPropertyValueType.array,
+            valueType: AgentEntityPropertyValueType.list,
             isSearchable: true,
             isIndexed: true,
           ),

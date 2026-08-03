@@ -32,7 +32,7 @@ void main() {
             ),
             AgentEntityPropertyDescriptor(
               name: 'tags',
-              valueType: AgentEntityPropertyValueType.array,
+              valueType: AgentEntityPropertyValueType.list,
               isSearchable: true,
             ),
           ],
@@ -67,7 +67,7 @@ void main() {
             ),
             AgentEntityPropertyDescriptor(
               name: 'labels',
-              valueType: AgentEntityPropertyValueType.array,
+              valueType: AgentEntityPropertyValueType.list,
               role: AgentEntityPropertyRole.keywords,
             ),
           ],

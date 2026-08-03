@@ -11,7 +11,7 @@ import '../registry/agent_registry.dart';
 typedef AgentCallHandler =
     FutureOr<AgentResult> Function(AgentArguments request);
 
-typedef _AgentCallEntryValue = ({
+typedef AgentCallEntryValue = ({
   String namespace,
   String description,
   InputSchema inputSchema,
@@ -23,8 +23,8 @@ typedef _AgentCallEntryValue = ({
 });
 
 extension type const AgentCallEntry._(
-  MapEntry<String, _AgentCallEntryValue> _entry
-) implements MapEntry<String, _AgentCallEntryValue> {
+  MapEntry<String, AgentCallEntryValue> _entry
+) implements MapEntry<String, AgentCallEntryValue> {
   factory AgentCallEntry.tool({
     required final String namespace,
     required final String name,

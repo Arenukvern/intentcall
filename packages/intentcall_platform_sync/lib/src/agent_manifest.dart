@@ -403,7 +403,7 @@ List<AgentManifestEntityType> _readEntityTypes(final Object? value) {
     return const <AgentManifestEntityType>[];
   }
   if (value is! List) {
-    throw const FormatException('entityTypes must be an array.');
+    throw const FormatException('entityTypes must be an list.');
   }
   final out = <AgentManifestEntityType>[];
   final seen = <String>{};

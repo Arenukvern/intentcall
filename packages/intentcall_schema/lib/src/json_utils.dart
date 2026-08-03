@@ -39,6 +39,14 @@ String? jsonDecodeNullableString(final dynamic value) => switch (value) {
 
 @Deprecated('migrate cases to from_json_to_json')
 // ignore: avoid_annotating_with_dynamic
+String? jsonDecodeNullableNotEmptyString(final dynamic value) =>
+    switch (value) {
+      final String value when value.isNotEmpty => value,
+      _ => null,
+    };
+
+@Deprecated('migrate cases to from_json_to_json')
+// ignore: avoid_annotating_with_dynamic
 Map<K, V>? jsonDecodeNullableMapAs<K, V>(final dynamic json) =>
     jsonDecodeNullableMap(json)?.cast<K, V>();
 

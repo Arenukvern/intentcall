@@ -72,13 +72,13 @@ void main() {
     });
   });
 
-  group('array items object required/properties', () {
+  group('list items object required/properties', () {
     const schema = {
       'type': 'object',
       'required': ['fields'],
       'properties': {
         'fields': {
-          'type': 'array',
+          'type': 'list',
           'items': {
             'type': 'object',
             'additionalProperties': false,

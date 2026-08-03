@@ -9,7 +9,7 @@ import 'json_utils.dart';
 ///
 /// VM service extensions and similar transports often deliver every value as a
 /// [String]. This function uses [schema] `properties` `type` fields to parse
-/// integers, numbers, booleans, JSON objects, and JSON arrays before
+/// integers, numbers, booleans, JSON objects, and JSON lists before
 /// validation.
 ///
 /// Typical pipeline:
@@ -71,7 +71,7 @@ Object? _coercePropertyValue(
       'number' => num.tryParse(trimmed) ?? value,
       'boolean' => jsonDecodeNullableBool(trimmed) ?? value,
       'object' => jsonDecodeNullableMapAs<String, Object>(trimmed) ?? value,
-      'array' => _parseWireJsonList(trimmed, propertySchema) ?? value,
+      'list' => _parseWireJsonList(trimmed, propertySchema) ?? value,
       _ => value,
     };
   }
@@ -79,7 +79,7 @@ Object? _coercePropertyValue(
   if (type == 'object' && value is Map) {
     return _coerceObjectValue(propertySchema, Map<String, Object?>.from(value));
   }
-  if (type == 'array' && value is List) {
+  if (type == 'list' && value is List) {
     return _coerceArrayValue(propertySchema, value);
   }
 
@@ -145,10 +145,10 @@ Object? _coerceOpenObjectEntryValue(final Object? value) {
 }
 
 List<Object?> _coerceArrayValue(
-  final Map<String, Object?> arraySchema,
+  final Map<String, Object?> listSchema,
   final List<dynamic> value,
 ) {
-  final itemSchema = arraySchema['items'];
+  final itemSchema = listSchema['items'];
   if (itemSchema is! Map) {
     return value;
   }
@@ -161,13 +161,13 @@ List<Object?> _coerceArrayValue(
 
 List<Object?>? _parseWireJsonList(
   final String trimmed,
-  final Map<String, Object?> arraySchema,
+  final Map<String, Object?> listSchema,
 ) {
   final decoded = jsonDecode(trimmed);
   if (decoded is! List) {
     return null;
   }
-  return _coerceArrayValue(arraySchema, decoded);
+  return _coerceArrayValue(listSchema, decoded);
 }
 
 Map<String, Object?>? _parseWireJsonMap(final String trimmed) =>

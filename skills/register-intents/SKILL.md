@@ -275,7 +275,7 @@ properties onto three slots:
 |------|--------------|-----------|-------------|
 | Primary line | `titleKey` | `title` | Display name |
 | Secondary line | `subtitleKey` | `subtitle` | Summary or context |
-| Search tokens | `keywordsKey` | `keywords` | Tags array (`valueType: 'array'`) |
+| Search tokens | `keywordsKey` | `keywords` | Tags list (`valueType: 'list'`) |
 
 `AgentEntitySnapshotKeys.fromDescriptor()` in `intentcall_core` resolves slots.
 Prefer **explicit roles** over implicit `isDisplay` / `isSearchable` ordering.
@@ -307,7 +307,7 @@ import 'package:intentcall_codegen/intentcall_codegen.dart';
     ),
     AgentEntityProperty(
       name: 'tags',
-      valueType: 'array',
+      valueType: 'list',
       description: 'Search keywords',
       isSearchable: true,
       role: 'keywords',
@@ -387,7 +387,7 @@ the native cache.
 ### Validation rules (codegen)
 
 - At most one property per role: `title`, `subtitle`, `keywords`.
-- `keywords` role requires `valueType: 'array'`.
+- `keywords` role requires `valueType: 'list'`.
 - Override property names must exist in `properties`.
 - `role` wins over conflicting `isDisplay` / `isSearchable` flags (warning logged).
 

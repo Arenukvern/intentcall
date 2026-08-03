@@ -19,7 +19,7 @@ native discovery UIs expose a **fixed display surface**:
 |----------|--------------|----------------|---------------|
 | Apple `AppEntity` | `title` | `subtitle` | `keywords: [String]` |
 | Apple `DisplayRepresentation` | title | subtitle | — |
-| IntentCall native cache search | `titleKey` field | `subtitleKey` field | `keywordsKey` array |
+| IntentCall native cache search | `titleKey` field | `subtitleKey` field | `keywordsKey` list |
 
 Apple is the first concrete emitter (`apple.entities`, `apple.spotlight`). Android
 and Windows entity lanes are not implemented yet, but they will map to the same
@@ -44,7 +44,7 @@ snapshot key slots plus the identifier:
 | `idKey` | Stable entity identifier in cache rows | `id` |
 | `titleKey` | Primary display string | `title` |
 | `subtitleKey` | Secondary display string | `subtitle` |
-| `keywordsKey` | Search token array | `keywords` |
+| `keywordsKey` | Search token list | `keywords` |
 
 Emitters and native stores read these keys from the manifest. They do **not**
 project arbitrary `displayProperties` lists — only one property name per slot.
@@ -66,7 +66,7 @@ time.
 Validation (codegen and `AgentEntitySnapshotKeys.fromDescriptor`):
 
 - At most one property per role (`title`, `subtitle`, `keywords`).
-- `keywords` role requires `valueType: array`.
+- `keywords` role requires `valueType: list`.
 - Entity-level override names must match a declared property.
 
 ### 3. Canonical key resolution
@@ -78,7 +78,7 @@ Validation (codegen and `AgentEntitySnapshotKeys.fromDescriptor`):
 2. Heuristic fallback for backward compatibility:
    - `titleKey` ← first `isDisplay` property, else `'title'`
    - `subtitleKey` ← second `isDisplay`, else first `isSearchable` ≠ title, else `'subtitle'`
-   - `keywordsKey` ← first `isSearchable` array property, else `'keywords'`
+   - `keywordsKey` ← first `isSearchable` list property, else `'keywords'`
 
 Consumers must call this API — not reimplement heuristics:
 

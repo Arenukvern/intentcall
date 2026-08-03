@@ -76,7 +76,7 @@ MCPCallEntry.tool(
 );
 ''';
       final migrated = migrator.migrateSource(before);
-      expect(migrated, contains("'ids': {'type': 'array'}"));
+      expect(migrated, contains("'ids': {'type': 'list'}"));
       expect(migrated, contains("'required': <String>['ids']"));
       expect(migrated, isNot(contains('TODO(migrate):')));
     });
@@ -103,7 +103,7 @@ MCPCallEntry.tool(
       final migrated = migrator.migrateSource(before);
       expect(
         migrated,
-        contains("'tags': {'type': 'array', 'items': {'type': 'string'}}"),
+        contains("'tags': {'type': 'list', 'items': {'type': 'string'}}"),
       );
       expect(migrated, contains("'required': <String>['tags']"));
       expect(migrated, isNot(contains('TODO(migrate):')));
@@ -137,7 +137,7 @@ MCPCallEntry.tool(
 );
 ''';
       final migrated = migrator.migrateSource(before);
-      expect(migrated, contains("'type': 'array'"));
+      expect(migrated, contains("'type': 'list'"));
       expect(migrated, contains("'type': 'object'"));
       expect(migrated, contains("'ref'"));
       expect(migrated, contains("'text'"));
@@ -147,7 +147,7 @@ MCPCallEntry.tool(
       expect(migrated, isNot(contains('TODO(migrate):')));
     });
 
-    test('emits TODO when ArraySchema items are nested arrays', () {
+    test('emits TODO when ListSchema items are nested lists', () {
       const before = '''
 MCPCallEntry.tool(
   definition: MCPToolDefinition(
@@ -170,7 +170,7 @@ MCPCallEntry.tool(
 ''';
       final migrated = migrator.migrateSource(before);
       expect(migrated, contains("'rows'"));
-      expect(migrated, contains("'type': 'array'"));
+      expect(migrated, contains("'type': 'list'"));
       expect(migrated, isNot(contains("'items': {")));
       expect(migrated, contains('TODO(migrate):'));
       expect(migrated, contains('nested ArraySchema items'));

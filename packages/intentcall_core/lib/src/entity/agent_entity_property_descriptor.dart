@@ -9,7 +9,7 @@ enum AgentEntityPropertyValueType {
   number,
   boolean,
   object,
-  array,
+  list,
 }
 
 enum AgentEntityPrivacy { public, private, sensitive }

@@ -13,7 +13,7 @@ import 'agent_validation_exception.dart';
 /// - Top-level `required` and `properties`
 /// - `additionalProperties: false` (rejects unknown keys)
 /// - Per-property `type`: `string`, `integer`, `number`, `boolean`, `object`,
-///   `array`
+///   `list`
 /// - `enum` on string properties (allowed string list)
 /// - Array `items` when each item is `type: object` with `required` /
 ///   `properties`
@@ -22,7 +22,7 @@ import 'agent_validation_exception.dart';
 /// ## Not supported
 ///
 /// - `pattern`, `format`, `oneOf`, `anyOf`
-/// - Nested object property validation (except array `items` objects)
+/// - Nested object property validation (except list `items` objects)
 /// - Type coercion (use [coerceArgumentsForSchema])
 ///
 /// Properties without a `type` are skipped. Unknown keys are allowed when
@@ -106,9 +106,9 @@ void _validateValue(
       if (value is! Map) {
         throw AgentValidationException('"$path" must be an object.');
       }
-    case 'array':
+    case 'list':
       if (value is! List) {
-        throw AgentValidationException('"$path" must be an array.');
+        throw AgentValidationException('"$path" must be an list.');
       }
       _validateArrayItems(path, schema, value);
   }

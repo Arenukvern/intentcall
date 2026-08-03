@@ -115,7 +115,7 @@ void main() {
       expect(js, contains('global.fetch(invokePath'));
     });
 
-    test('emits array items object validation', () {
+    test('emits list items object validation', () {
       final js = const WebMcpJsEmitter().emit(_fixtureAgentManifest);
       expect(js, contains('validateArrayItems'));
       expect(js, contains('validateObjectProperties'));
@@ -328,7 +328,7 @@ void main() {
       expect(manifest.entityTypes.single.qualifiedName, 'app_project');
     });
 
-    test('reads shortcuts and intents arrays', () {
+    test('reads shortcuts and intents lists', () {
       final manifest = AgentManifest.fromJson(<String, Object?>{
         'version': 1,
         'platform': 'android',

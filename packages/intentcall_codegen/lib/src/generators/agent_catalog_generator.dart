@@ -961,10 +961,10 @@ $fields
         isSearchable: isSearchable,
       );
 
-      if (role == AgentEntityPropertyRole.keywords && valueType != 'array') {
+      if (role == AgentEntityPropertyRole.keywords && valueType != 'list') {
         throw InvalidGenerationSourceError(
           "@AgentEntity property '$propertyName' has role 'keywords' but "
-          "valueType '$valueType'; keywords requires valueType 'array'.",
+          "valueType '$valueType'; keywords requires valueType 'list'.",
           element: element,
         );
       }

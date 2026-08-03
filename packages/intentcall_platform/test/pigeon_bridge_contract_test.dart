@@ -58,7 +58,7 @@ void main() {
           ),
           AgentEntityPropertyDescriptor(
             name: 'tags',
-            valueType: AgentEntityPropertyValueType.array,
+            valueType: AgentEntityPropertyValueType.list,
             role: AgentEntityPropertyRole.keywords,
             isIndexed: true,
           ),
@@ -138,7 +138,7 @@ String _readRepoFile(final String relativePath) {
   return File(p.join(repoRoot.path, relativePath)).readAsStringSync();
 }
 
-Directory _findRepoRoot(Directory start) {
+Directory _findRepoRoot(final Directory start) {
   var dir = start;
   while (true) {
     final pubspec = File(p.join(dir.path, 'pubspec.yaml'));

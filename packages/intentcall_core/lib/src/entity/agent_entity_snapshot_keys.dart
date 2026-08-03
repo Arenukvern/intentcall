@@ -15,7 +15,8 @@ final class AgentEntitySnapshotKeys {
   ) {
     _validateUniqueRoles(descriptor.properties);
 
-    final titleKey = _propertyNameWithRole(
+    final titleKey =
+        _propertyNameWithRole(
           descriptor.properties,
           AgentEntityPropertyRole.title,
         ) ??
@@ -25,7 +26,8 @@ final class AgentEntitySnapshotKeys {
         ) ??
         'title';
 
-    final subtitleKey = _propertyNameWithRole(
+    final subtitleKey =
+        _propertyNameWithRole(
           descriptor.properties,
           AgentEntityPropertyRole.subtitle,
         ) ??
@@ -34,29 +36,28 @@ final class AgentEntitySnapshotKeys {
           (final property) => property.isDisplay,
           1,
         ) ??
-        _firstOrNull(
-          descriptor.properties
-              .where(
-                (final property) =>
-                    property.isSearchable && property.name != titleKey,
-              )
-              .map((final property) => property.name),
-        ) ??
+        descriptor.properties
+            .where(
+              (final property) =>
+                  property.isSearchable && property.name != titleKey,
+            )
+            .map((final property) => property.name)
+            .firstOrNull ??
         'subtitle';
 
-    final keywordsKey = _propertyNameWithRole(
+    final keywordsKey =
+        _propertyNameWithRole(
           descriptor.properties,
           AgentEntityPropertyRole.keywords,
         ) ??
-        _firstOrNull(
-          descriptor.properties
-              .where(
-                (final property) =>
-                    property.isSearchable &&
-                    property.valueType == AgentEntityPropertyValueType.array,
-              )
-              .map((final property) => property.name),
-        ) ??
+        descriptor.properties
+            .where(
+              (final property) =>
+                  property.isSearchable &&
+                  property.valueType == AgentEntityPropertyValueType.list,
+            )
+            .map((final property) => property.name)
+            .firstOrNull ??
         'keywords';
 
     return AgentEntitySnapshotKeys(
@@ -76,11 +77,7 @@ final class AgentEntitySnapshotKeys {
 void _validateUniqueRoles(
   final Iterable<AgentEntityPropertyDescriptor> properties,
 ) {
-  for (final role in <AgentEntityPropertyRole>[
-    AgentEntityPropertyRole.title,
-    AgentEntityPropertyRole.subtitle,
-    AgentEntityPropertyRole.keywords,
-  ]) {
+  for (final role in AgentEntityPropertyRole.validValues) {
     final matches = properties
         .where((final property) => property.role == role)
         .toList();
@@ -133,9 +130,4 @@ String? _nthPropertyNameWhere(
     seen++;
   }
   return null;
-}
-
-String? _firstOrNull(final Iterable<String> values) {
-  final iterator = values.iterator;
-  return iterator.moveNext() ? iterator.current : null;
 }
