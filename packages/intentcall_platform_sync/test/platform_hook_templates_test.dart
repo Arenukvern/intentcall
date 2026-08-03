@@ -7,9 +7,7 @@ import 'package:test/test.dart';
 void main() {
   group('PlatformHookSpine', () {
     test('default flutter spine uses dart run cli invocation', () {
-      final spine = PlatformHookSpine.resolve(
-        const PlatformHookSpineInput(host: 'flutter'),
-      );
+      final spine = PlatformHookSpine.resolve(const PlatformHookSpineInput());
       expect(spine.cliInvocation, kDefaultHookCliInvocation);
       expect(
         spine.manifestPhase.shellLine,
@@ -20,16 +18,15 @@ void main() {
 
     test('honors hooks.syncCommand override', () {
       final spine = PlatformHookSpine.resolve(
-        const PlatformHookSpineInput(
-          host: 'flutter',
-          syncCommand: 'intentcall',
-        ),
+        const PlatformHookSpineInput(syncCommand: 'intentcall'),
       );
       expect(spine.cliInvocation, 'intentcall');
-      expect(
-        spine.manifestPhase.argv,
-        <String>['intentcall', 'manifest', 'export', '--check'],
-      );
+      expect(spine.manifestPhase.argv, <String>[
+        'intentcall',
+        'manifest',
+        'export',
+        '--check',
+      ]);
     });
 
     test('resolves platform list from yaml enabled platforms', () {
@@ -74,7 +71,10 @@ hooks:
     });
 
     test('legacy template getters delegate to default spine', () {
-      expect(kAndroidGradleCodegenHook, kDefaultFlutterHookSpine.renderGradle());
+      expect(
+        kAndroidGradleCodegenHook,
+        kDefaultFlutterHookSpine.renderGradle(),
+      );
       expect(
         kAppleXcodeCodegenRunScript,
         kDefaultFlutterHookSpine.renderAppleXcode(),
@@ -87,10 +87,10 @@ hooks:
         tokenizeShellCommand('dart run intentcall_cli:intentcall'),
         <String>['dart', 'run', 'intentcall_cli:intentcall'],
       );
-      expect(
-        tokenizeShellCommand('"dart run" intentcall'),
-        <String>['dart run', 'intentcall'],
-      );
+      expect(tokenizeShellCommand('"dart run" intentcall'), <String>[
+        'dart run',
+        'intentcall',
+      ]);
     });
   });
 }

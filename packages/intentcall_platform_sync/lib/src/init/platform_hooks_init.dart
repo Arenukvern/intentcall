@@ -96,38 +96,40 @@ final class PlatformHooksInit {
       );
     }
     if (patchable.contains('ios')) {
-      targets.add(
-        await _patchFile(
-          id: 'ios_codegen_script',
-          path: p.join(root, 'ios', 'intentcall_codegen.sh'),
-          snippet: spine.renderAppleXcode().trim(),
-          checkOnly: checkOnly,
-          wholeFile: true,
-        ),
-      );
-      targets.add(
-        _checkXcodeRunScript(
-          id: 'ios_xcode_run_script',
-          path: p.join(root, 'ios', 'Runner.xcodeproj', 'project.pbxproj'),
-        ),
-      );
+      targets
+        ..add(
+          await _patchFile(
+            id: 'ios_codegen_script',
+            path: p.join(root, 'ios', 'intentcall_codegen.sh'),
+            snippet: spine.renderAppleXcode().trim(),
+            checkOnly: checkOnly,
+            wholeFile: true,
+          ),
+        )
+        ..add(
+          _checkXcodeRunScript(
+            id: 'ios_xcode_run_script',
+            path: p.join(root, 'ios', 'Runner.xcodeproj', 'project.pbxproj'),
+          ),
+        );
     }
     if (patchable.contains('macos')) {
-      targets.add(
-        await _patchFile(
-          id: 'macos_codegen_script',
-          path: p.join(root, 'macos', 'intentcall_codegen.sh'),
-          snippet: spine.renderAppleXcode().trim(),
-          checkOnly: checkOnly,
-          wholeFile: true,
-        ),
-      );
-      targets.add(
-        _checkXcodeRunScript(
-          id: 'macos_xcode_run_script',
-          path: p.join(root, 'macos', 'Runner.xcodeproj', 'project.pbxproj'),
-        ),
-      );
+      targets
+        ..add(
+          await _patchFile(
+            id: 'macos_codegen_script',
+            path: p.join(root, 'macos', 'intentcall_codegen.sh'),
+            snippet: spine.renderAppleXcode().trim(),
+            checkOnly: checkOnly,
+            wholeFile: true,
+          ),
+        )
+        ..add(
+          _checkXcodeRunScript(
+            id: 'macos_xcode_run_script',
+            path: p.join(root, 'macos', 'Runner.xcodeproj', 'project.pbxproj'),
+          ),
+        );
     }
 
     return PlatformHooksInitReport(

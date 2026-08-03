@@ -11,23 +11,17 @@ Future<void> runIntentCallStdioMcpServer({
   final AgentRegistry? registry,
   final List<AgentModule> modules = const <AgentModule>[],
 }) async {
-  IntentCallStdioMcpServer? serverRef;
-  final adapter = McpPublishAdapter(
-    publishTool: (final tool, final impl) =>
-        serverRef!.registerTool(tool, impl),
-    unpublishTool: (final name) => serverRef!.unregisterTool(name),
-    publishResource: (final resource, final impl) =>
-        serverRef!.addResource(resource, impl),
-    unpublishResource: (final uri) => serverRef!.removeResource(uri),
-    publishResourceTemplate: (final template, final impl) =>
-        serverRef!.addResourceTemplate(template, impl),
+  final IntentCallStdioMcpServer serverRef = IntentCallStdioMcpServer(
+    stdioChannel(input: io.stdin, output: io.stdout),
   );
 
-  serverRef = IntentCallStdioMcpServer(
-    stdioChannel(input: io.stdin, output: io.stdout),
-    adapter: adapter,
+  final adapter = McpPublishAdapter(
+    publishTool: serverRef.registerTool,
+    unpublishTool: serverRef.unregisterTool,
+    publishResource: serverRef.addResource,
+    unpublishResource: serverRef.removeResource,
+    publishResourceTemplate: serverRef.addResourceTemplate,
   );
-  final server = serverRef;
 
   final runtime = AgentRuntime(
     registry: registry,
@@ -35,24 +29,17 @@ Future<void> runIntentCallStdioMcpServer({
     adapters: <AgentAdapter>[adapter],
   );
   await runtime.start();
-  await server.initialized;
-  await server.done;
+  await serverRef.initialized;
+  await serverRef.done;
   await runtime.stop();
 }
 
 base class IntentCallStdioMcpServer extends MCPServer
     with ToolsSupport, ResourcesSupport {
-  IntentCallStdioMcpServer(
-    super.channel, {
-    required this.adapter,
-  }) : super.fromStreamChannel(
-          implementation: Implementation(
-            name: 'intentcall',
-            version: '0.6.0',
-          ),
-          instructions:
-              'IntentCall registry-backed MCP server (minimal dogfood host).',
-        );
-
-  final McpPublishAdapter adapter;
+  IntentCallStdioMcpServer(super.channel)
+    : super.fromStreamChannel(
+        implementation: Implementation(name: 'intentcall', version: '0.6.0'),
+        instructions:
+            'IntentCall registry-backed MCP server (minimal dogfood host).',
+      );
 }

@@ -6,7 +6,6 @@ import 'package:intentcall_platform_sync/intentcall_platform_sync.dart'
     hide parsePlatformList;
 import 'package:path/path.dart' as p;
 
-import 'catalog/catalog_loader.dart';
 import 'commands/apple_app_intents_testing.dart';
 import 'config/host_profiles.dart';
 import 'config/intentcall_config.dart';
@@ -662,12 +661,13 @@ final class _HooksSpineCommand extends Command<int> {
     if (asJson) {
       stdout.write(spine.encodeJson());
     } else {
-      stdout.writeln('host: ${spine.host}');
-      stdout.writeln('cliInvocation: ${spine.cliInvocation}');
-      stdout.writeln('platformList: ${spine.platformList}');
-      stdout.writeln('codegen: ${spine.codegenPhase.shellLine}');
-      stdout.writeln('manifest: ${spine.manifestPhase.shellLine}');
-      stdout.writeln('sync: ${spine.syncPhase.shellLine}');
+      stdout
+        ..writeln('host: ${spine.host}')
+        ..writeln('cliInvocation: ${spine.cliInvocation}')
+        ..writeln('platformList: ${spine.platformList}')
+        ..writeln('codegen: ${spine.codegenPhase.shellLine}')
+        ..writeln('manifest: ${spine.manifestPhase.shellLine}')
+        ..writeln('sync: ${spine.syncPhase.shellLine}');
     }
     return 0;
   }

@@ -45,6 +45,7 @@ class IntentCallEntityKeyBundle {
 }
 
 @HostApi()
+// ignore: one_member_abstracts
 abstract class IntentCallInvocationsHostApi {
   List<IntentCallInvocationEnvelopeDto> takePendingInvocations();
 }
