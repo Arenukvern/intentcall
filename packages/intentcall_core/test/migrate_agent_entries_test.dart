@@ -56,7 +56,7 @@ MCPCallEntry.tool(
       expect(migrated, isNot(contains('TODO(migrate):')));
     });
 
-    test('preserves top-level ArraySchema without items', () {
+    test('preserves top-level ListSchema without items', () {
       const before = '''
 MCPCallEntry.tool(
   definition: MCPToolDefinition(
@@ -81,7 +81,7 @@ MCPCallEntry.tool(
       expect(migrated, isNot(contains('TODO(migrate):')));
     });
 
-    test('preserves ArraySchema with primitive items', () {
+    test('preserves ListSchema with primitive items', () {
       const before = '''
 MCPCallEntry.tool(
   definition: MCPToolDefinition(
@@ -109,7 +109,7 @@ MCPCallEntry.tool(
       expect(migrated, isNot(contains('TODO(migrate):')));
     });
 
-    test('preserves fill_form-shaped ArraySchema ObjectSchema items', () {
+    test('preserves fill_form-shaped ListSchema ObjectSchema items', () {
       const before = '''
 MCPCallEntry.tool(
   definition: MCPToolDefinition(
@@ -173,7 +173,7 @@ MCPCallEntry.tool(
       expect(migrated, contains("'type': 'list'"));
       expect(migrated, isNot(contains("'items': {")));
       expect(migrated, contains('TODO(migrate):'));
-      expect(migrated, contains('nested ArraySchema items'));
+      expect(migrated, contains('nested ListSchema items'));
     });
 
     test('preserves nested ObjectSchema inner properties', () {

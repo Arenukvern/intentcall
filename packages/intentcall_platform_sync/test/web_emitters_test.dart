@@ -117,7 +117,7 @@ void main() {
 
     test('emits list items object validation', () {
       final js = const WebMcpJsEmitter().emit(_fixtureAgentManifest);
-      expect(js, contains('validateArrayItems'));
+      expect(js, contains('validateListItems'));
       expect(js, contains('validateObjectProperties'));
       expect(js, contains('must be an object.'));
       expect(js, contains('Missing required property "'));

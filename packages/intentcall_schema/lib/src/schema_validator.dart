@@ -15,7 +15,7 @@ import 'agent_validation_exception.dart';
 /// - Per-property `type`: `string`, `integer`, `number`, `boolean`, `object`,
 ///   `list`
 /// - `enum` on string properties (allowed string list)
-/// - Array `items` when each item is `type: object` with `required` /
+/// - List `items` when each item is `type: object` with `required` /
 ///   `properties`
 /// - `minimum` / `maximum` on numeric types
 ///
@@ -110,11 +110,11 @@ void _validateValue(
       if (value is! List) {
         throw AgentValidationException('"$path" must be an list.');
       }
-      _validateArrayItems(path, schema, value);
+      _validateListItems(path, schema, value);
   }
 }
 
-void _validateArrayItems(
+void _validateListItems(
   final String path,
   final Map<String, Object?> schema,
   final List<Object?> value,

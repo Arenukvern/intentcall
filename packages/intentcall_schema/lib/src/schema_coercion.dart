@@ -80,7 +80,7 @@ Object? _coercePropertyValue(
     return _coerceObjectValue(propertySchema, Map<String, Object?>.from(value));
   }
   if (type == 'list' && value is List) {
-    return _coerceArrayValue(propertySchema, value);
+    return _coerceListValue(propertySchema, value);
   }
 
   return value;
@@ -144,7 +144,7 @@ Object? _coerceOpenObjectEntryValue(final Object? value) {
   return value;
 }
 
-List<Object?> _coerceArrayValue(
+List<Object?> _coerceListValue(
   final Map<String, Object?> listSchema,
   final List<dynamic> value,
 ) {
@@ -167,7 +167,7 @@ List<Object?>? _parseWireJsonList(
   if (decoded is! List) {
     return null;
   }
-  return _coerceArrayValue(listSchema, decoded);
+  return _coerceListValue(listSchema, decoded);
 }
 
 Map<String, Object?>? _parseWireJsonMap(final String trimmed) =>
