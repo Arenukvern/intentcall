@@ -1,6 +1,6 @@
 import 'package:meta/meta.dart';
 
-import '../naming/qualified_name.dart';
+import '../models/qualified_name.dart';
 import 'agent_entity_property_role.dart';
 
 enum AgentEntityPropertyValueType {

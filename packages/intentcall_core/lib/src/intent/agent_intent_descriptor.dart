@@ -1,7 +1,7 @@
 import 'package:intentcall_schema/intentcall_schema.dart' as schema;
 import 'package:meta/meta.dart';
 
-import '../naming/qualified_name.dart';
+import '../models/qualified_name.dart';
 import 'agent_intent_kind.dart';
 
 @immutable
@@ -35,8 +35,5 @@ final class AgentIntentDescriptor {
 
   String effectiveResourceUri(final String protocolScheme) =>
       resourceUri ??
-      schema.resourceUri(
-        protocolScheme: protocolScheme,
-        resourceName: name,
-      );
+      schema.resourceUri(protocolScheme: protocolScheme, resourceName: name);
 }
