@@ -26,7 +26,7 @@ AgentArguments coerceArgumentsForSchema(
   final AgentArguments arguments,
 ) {
   if (schema['type'] != 'object') {
-    return Map<String, Object?>.from(arguments);
+    return jsonDecodeMap(arguments);
   }
 
   final properties = _propertySchemas(schema);
