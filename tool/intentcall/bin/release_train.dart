@@ -18,7 +18,7 @@ const publishablePackages = [
   'intentcall_testing',
 ];
 
-const workspaceOnlyPackages = ['intentcall_gemma'];
+const workspaceOnlyPackages = ['intentcall_gemma', 'acp_toolkit'];
 
 const allInternalPackages = [...publishablePackages, ...workspaceOnlyPackages];
 

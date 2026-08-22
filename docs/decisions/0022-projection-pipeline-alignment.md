@@ -14,7 +14,7 @@ emitters disagreed on absent-key semantics, and Apple projection treated App
 Intent struct emission, Shortcuts phrases, entity queries, and Spotlight indexing
 as one bundle.
 
-The [projection pipeline spec](../evidence/projection-pipeline-spec.md) requires
+The projection pipeline spec (deleted per ADR-0013; see ADR 0024) required
 Layer 3 alignment before entity lifecycle and consumer harness work proceed.
 
 ## Decision
@@ -35,12 +35,12 @@ Layer 3 alignment before entity lifecycle and consumer harness work proceed.
 
 4. **New Apple surfaces** (additive; manifest schema version stays `1`):
 
-   | Enum | Manifest key | Default when `ios`/`macos` enabled |
-   |------|--------------|-------------------------------------|
-   | `appleAppIntents` | `apple.appIntents` | `true` |
-   | `appleAppShortcuts` | `apple.appShortcuts` | `false` (opt-in) |
-   | `appleSpotlight` | `apple.spotlight` | `false` |
-   | `appleEntities` | `apple.entities` | `false` |
+   | Enum                | Manifest key         | Default when `ios`/`macos` enabled |
+   | ------------------- | -------------------- | ---------------------------------- |
+   | `appleAppIntents`   | `apple.appIntents`   | `true`                             |
+   | `appleAppShortcuts` | `apple.appShortcuts` | `false` (opt-in)                   |
+   | `appleSpotlight`    | `apple.spotlight`    | `false`                            |
+   | `appleEntities`     | `apple.entities`     | `false`                            |
 
 5. **Emitter gating** — `AppleSwiftAppIntentsEmitter` reads dense manifest rows:
    - Swift `AppIntent` structs ← `apple.appIntents`
@@ -70,21 +70,21 @@ Layer 3 alignment before entity lifecycle and consumer harness work proceed.
 - [0021-agent-catalog-annotation.md](0021-agent-catalog-annotation.md)
 - [0024-dart-hooks-and-pigeon-bridge-consistency.md](0024-dart-hooks-and-pigeon-bridge-consistency.md)
 - [hooks-native-bridge-plan.md](../evidence/hooks-native-bridge-plan.md)
-- [projection-pipeline-spec.md](../evidence/projection-pipeline-spec.md) (retired; see ADR 0024)
+- [projection-pipeline-spec.md](../evidence/projection-pipeline-spec.md) (deleted per ADR-0013; see ADR 0024)
 
 ## Verification inventory
 
 Primary test files for dense export, Apple sub-channels, and projection alignment:
 
-| Test file | Coverage |
-|-----------|----------|
-| [`dense_manifest_test.dart`](../../packages/intentcall_platform_sync/test/dense_manifest_test.dart) | Every exported tool row emits all surface keys with explicit `include` booleans |
-| [`partial_defaults_platform_scope_test.dart`](../../packages/intentcall_platform_sync/test/partial_defaults_platform_scope_test.dart) | Partial yaml merge and platform-scoped default surface resolution |
-| [`ios_shortcuts_opt_in_test.dart`](../../packages/intentcall_platform_sync/test/ios_shortcuts_opt_in_test.dart) | `apple.appShortcuts` remains opt-in; not auto-enabled from `platforms.enabled` |
-| [`apple_surface_matrix_test.dart`](../../packages/intentcall_platform_sync/test/apple_surface_matrix_test.dart) | Apple sub-channel gating matrix (`appIntents`, `appShortcuts`, `entities`, `spotlight`) |
-| [`native_emitters_test.dart`](../../packages/intentcall_platform_sync/test/native_emitters_test.dart) | Emitter output gated by dense manifest surface rows |
-| [`projection_alignment_test.dart`](../../packages/intentcall_platform_sync/test/projection_alignment_test.dart) | End-to-end manifest → emitter alignment across surface families |
-| [`platform_sync_layout_test.dart`](../../packages/intentcall_platform_sync/test/platform_sync_layout_test.dart) | Platform sync artifact layout and hook spine outputs |
-| [`webmcp_bootstrap_surface_test.dart`](../../packages/intentcall_platform_sync/test/webmcp_bootstrap_surface_test.dart) | WebMCP bootstrap surface projection |
+| Test file                                                                                                                             | Coverage                                                                                |
+| ------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| [`dense_manifest_test.dart`](../../packages/intentcall_platform_sync/test/dense_manifest_test.dart)                                   | Every exported tool row emits all surface keys with explicit `include` booleans         |
+| [`partial_defaults_platform_scope_test.dart`](../../packages/intentcall_platform_sync/test/partial_defaults_platform_scope_test.dart) | Partial yaml merge and platform-scoped default surface resolution                       |
+| [`ios_shortcuts_opt_in_test.dart`](../../packages/intentcall_platform_sync/test/ios_shortcuts_opt_in_test.dart)                       | `apple.appShortcuts` remains opt-in; not auto-enabled from `platforms.enabled`          |
+| [`apple_surface_matrix_test.dart`](../../packages/intentcall_platform_sync/test/apple_surface_matrix_test.dart)                       | Apple sub-channel gating matrix (`appIntents`, `appShortcuts`, `entities`, `spotlight`) |
+| [`native_emitters_test.dart`](../../packages/intentcall_platform_sync/test/native_emitters_test.dart)                                 | Emitter output gated by dense manifest surface rows                                     |
+| [`projection_alignment_test.dart`](../../packages/intentcall_platform_sync/test/projection_alignment_test.dart)                       | End-to-end manifest → emitter alignment across surface families                         |
+| [`platform_sync_layout_test.dart`](../../packages/intentcall_platform_sync/test/platform_sync_layout_test.dart)                       | Platform sync artifact layout and hook spine outputs                                    |
+| [`webmcp_bootstrap_surface_test.dart`](../../packages/intentcall_platform_sync/test/webmcp_bootstrap_surface_test.dart)               | WebMCP bootstrap surface projection                                                     |
 
 Aggregate gate: `just projection-pipeline-check` and steward scenario `intentcall.projection-pipeline`.

@@ -15,11 +15,11 @@ platforms cache JSON-safe rows for cold-start query and indexing.
 Entity descriptors declare many properties (`name`, `summary`, `tags`, …), but
 native discovery UIs expose a **fixed display surface**:
 
-| Platform | Primary line | Secondary line | Search tokens |
-|----------|--------------|----------------|---------------|
-| Apple `AppEntity` | `title` | `subtitle` | `keywords: [String]` |
-| Apple `DisplayRepresentation` | title | subtitle | — |
-| IntentCall native cache search | `titleKey` field | `subtitleKey` field | `keywordsKey` list |
+| Platform                       | Primary line     | Secondary line      | Search tokens        |
+| ------------------------------ | ---------------- | ------------------- | -------------------- |
+| Apple `AppEntity`              | `title`          | `subtitle`          | `keywords: [String]` |
+| Apple `DisplayRepresentation`  | title            | subtitle            | —                    |
+| IntentCall native cache search | `titleKey` field | `subtitleKey` field | `keywordsKey` list   |
 
 Apple is the first concrete emitter (`apple.entities`, `apple.spotlight`). Android
 and Windows entity lanes are not implemented yet, but they will map to the same
@@ -39,12 +39,12 @@ properties share a flag.
 Each `entityTypes[]` row in `agent_manifest.json` carries exactly three
 snapshot key slots plus the identifier:
 
-| Manifest key | Semantic role | Default when unset |
-|--------------|---------------|--------------------|
-| `idKey` | Stable entity identifier in cache rows | `id` |
-| `titleKey` | Primary display string | `title` |
-| `subtitleKey` | Secondary display string | `subtitle` |
-| `keywordsKey` | Search token list | `keywords` |
+| Manifest key  | Semantic role                          | Default when unset |
+| ------------- | -------------------------------------- | ------------------ |
+| `idKey`       | Stable entity identifier in cache rows | `id`               |
+| `titleKey`    | Primary display string                 | `title`            |
+| `subtitleKey` | Secondary display string               | `subtitle`         |
+| `keywordsKey` | Search token list                      | `keywords`         |
 
 Emitters and native stores read these keys from the manifest. They do **not**
 project arbitrary `displayProperties` lists — only one property name per slot.
@@ -106,13 +106,13 @@ keys remain the contract.
 
 ### 6. Platform mapping (current and future)
 
-| Layer | Responsibility |
-|-------|----------------|
-| Dart `AgentEntitySnapshot` + `projectAgentEntitySnapshot` | Source rows keyed by descriptor fields |
-| `agent_manifest.json` `entityTypes[]` | Declares slot → property name mapping |
-| Apple `AppEntity` codegen | Fixed `title`/`subtitle`/`keywords` struct; reads snapshot via manifest keys |
-| `IntentCallNativeEntitySnapshotStore` | Cold-start search over `titleKey`/`subtitleKey`/`keywordsKey` |
-| Android / Windows (future) | Reuse same three slots; map to platform-specific labels when emitters land |
+| Layer                                                     | Responsibility                                                               |
+| --------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Dart `AgentEntitySnapshot` + `projectAgentEntitySnapshot` | Source rows keyed by descriptor fields                                       |
+| `agent_manifest.json` `entityTypes[]`                     | Declares slot → property name mapping                                        |
+| Apple `AppEntity` codegen                                 | Fixed `title`/`subtitle`/`keywords` struct; reads snapshot via manifest keys |
+| `IntentCallNativeEntitySnapshotStore`                     | Cold-start search over `titleKey`/`subtitleKey`/`keywordsKey`                |
+| Android / Windows (future)                                | Reuse same three slots; map to platform-specific labels when emitters land   |
 
 ## Consequences
 
@@ -148,7 +148,7 @@ Neutral:
 - [0022-projection-pipeline-alignment.md](0022-projection-pipeline-alignment.md)
 - [0024-dart-hooks-and-pigeon-bridge-consistency.md](0024-dart-hooks-and-pigeon-bridge-consistency.md)
 - [hooks-native-bridge-plan.md](../evidence/hooks-native-bridge-plan.md)
-- [projection-pipeline-spec.md](../evidence/projection-pipeline-spec.md) (retired; see ADR 0024)
+- [projection-pipeline-spec.md](../evidence/projection-pipeline-spec.md) (deleted per ADR-0013; see ADR 0024)
 - `packages/intentcall_core/lib/src/entity/agent_entity_snapshot_keys.dart`
 - `packages/intentcall_core/lib/src/entity/agent_entity_property_role.dart`
 
@@ -156,9 +156,9 @@ Neutral:
 
 Primary test files for three-slot entity projection and manifest export:
 
-| Test file | Coverage |
-|-----------|----------|
-| [`manifest_entity_export_test.dart`](../../packages/intentcall_cli/test/manifest_entity_export_test.dart) | `entityTypes[]` export with `idKey` / `titleKey` / `subtitleKey` / `keywordsKey` slots |
-| [`intentcall_entity_index_test.dart`](../../packages/intentcall_platform/test/intentcall_entity_index_test.dart) | Native entity index search over manifest slot keys |
-| [`agent_entity_snapshot_projection_test.dart`](../../packages/intentcall_core/test/agent_entity_snapshot_projection_test.dart) | `projectAgentEntitySnapshot()` maps descriptor roles to cache rows |
-| [`projection_alignment_test.dart`](../../packages/intentcall_platform_sync/test/projection_alignment_test.dart) — `entityTypes in export` and `single native entity snapshot store` groups | Manifest `entityTypes` passthrough and Apple emitter entity store wiring |
+| Test file                                                                                                                                                                                  | Coverage                                                                               |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| [`manifest_entity_export_test.dart`](../../packages/intentcall_cli/test/manifest_entity_export_test.dart)                                                                                  | `entityTypes[]` export with `idKey` / `titleKey` / `subtitleKey` / `keywordsKey` slots |
+| [`intentcall_entity_index_test.dart`](../../packages/intentcall_platform/test/intentcall_entity_index_test.dart)                                                                           | Native entity index search over manifest slot keys                                     |
+| [`agent_entity_snapshot_projection_test.dart`](../../packages/intentcall_core/test/agent_entity_snapshot_projection_test.dart)                                                             | `projectAgentEntitySnapshot()` maps descriptor roles to cache rows                     |
+| [`projection_alignment_test.dart`](../../packages/intentcall_platform_sync/test/projection_alignment_test.dart) — `entityTypes in export` and `single native entity snapshot store` groups | Manifest `entityTypes` passthrough and Apple emitter entity store wiring               |

@@ -25,8 +25,7 @@ Remaining gaps are **operational**, not policy:
    duplicates handoff-store logic; entity channel keys and entity-open drain are inconsistent
    with manifest projection (ADR 0015/0018).
 
-The retired [projection-pipeline-spec](../evidence/projection-pipeline-spec.md) execution
-playbook is superseded by [hooks-native-bridge-plan](../evidence/hooks-native-bridge-plan.md).
+The retired projection-pipeline-spec execution playbook (deleted per ADR-0013) is superseded by [hooks-native-bridge-plan](../evidence/hooks-native-bridge-plan.md).
 
 ## Decision
 

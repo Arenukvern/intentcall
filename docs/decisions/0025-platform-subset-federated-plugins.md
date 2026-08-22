@@ -30,8 +30,8 @@ for iOS/macOS native dependencies. The CocoaPods registry becomes read-only on
 IntentCall will drop CocoaPods for Apple-owned plugin packages and standardize on
 SPM with `sharedDarwinSource` for iOS + macOS.
 
-Implementation plan:
-[platform-subset-federated-plugins-plan.md](../evidence/platform-subset-federated-plugins-plan.md).
+Implementation plan: deleted per ADR-0013 after durable extraction (see git
+history for `platform-subset-federated-plugins-plan.md`).
 
 ## Decision
 
@@ -57,12 +57,12 @@ Implementation plan:
 
 Split runtime native code into endorsed federated packages:
 
-| Package | Role |
-|---------|------|
-| `intentcall_platform` | App-facing umbrella with `default_package` map and Dart host API |
-| `intentcall_platform_apple` | iOS + macOS native (Pigeon + Swift), SPM under `darwin/`; public Swift facades `IntentCallNativeBridge`, `IntentCallNativeHandoffStore`, `IntentCallNativeEntitySnapshotStore` |
-| `intentcall_platform_android` | Android native (Pigeon + Kotlin) |
-| `intentcall_bridge` | Shared Pigeon IDL and generated bindings |
+| Package                       | Role                                                                                                                                                                           |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `intentcall_platform`         | App-facing umbrella with `default_package` map and Dart host API                                                                                                               |
+| `intentcall_platform_apple`   | iOS + macOS native (Pigeon + Swift), SPM under `darwin/`; public Swift facades `IntentCallNativeBridge`, `IntentCallNativeHandoffStore`, `IntentCallNativeEntitySnapshotStore` |
+| `intentcall_platform_android` | Android native (Pigeon + Kotlin)                                                                                                                                               |
+| `intentcall_bridge`           | Shared Pigeon IDL and generated bindings                                                                                                                                       |
 
 **Hardcut:** no separate `intentcall_platform_interface` package — the umbrella
 owns the Dart host surface; apple + android are the endorsed impl packages.
@@ -119,5 +119,5 @@ Tradeoffs:
 
 - [0022-projection-pipeline-alignment.md](0022-projection-pipeline-alignment.md)
 - [0024-dart-hooks-and-pigeon-bridge-consistency.md](0024-dart-hooks-and-pigeon-bridge-consistency.md)
-- [platform-subset-federated-plugins-plan.md](../evidence/platform-subset-federated-plugins-plan.md)
+- [platform-subset-federated-plugins-plan.md](../evidence/platform-subset-federated-plugins-plan.md) (deleted per ADR-0013; durable knowledge in this ADR)
 - [hooks-native-bridge-plan.md](../evidence/hooks-native-bridge-plan.md)

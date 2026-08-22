@@ -4,8 +4,9 @@ description: >-
   stdio with pluggable agent backends. Pure Dart.
 version: 0.1.0-dev.1
 license: MIT
-repository: https://github.com/Arenukvern/mcp_flutter/tree/main/packages/acp_server
-issue_tracker: https://github.com/Arenukvern/mcp_flutter/issues
+repository: https://github.com/Arenukvern/intentcall/tree/main/packages/acp_toolkit
+issue_tracker: https://github.com/Arenukvern/intentcall/issues
+homepage: https://github.com/Arenukvern/intentcall/tree/main/packages/acp_toolkit
 topics:
   - acp
   - agent
@@ -16,8 +17,14 @@ environment:
   sdk: ">=3.12.0 <4.0.0"
 resolution: workspace
 dependencies:
+  intentcall_core: ^0.6.0
+  intentcall_schema: ^0.6.0
   meta: ^1.18.0
   from_json_to_json: ^0.5.0
+
+# Workspace-only for now: the registry-backed backend depends on intentcall_core.
+# Promote to the release train when the ACP adapter gets a contract test + consumer.
+publish_to: none
 dev_dependencies:
   lints: ^6.1.0
   test: ^1.31.0

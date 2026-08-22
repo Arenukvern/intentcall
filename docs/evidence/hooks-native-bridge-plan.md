@@ -2,13 +2,13 @@
 
 **Status:** Active implementation plan  
 **Date:** 2026-07-08  
-**Superseded by:** [projection-pipeline-spec.md](projection-pipeline-spec.md) (retired)  
+**Superseded by:** — (projection-pipeline-spec.md deleted per ADR-0013; see ADR 0024)  
 **Supersedes:** —  
-**See also:** [platform-subset-federated-plugins-plan.md](platform-subset-federated-plugins-plan.md)  
+**See also:** — (platform-subset-federated-plugins-plan.md deleted per ADR-0013; durable knowledge lives in ADR 0025)  
 **ADR:** [0024 — Dart Hooks and Pigeon Bridge Consistency](../decisions/0024-dart-hooks-and-pigeon-bridge-consistency.md)  
 **Disposition:** `promote_to_artifact`
 
-**Related ADRs:** [0015](../decisions/0015-dart-first-native-bridge.md), [0016](../decisions/0016-dispatch-mode-handoff-contract.md), [0017](../decisions/0017-apple-inline-runtime-tracks.md), [0019](../decisions/0019-framework-neutral-intentcall-cli.md), [0022](../decisions/0022-projection-pipeline-alignment.md), [0023](../decisions/0023-entity-three-slot-projection.md), [0025](../decisions/0025-platform-subset-federated-plugins.md) (federated plugins — see [platform-subset-federated-plugins-plan.md](platform-subset-federated-plugins-plan.md))
+**Related ADRs:** [0015](../decisions/0015-dart-first-native-bridge.md), [0016](../decisions/0016-dispatch-mode-handoff-contract.md), [0017](../decisions/0017-apple-inline-runtime-tracks.md), [0019](../decisions/0019-framework-neutral-intentcall-cli.md), [0022](../decisions/0022-projection-pipeline-alignment.md), [0023](../decisions/0023-entity-three-slot-projection.md), [0025](../decisions/0025-platform-subset-federated-plugins.md) (federated plugins — plan deleted after durable extraction per ADR-0013)
 
 ---
 
@@ -45,19 +45,19 @@ Invocation surfaces evolve; gate meaning does not.
 
 ## 3. Acceptance criteria
 
-| # | Criterion | Phase |
-|---|-----------|-------|
-| H1 | `PlatformHookSpine` resolves phases + CLI invocation from `intentcall.yaml` | P1 |
-| H2 | Gradle/Xcode/Jaspr templates generated from spine (not hand-maintained const strings) | P1 |
-| H3 | `hooks.syncCommand` honored when set | P1 |
-| H4 | `just platform-hooks-check` + steward action pass | P1, P4 |
-| H5 | `intentcall_hooks` package with `hook/build.dart` runs export+sync in-process for Jaspr fixture | P2 |
-| H6 | Shared `CatalogLoader` used by CLI and Dart hook | P2 |
-| H7 | Pigeon IDL for invocations + entities channels; plugin uses generated HostApi | P3 |
-| H8 | Single handoff store (no duplicate Swift implementations) | P3 |
-| H9 | `EntityKeyBundle` from manifest on entity channel calls | P3 |
-| H10 | `projection-pipeline-check` in CI + quick probe | P4 |
-| H11 | mcp_flutter three-gate (sibling repo) | P4 |
+| #   | Criterion                                                                                       | Phase  |
+| --- | ----------------------------------------------------------------------------------------------- | ------ |
+| H1  | `PlatformHookSpine` resolves phases + CLI invocation from `intentcall.yaml`                     | P1     |
+| H2  | Gradle/Xcode/Jaspr templates generated from spine (not hand-maintained const strings)           | P1     |
+| H3  | `hooks.syncCommand` honored when set                                                            | P1     |
+| H4  | `just platform-hooks-check` + steward action pass                                               | P1, P4 |
+| H5  | `intentcall_hooks` package with `hook/build.dart` runs export+sync in-process for Jaspr fixture | P2     |
+| H6  | Shared `CatalogLoader` used by CLI and Dart hook                                                | P2     |
+| H7  | Pigeon IDL for invocations + entities channels; plugin uses generated HostApi                   | P3     |
+| H8  | Single handoff store (no duplicate Swift implementations)                                       | P3     |
+| H9  | `EntityKeyBundle` from manifest on entity channel calls                                         | P3     |
+| H10 | `projection-pipeline-check` in CI + quick probe                                                 | P4     |
+| H11 | mcp_flutter three-gate (sibling repo)                                                           | P4     |
 
 **Claim ceiling:** artifact + static CI. **Non-claims:** live Siri ranking, signed-app Spotlight UX, exactly-once native delivery.
 
@@ -67,8 +67,8 @@ Invocation surfaces evolve; gate meaning does not.
 
 **Goal:** Retire stale spec; record decision in ADR 0024.
 
-| Lane | Scope |
-|------|-------|
+| Lane   | Scope                                                                                                                          |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------ |
 | P0-doc | Tombstone `projection-pipeline-spec.md`; ADR 0024; verification appendices on ADR 0022/0023; update `docs/decisions/README.md` |
 
 **Gate:** Doc links valid; `intentcall validate` passes.
@@ -97,11 +97,11 @@ outputs:
 
 ### 5.2 Parallel lanes
 
-| Lane | Agent | Write set | Gate |
-|------|-------|-----------|------|
+| Lane          | Agent         | Write set                                                           | Gate                                |
+| ------------- | ------------- | ------------------------------------------------------------------- | ----------------------------------- |
 | **P1a-spine** | Hook resolver | `platform_hook_spine.dart`, refactor `platform_hook_templates.dart` | `platform_hook_templates_test.dart` |
-| **P1b-init** | Hooks init | `platform_hooks_init.dart`, wire `hooks.syncCommand` | `platform_hooks_init_test.dart` |
-| **P1c-cli** | CLI | `intentcall hooks render`, `intentcall hooks spine --json` | `command_runner_test.dart` |
+| **P1b-init**  | Hooks init    | `platform_hooks_init.dart`, wire `hooks.syncCommand`                | `platform_hooks_init_test.dart`     |
+| **P1c-cli**   | CLI           | `intentcall hooks render`, `intentcall hooks spine --json`          | `command_runner_test.dart`          |
 
 **Order:** P1a → P1b ∥ P1c
 
@@ -133,10 +133,10 @@ packages/intentcall_hooks/
 
 ### 6.2 Parallel lanes
 
-| Lane | Agent | Write set | Gate |
-|------|-------|-----------|------|
-| **P2a-hook-pkg** | Dart hooks | `packages/intentcall_hooks/` | Jaspr fixture spine test |
-| **P2b-catalog-loader** | Shared lib | Extract `CatalogLoader` from CLI | CLI + hook parity tests |
+| Lane                   | Agent      | Write set                        | Gate                     |
+| ---------------------- | ---------- | -------------------------------- | ------------------------ |
+| **P2a-hook-pkg**       | Dart hooks | `packages/intentcall_hooks/`     | Jaspr fixture spine test |
+| **P2b-catalog-loader** | Shared lib | Extract `CatalogLoader` from CLI | CLI + hook parity tests  |
 
 **Order:** P2b → P2a (loader first)
 
@@ -202,11 +202,11 @@ packages/intentcall_bridge/
 
 ### 7.2 Parallel lanes
 
-| Lane | Agent | Write set | Gate |
-|------|-------|-----------|------|
-| **P3a-idl** | IDL author | `intentcall_bridge` pigeons + codegen | `just pigeon-codegen-check` |
-| **P3b-plugin** | Plugin | Refactor `IntentCallPlatformPlugin`; dedupe Swift | `pigeon_bridge_contract_test.dart` |
-| **P3c-entity** | Entity bridge | `EntityKeyBundle`; entity-open drain parity | `intentcall_entity_index_test.dart` |
+| Lane           | Agent         | Write set                                         | Gate                                |
+| -------------- | ------------- | ------------------------------------------------- | ----------------------------------- |
+| **P3a-idl**    | IDL author    | `intentcall_bridge` pigeons + codegen             | `just pigeon-codegen-check`         |
+| **P3b-plugin** | Plugin        | Refactor `IntentCallPlatformPlugin`; dedupe Swift | `pigeon_bridge_contract_test.dart`  |
+| **P3c-entity** | Entity bridge | `EntityKeyBundle`; entity-open drain parity       | `intentcall_entity_index_test.dart` |
 
 **Order:** P3a → P3b ∥ P3c
 
@@ -216,12 +216,12 @@ packages/intentcall_bridge/
 
 **Goal:** Promote gates; close L5 sibling gap.
 
-| Lane | Agent | Scope | Gate |
-|------|-------|-------|------|
-| **P4a-harness** | Steward | CI + quick probe; new steward actions | `steward benchmark --scenario intentcall.projection-pipeline` |
-| **P4b-tests** | Tests | Extend `projection-pipeline-check`; A5/A8 gaps | `just projection-pipeline-check` |
-| **P4c-mcp-jaspr** | Sibling | mcp_flutter Jaspr three-gate | `make check-contracts` |
-| **P4d-mcp-flutter** | Sibling | flutter_test_app migration | hosted consumer script |
+| Lane                | Agent   | Scope                                          | Gate                                                          |
+| ------------------- | ------- | ---------------------------------------------- | ------------------------------------------------------------- |
+| **P4a-harness**     | Steward | CI + quick probe; new steward actions          | `steward benchmark --scenario intentcall.projection-pipeline` |
+| **P4b-tests**       | Tests   | Extend `projection-pipeline-check`; A5/A8 gaps | `just projection-pipeline-check`                              |
+| **P4c-mcp-jaspr**   | Sibling | mcp_flutter Jaspr three-gate                   | `make check-contracts`                                        |
+| **P4d-mcp-flutter** | Sibling | flutter_test_app migration                     | hosted consumer script                                        |
 
 **Harness additions:**
 
@@ -266,21 +266,21 @@ P4 (harness)                        ──────► [P4a ∥ P4b ∥ P4c �
 ## 10. Master subagent batch contract
 
 ```markdown
-| Lane | Phase | Role | Write set | Forbidden | Native gate |
-|------|-------|------|-----------|-----------|-------------|
-| P0-doc | 0 | ADR + doc hygiene | docs/** | code | intentcall validate |
-| P1a-spine | 1 | Hook resolver | platform_hook_spine, templates | pigeon, mcp_flutter | platform_hook_templates_test |
-| P1b-init | 1 | Hooks init | platform_hooks_init | CLI surface break | platform_hooks_init_test |
-| P1c-cli | 1 | CLI hooks commands | intentcall_cli | emitter logic | command_runner_test |
-| P2b-catalog | 2 | CatalogLoader extract | platform_sync or hooks | emitters | catalog loader tests |
-| P2a-hook-pkg | 2 | Dart hook package | intentcall_hooks | Gradle/Xcode removal | jaspr fixture |
-| P3a-idl | 3 | Pigeon IDL | intentcall_bridge | App Intents emitters | pigeon-codegen-check |
-| P3b-plugin | 3 | Plugin refactor | intentcall_platform | emitters | pigeon_bridge_contract_test |
-| P3c-entity | 3 | Entity bridge | entity_index, plugin | mcp_flutter | entity_index_test |
-| P4a-harness | 4 | Steward/CI | steward.yaml, justfile, ci.yml | app code | steward benchmark |
-| P4b-tests | 4 | Test promotion | projection tests | — | projection-pipeline-check |
-| P4c-mcp-jaspr | 4 | Sibling Jaspr | mcp_flutter | agentkit core | check-contracts |
-| P4d-mcp-flutter | 4 | Sibling Flutter | mcp_flutter | agentkit core | hosted consumer |
+| Lane            | Phase | Role                  | Write set                      | Forbidden            | Native gate                  |
+| --------------- | ----- | --------------------- | ------------------------------ | -------------------- | ---------------------------- |
+| P0-doc          | 0     | ADR + doc hygiene     | docs/**                        | code                 | intentcall validate          |
+| P1a-spine       | 1     | Hook resolver         | platform_hook_spine, templates | pigeon, mcp_flutter  | platform_hook_templates_test |
+| P1b-init        | 1     | Hooks init            | platform_hooks_init            | CLI surface break    | platform_hooks_init_test     |
+| P1c-cli         | 1     | CLI hooks commands    | intentcall_cli                 | emitter logic        | command_runner_test          |
+| P2b-catalog     | 2     | CatalogLoader extract | platform_sync or hooks         | emitters             | catalog loader tests         |
+| P2a-hook-pkg    | 2     | Dart hook package     | intentcall_hooks               | Gradle/Xcode removal | jaspr fixture                |
+| P3a-idl         | 3     | Pigeon IDL            | intentcall_bridge              | App Intents emitters | pigeon-codegen-check         |
+| P3b-plugin      | 3     | Plugin refactor       | intentcall_platform            | emitters             | pigeon_bridge_contract_test  |
+| P3c-entity      | 3     | Entity bridge         | entity_index, plugin           | mcp_flutter          | entity_index_test            |
+| P4a-harness     | 4     | Steward/CI            | steward.yaml, justfile, ci.yml | app code             | steward benchmark            |
+| P4b-tests       | 4     | Test promotion        | projection tests               | —                    | projection-pipeline-check    |
+| P4c-mcp-jaspr   | 4     | Sibling Jaspr         | mcp_flutter                    | agentkit core        | check-contracts              |
+| P4d-mcp-flutter | 4     | Sibling Flutter       | mcp_flutter                    | agentkit core        | hosted consumer              |
 ```
 
 Parent blocks phase N+1 until phase N aggregate gate passes (except P3a after P0, P4 doc-only lanes).
@@ -289,13 +289,13 @@ Parent blocks phase N+1 until phase N aggregate gate passes (except P3a after P0
 
 ## 11. Risk register
 
-| Risk | Mitigation |
-|------|------------|
-| Flutter hook timing vs Xcode compile | Keep Gradle/Xcode until dogfood proof (§6.3) |
+| Risk                                           | Mitigation                                                |
+| ---------------------------------------------- | --------------------------------------------------------- |
+| Flutter hook timing vs Xcode compile           | Keep Gradle/Xcode until dogfood proof (§6.3)              |
 | `DataAsset` not stable for Swift/XML artifacts | Hook writes project tree via `PlatformSync` (same as CLI) |
-| Pigeon breaks plugin consumers | Deprecation period; channel names unchanged |
-| mcp_flutter path deps | Land agentkit first; bump hosted versions |
-| New packages in release train | Add to `release_train.dart`, `PUBLISHING.md` |
+| Pigeon breaks plugin consumers                 | Deprecation period; channel names unchanged               |
+| mcp_flutter path deps                          | Land agentkit first; bump hosted versions                 |
+| New packages in release train                  | Add to `release_train.dart`, `PUBLISHING.md`              |
 
 ---
 

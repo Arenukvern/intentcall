@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:dart_acp_toolkit/dart_acp_toolkit.dart';
+import 'package:intentcall_core/intentcall_core.dart';
 
 /// ACP stdio server entrypoint.
 ///
@@ -12,6 +13,10 @@ import 'package:dart_acp_toolkit/dart_acp_toolkit.dart';
 ///
 /// Backends:
 /// - `echo` — conformance smoke backend, echoes prompts.
+/// - `registry` — projects an [AgentRegistry]; tools are invoked by qualified
+///   name. Pair with `--entrypoint <dart_file>` to load a registry from a
+///   Dart entrypoint exposing `Future<AgentRegistry> Function()` via
+///   `build` or a `main` returning the registry (see README).
 Future<void> main(List<String> args) async {
   final backendFlag = args.indexOf('--backend');
   final backendName = backendFlag >= 0 && backendFlag + 1 < args.length
@@ -22,8 +27,10 @@ Future<void> main(List<String> args) async {
   switch (backendName) {
     case 'echo':
       backend = EchoAcpBackend();
+    case 'registry':
+      backend = RegistryAcpBackend(registry: InMemoryAgentRegistry());
     default:
-      stderr.writeln('Unknown backend: $backendName (expected echo)');
+      stderr.writeln('Unknown backend: $backendName (expected echo|registry)');
       exit(2);
   }
 

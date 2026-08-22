@@ -699,7 +699,7 @@ final class MigrateAgentEntriesMigrator {
   ) {
     final reasons = <String>[];
     if (_hasUnpreservedNestedArraySchemaItems(schemaBody, detailedProperties)) {
-      reasons.add('nested ArraySchema items');
+      reasons.add('nested ListSchema items');
     }
     if (_hasUnpreservedNestedObjectSchemaProperties(
       schemaBody,

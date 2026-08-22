@@ -3,30 +3,31 @@
 Architecture Decision Records (ADRs) for IntentCall.
 Format: [MADR](https://adr.github.io/madr/) — see any existing ADR for the template.
 
-Next ADR number: **0026**
+Next ADR number: **0027**
 
 ---
 
 ## Index
 
-| ADR | Status | Title | Date |
-|-----|--------|-------|------|
-| [0010](0010-adopt-intentcall-product-name.md) | accepted | Adopt IntentCall as the public product name | 2026-05-29 |
-| [0011](0011-agent-skills-discoverability-for-intentcall.md) | accepted | Agent Skills Discoverability and Custom Skills for IntentCall | 2026-06-02 |
-| [0012](0012-adopt-platform-support-tiers.md) | accepted | Adopt platform support tiers for IntentCall | 2026-06-10 |
-| [0013](0013-delete-implemented-plans-after-durable-extraction.md) | accepted | Delete implemented plans after durable extraction | 2026-06-10 |
-| [0014](0014-own-runtime-sessions-in-intentcall.md) | accepted | Own runtime sessions in IntentCall | 2026-06-22 |
-| [0015](0015-dart-first-native-bridge.md) | accepted | Dart-first Native Bridge for Platform Surfaces | 2026-06-26 |
-| [0016](0016-dispatch-mode-handoff-contract.md) | accepted | Dispatch Mode Handoff Contract | 2026-06-28 |
-| [0017](0017-apple-inline-runtime-tracks.md) | accepted | Apple Inline Runtime Tracks | 2026-06-28 |
-| [0018](0018-additive-actions-typed-entities-indexing-lifecycle.md) | accepted | Additive Actions, Typed Entities, and Indexing Lifecycle | 2026-06-29 |
-| [0019](0019-framework-neutral-intentcall-cli.md) | accepted | Framework-Neutral IntentCall CLI and Registry-Backed Manifest Generation | 2026-07-07 |
-| [0020](0020-platform-scoped-manifest-surfaces.md) | accepted | Platform-Scoped Manifest Surface Defaults | 2026-07-07 |
-| [0021](0021-agent-catalog-annotation.md) | accepted | @AgentCatalog Annotation and Removal of Handwritten Catalog Path | 2026-07-07 |
-| [0022](0022-projection-pipeline-alignment.md) | accepted | Projection Pipeline Alignment — Dense Export and Apple Sub-Channels | 2026-07-07 |
-| [0023](0023-entity-three-slot-projection.md) | accepted | Entity Three-Slot Projection and Property Roles | 2026-07-07 |
-| [0024](0024-dart-hooks-and-pigeon-bridge-consistency.md) | accepted | Dart Hooks and Pigeon Bridge Consistency | 2026-07-08 |
-| [0025](0025-platform-subset-federated-plugins.md) | accepted | Platform Subset and Federated Flutter Plugins | 2026-07-08 |
+| ADR                                                                | Status   | Title                                                                    | Date       |
+| ------------------------------------------------------------------ | -------- | ------------------------------------------------------------------------ | ---------- |
+| [0010](0010-adopt-intentcall-product-name.md)                      | accepted | Adopt IntentCall as the public product name                              | 2026-05-29 |
+| [0011](0011-agent-skills-discoverability-for-intentcall.md)        | accepted | Agent Skills Discoverability and Custom Skills for IntentCall            | 2026-06-02 |
+| [0012](0012-adopt-platform-support-tiers.md)                       | accepted | Adopt platform support tiers for IntentCall                              | 2026-06-10 |
+| [0013](0013-delete-implemented-plans-after-durable-extraction.md)  | accepted | Delete implemented plans after durable extraction                        | 2026-06-10 |
+| [0014](0014-own-runtime-sessions-in-intentcall.md)                 | accepted | Own runtime sessions in IntentCall                                       | 2026-06-22 |
+| [0015](0015-dart-first-native-bridge.md)                           | accepted | Dart-first Native Bridge for Platform Surfaces                           | 2026-06-26 |
+| [0016](0016-dispatch-mode-handoff-contract.md)                     | accepted | Dispatch Mode Handoff Contract                                           | 2026-06-28 |
+| [0017](0017-apple-inline-runtime-tracks.md)                        | accepted | Apple Inline Runtime Tracks                                              | 2026-06-28 |
+| [0018](0018-additive-actions-typed-entities-indexing-lifecycle.md) | accepted | Additive Actions, Typed Entities, and Indexing Lifecycle                 | 2026-06-29 |
+| [0019](0019-framework-neutral-intentcall-cli.md)                   | accepted | Framework-Neutral IntentCall CLI and Registry-Backed Manifest Generation | 2026-07-07 |
+| [0020](0020-platform-scoped-manifest-surfaces.md)                  | accepted | Platform-Scoped Manifest Surface Defaults                                | 2026-07-07 |
+| [0021](0021-agent-catalog-annotation.md)                           | accepted | @AgentCatalog Annotation and Removal of Handwritten Catalog Path         | 2026-07-07 |
+| [0022](0022-projection-pipeline-alignment.md)                      | accepted | Projection Pipeline Alignment — Dense Export and Apple Sub-Channels      | 2026-07-07 |
+| [0023](0023-entity-three-slot-projection.md)                       | accepted | Entity Three-Slot Projection and Property Roles                          | 2026-07-07 |
+| [0024](0024-dart-hooks-and-pigeon-bridge-consistency.md)           | accepted | Dart Hooks and Pigeon Bridge Consistency                                 | 2026-07-08 |
+| [0025](0025-platform-subset-federated-plugins.md)                  | accepted | Platform Subset and Federated Flutter Plugins                            | 2026-07-08 |
+| [0026](0026-acp-registry-projection.md)                            | accepted | Agent Client Protocol (ACP) as a Registry Projection                     | 2026-08-22 |
 
 ---
 
