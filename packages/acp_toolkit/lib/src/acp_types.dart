@@ -84,7 +84,59 @@ sealed class AcpSessionUpdate {
     UserMessageChunk() => 'user_message_chunk',
     ToolCallUpdate() => 'tool_call_update',
     Plan() => 'plan',
+    UnknownSessionUpdate(:final kind) => kind,
   };
+
+  /// Decodes an inbound `session/update` payload.
+  ///
+  /// Unknown `sessionUpdate` kinds are preserved as [UnknownSessionUpdate]
+  /// instead of throwing, so clients stay forward-compatible with newer
+  /// agents.
+  static AcpSessionUpdate fromJson(Map<String, Object?> json) {
+    final update = json['sessionUpdate'] as String? ?? '';
+    switch (update) {
+      case 'agent_message_chunk':
+        return AgentMessageChunk(
+          content: AcpContentBlock.fromJson(
+            (json['content'] as Map<String, Object?>?) ?? const {},
+          ),
+          messageId: json['messageId'] as String?,
+        );
+      case 'user_message_chunk':
+        return UserMessageChunk(
+          content: AcpContentBlock.fromJson(
+            (json['content'] as Map<String, Object?>?) ?? const {},
+          ),
+          messageId: json['messageId'] as String?,
+        );
+      case 'tool_call_update':
+        return ToolCallUpdate(
+          toolCallId: json['toolCallId'] as String? ?? '',
+          status: json['status'] as String? ?? 'pending',
+          title: json['title'] as String?,
+          kind: json['kind'] as String?,
+          content: (json['content'] as List<Object?>?)
+              ?.whereType<Map<String, Object?>>()
+              .map(AcpContentBlock.fromJson)
+              .toList(),
+        );
+      case 'plan':
+        return Plan(
+          entries: (json['entries'] as List<Object?>? ?? [])
+              .whereType<Map<String, Object?>>()
+              .map(
+                (e) => PlanEntry(
+                  content: e['content'] as String? ?? '',
+                  priority: e['priority'] as String? ?? 'medium',
+                  status: e['status'] as String? ?? 'pending',
+                ),
+              )
+              .toList(),
+        );
+      default:
+        return UnknownSessionUpdate(kind: update, raw: json);
+    }
+  }
 
   Map<String, Object?> toJson(String sessionId) {
     final update = <String, Object?>{
@@ -128,6 +180,7 @@ sealed class AcpSessionUpdate {
           )
           .toList(),
     },
+    UnknownSessionUpdate() => const <String, Object?>{},
   };
 }
 
@@ -175,6 +228,23 @@ class PlanEntry {
 class Plan extends AcpSessionUpdate {
   const Plan({required this.entries});
   final List<PlanEntry> entries;
+}
+
+/// An unrecognized `session/update` kind from a newer agent.
+///
+/// Preserved verbatim in [raw] so callers can log or ignore it without
+/// breaking the turn.
+class UnknownSessionUpdate extends AcpSessionUpdate {
+  const UnknownSessionUpdate({required this.kind, required this.raw});
+
+  /// The unrecognized `sessionUpdate` discriminator (empty when missing).
+  final String kind;
+
+  /// The full inbound payload.
+  final Map<String, Object?> raw;
+
+  @override
+  Map<String, Object?> _payload() => raw;
 }
 
 /// Permission request sent to the client via `session/request_permission`.
