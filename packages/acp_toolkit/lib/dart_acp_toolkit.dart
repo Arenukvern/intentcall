@@ -11,6 +11,7 @@ library;
 
 export 'src/acp_agent_backend.dart';
 export 'src/acp_client.dart';
+export 'src/acp_move.dart';
 export 'src/acp_types.dart';
 export 'src/acp_stdio_server.dart';
 export 'src/echo_backend.dart';

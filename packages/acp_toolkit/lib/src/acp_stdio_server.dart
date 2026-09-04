@@ -5,7 +5,21 @@ import 'dart:io';
 import 'package:from_json_to_json/from_json_to_json.dart';
 
 import 'acp_agent_backend.dart';
+import 'acp_move.dart';
 import 'acp_types.dart';
+
+/// Optional capability for backends that need to ask the CLIENT for
+/// permission mid-turn (e.g. file-write approval). The server attaches
+/// itself at startup when the backend implements this interface; the
+/// attached requester sends `session/request_permission` to the client and
+/// awaits its outcome.
+abstract interface class AcpPermissionRequesting {
+  /// Called once by the server before the first message is dispatched.
+  void attachPermissionRequester(
+    Future<AcpPermissionOutcome> Function(AcpPermissionRequest request)
+    requester,
+  );
+}
 
 /// ACP v1 server: JSON-RPC 2.0 over stdio (newline-delimited).
 ///
@@ -43,6 +57,15 @@ final class AcpStdioServer {
   bool _initialized = false;
 
   Future<void> run() async {
+    if (backend is AcpPermissionRequesting) {
+      (backend as AcpPermissionRequesting)
+          .attachPermissionRequester(requestPermissionFromClient);
+    }
+    // R7 production #4: the remote mover — the client is the session
+    // actor's brain; every decision round-trips as session/propose_move.
+    if (backend is AcpMoveProposing) {
+      (backend as AcpMoveProposing).attachMoveProposer(proposeMoveFromClient);
+    }
     final lines = input.transform(utf8.decoder).transform(const LineSplitter());
     await for (final line in lines) {
       if (line.trim().isEmpty) continue;
@@ -57,7 +80,43 @@ final class AcpStdioServer {
         });
         continue;
       }
+      // Responses to OUR OWN calls (session/request_permission,
+      // session/propose_move) must be routed out-of-band: while a prompt
+      // turn is in flight, the loop is blocked inside `backend.prompt` — a
+      // response awaited by that very turn would otherwise deadlock the
+      // stream (measured: permission round-trip test hung until this
+      // out-of-band route existed).
+      final method = message['method'] as String?;
+      final id = message['id'];
+      if (method == null && id != null) {
+        final pending = _pendingClientRequests.remove(id);
+        if (pending != null) {
+          if (message['error'] != null) {
+            pending.completeError(StateError('${message['error']}'));
+          } else {
+            pending.complete(jsonDecodeMap(message['result']));
+          }
+          continue;
+        }
+      }
+      // Dispatch CONCURRENTLY (ACP-faithful): a prompt turn streams updates
+      // for a long time, and while it is in flight the stream must still
+      // deliver `session/cancel` and permission responses. Awaiting the
+      // dispatch inline deadlocked exactly those round-trips (measured: the
+      // permission round-trip hung until dispatch went concurrent).
+      unawaited(_handleMessageSafe(message));
+    }
+  }
+
+  Future<void> _handleMessageSafe(Map<String, Object?> message) async {
+    try {
       await _handleMessage(message);
+    } on Object catch (error, stack) {
+      _write({
+        'jsonrpc': '2.0',
+        'id': message['id'],
+        'error': _error(-32603, '$error', data: {'stack': '$stack'}),
+      });
     }
   }
 
@@ -66,9 +125,10 @@ final class AcpStdioServer {
     final id = message['id'];
     final params = message['params'];
 
-    // Responses to our own calls (e.g. session/request_permission).
+    // Responses to our own calls (session/request_permission,
+    // session/propose_move).
     if (method == null && id != null) {
-      final pending = _pendingPermissions.remove(id);
+      final pending = _pendingClientRequests.remove(id);
       if (pending != null) {
         if (message['error'] != null) {
           pending.completeError(StateError('${message['error']}'));
@@ -188,34 +248,66 @@ final class AcpStdioServer {
   Future<AcpPermissionOutcome> requestPermissionFromClient(
     AcpPermissionRequest request,
   ) async {
-    final requestId = _nextRequestId++;
-    final responseCompleter = Completer<Map<String, Object?>>();
-    _pendingPermissions[requestId] = responseCompleter;
-    _write({
-      'jsonrpc': '2.0',
-      'id': requestId,
-      'method': 'session/request_permission',
-      'params': request.toParams(),
-    });
+    final response = await _callClient(
+      'session/request_permission',
+      request.toParams(),
+    );
+    final outcome = response['outcome'] as Map<String, Object?>?;
+    final optionId = outcome?['optionId'] as String?;
+    return switch (optionId) {
+      'allow' => AcpPermissionOutcome.allow,
+      'reject' => AcpPermissionOutcome.reject,
+      _ => AcpPermissionOutcome.cancelled,
+    };
+  }
+
+  /// R7 production #4 — sends a `session/propose_move` call to the client
+  /// and awaits its typed tool calls (the remote mover round-trip). A
+  /// client that never answers (timeout) yields an EMPTY response — the
+  /// loop closes the decision; the goal gate grades the end state. The
+  /// answer's `decisionId` must match (a stale/mismatched reply is
+  /// treated as an empty move, never applied to another decision).
+  Future<AcpMoveResponse> proposeMoveFromClient(
+    AcpMoveProposal proposal,
+  ) async {
     try {
-      final response = await responseCompleter.future.timeout(
-        const Duration(minutes: 5),
+      final response = await _callClient(
+        'session/propose_move',
+        proposal.toParams(),
       );
-      final outcome = response['outcome'] as Map<String, Object?>?;
-      final optionId = outcome?['optionId'] as String?;
-      return switch (optionId) {
-        'allow' => AcpPermissionOutcome.allow,
-        'reject' => AcpPermissionOutcome.reject,
-        _ => AcpPermissionOutcome.cancelled,
-      };
+      final echoed = response['decisionId'] as String?;
+      if (echoed != null && echoed != proposal.decisionId) {
+        // Stale/mismatched reply: never applied to another decision.
+        return const AcpMoveResponse();
+      }
+      return AcpMoveResponse.fromJson(response);
     } on TimeoutException {
-      return AcpPermissionOutcome.cancelled;
-    } finally {
-      _pendingPermissions.remove(requestId);
+      return const AcpMoveResponse();
     }
   }
 
-  final Map<int, Completer<Map<String, Object?>>> _pendingPermissions = {};
+  /// One server→client JSON-RPC call + response await (the shared
+  /// request_permission / propose_move round-trip machinery).
+  Future<Map<String, Object?>> _callClient(
+    String method,
+    Map<String, Object?> params,
+  ) async {
+    final requestId = _nextRequestId++;
+    final responseCompleter = Completer<Map<String, Object?>>();
+    _pendingClientRequests[requestId] = responseCompleter;
+    _write({'jsonrpc': '2.0', 'id': requestId, 'method': method,
+        'params': params});
+    try {
+      return await responseCompleter.future.timeout(
+        const Duration(minutes: 5),
+      );
+    } finally {
+      _pendingClientRequests.remove(requestId);
+    }
+  }
+
+  final Map<int, Completer<Map<String, Object?>>> _pendingClientRequests =
+      {};
 
   void _notify(String method, Map<String, Object?> params) {
     _write({'jsonrpc': '2.0', 'method': method, 'params': params});
