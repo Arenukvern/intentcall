@@ -254,11 +254,17 @@ class AcpPermissionRequest {
     required this.toolCallId,
     required this.title,
     this.kind = 'other',
+    this.details,
   });
   final String sessionId;
   final String toolCallId;
   final String title;
   final String kind;
+
+  /// Optional human-facing detail block (e.g. the unified diff of the
+  /// mutation under review) — surfaced by the client's consent UI so the
+  /// human decides on the CHANGE, not just the path.
+  final String? details;
 
   Map<String, Object?> toParams() => {
     'sessionId': sessionId,
@@ -266,7 +272,11 @@ class AcpPermissionRequest {
       {'optionId': 'allow', 'name': 'Allow', 'kind': 'allow_once'},
       {'optionId': 'reject', 'name': 'Reject', 'kind': 'reject_once'},
     ],
-    '_meta': {'title': title, 'kind': kind},
+    '_meta': {
+      'title': title,
+      'kind': kind,
+      if (details != null) 'details': details,
+    },
   };
 }
 
