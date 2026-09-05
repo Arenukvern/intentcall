@@ -19,6 +19,7 @@ class AcpMoveProposal {
     required this.prompt,
     required this.toolSchemas,
     required this.budgets,
+    this.reasoning = 'high',
   });
 
   final String sessionId;
@@ -41,12 +42,19 @@ class AcpMoveProposal {
   /// daemon loop, not by the client — the client only sees what's left).
   final Map<String, Object?> budgets;
 
+  /// Reasoning-policy hint for this decision class (ADR 0027):
+  /// `none` (mechanical/routine moves — cheap model or thinking off),
+  /// `low` (structured edits), `high` (decomposition/planning/repair).
+  /// The daemon classifies; the client maps it to its model config.
+  final String reasoning;
+
   Map<String, Object?> toParams() => {
     'sessionId': sessionId,
     'decisionId': decisionId,
     'prompt': prompt,
     'toolSchemas': toolSchemas,
     'budgets': budgets,
+    'reasoning': reasoning,
   };
 }
 
@@ -62,7 +70,11 @@ class AcpMoveToolCall {
 
 /// The client's answer to one `session/propose_move`.
 class AcpMoveResponse {
-  const AcpMoveResponse({this.toolCalls = const [], this.text = ''});
+  const AcpMoveResponse({
+    this.toolCalls = const [],
+    this.text = '',
+    this.thinking = '',
+  });
 
   factory AcpMoveResponse.fromJson(Map<String, Object?> json) =>
       AcpMoveResponse(
@@ -78,6 +90,10 @@ class AcpMoveResponse {
                 ),
         ],
         text: json['text'] as String? ?? '',
+        // ADR 0027: the client's reasoning, captured by the daemon as a
+        // reasoning record (measured, never re-projected, reused on
+        // escalation). Additive — absent on older clients.
+        thinking: json['thinking'] as String? ?? '',
       );
 
   /// Typed tool calls the actor emits THIS decision (empty = the model is
@@ -86,6 +102,12 @@ class AcpMoveResponse {
 
   /// Short narration (streams to the client as a message chunk).
   final String text;
+
+  /// The client's reasoning text for this decision (ADR 0027). Captured
+  /// by the daemon as a reasoning record — measured (chars), never
+  /// re-projected into future cuts, reused on escalation. NOT streamed
+  /// back to the client.
+  final String thinking;
 }
 
 /// Optional capability for backends whose session actor's brain lives on
