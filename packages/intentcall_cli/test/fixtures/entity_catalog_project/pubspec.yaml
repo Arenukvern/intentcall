@@ -1,0 +1,20 @@
+name: entity_catalog_project
+description: Layer 4 fixture — catalog entity descriptor export.
+publish_to: none
+
+environment:
+  sdk: ">=3.12.0 <4.0.0"
+
+dependencies:
+  intentcall_core:
+    path: ../../../../intentcall_core
+  intentcall_platform_sync:
+    path: ../../../../intentcall_platform_sync
+
+dependency_overrides:
+  intentcall_core:
+    path: ../../../../intentcall_core
+  intentcall_platform_sync:
+    path: ../../../../intentcall_platform_sync
+  intentcall_schema:
+    path: ../../../../intentcall_schema

@@ -33,11 +33,16 @@ that app-owned scheme. That is an artifact/project-sync/configuration claim:
 successful Xcode builds, signing, installation, Apple system discovery, and live
 invocation need proof in the consuming app.
 
-Swift Package Manager support is declared for the iOS/macOS Flutter plugin under
-`ios/intentcall_platform/Package.swift` and
-`macos/intentcall_platform/Package.swift`. CocoaPods remains supported through
-the existing podspecs so current Flutter projects can use either native package
-integration path.
+This package is the **federated Flutter umbrella**: apps depend on
+`intentcall_platform` only. Endorsed native impls are
+`intentcall_platform_apple` and `intentcall_platform_android` via
+`default_package`.
+
+Apple native integration is **SPM-only** (no CocoaPods / podspecs). The shared
+Darwin tree lives under
+`packages/intentcall_platform_apple/darwin/intentcall_platform_apple/`
+(`Package.swift`, `sharedDarwinSource` for iOS + macOS). Android native code
+lives in `packages/intentcall_platform_android/`.
 
 ## Invocation policy
 
@@ -257,23 +262,48 @@ wrap that API for their own product workflow. For example, Flutter MCP Toolkit
 consumers can run:
 
 ```bash
-flutter-mcp-toolkit codegen sync \
+intentcall platform sync \
   --platform web,android,ios,macos,linux,windows \
   --project-dir <app>
 ```
 
-Use the same command with `--check` in CI. `--check` reports whether any
-generated artifact, native project membership, or Apple URL-scheme plist
-configuration would change without writing files.
+Use the same command with `--check` in CI.
 
-### One-time hooks
-
-Flutter MCP Toolkit consumer example:
+Flutter MCP Toolkit consumers may delegate:
 
 ```bash
-flutter-mcp-toolkit init intentcall-platform --project-dir <flutter_app>
+flutter-mcp-toolkit codegen sync --platform web,ios,macos --project-dir <app>
 ```
 
-### Future
+### Build hooks (ADR 0024)
 
-Registry-backed `generateWebAgentManifest` is deferred — edit `agent_manifest.json`, then `codegen sync`.
+| Host | Invocation surface |
+|------|-------------------|
+| **Flutter** (Android/iOS/macOS) | Gradle `preBuild` + Xcode Run Script from `PlatformHookSpine` — one-time init below |
+| **Jaspr / plain Dart web** | `intentcall_hooks` Dart SDK `hook/build.dart` (no Gradle/Xcode) |
+
+Flutter native hook migration to `intentcall_hooks` is **deferred** (Phase 2b)
+until `flutter build` is proven to run the Dart hook before `xcodebuild compile`
+/ Android native compile. Until then, keep spine-rendered Gradle/Xcode snippets.
+
+**Flutter — one-time init:**
+
+```bash
+intentcall platform hooks init --host flutter --project-dir <flutter_app>
+```
+
+Renders Gradle and Xcode Run Script blocks from `PlatformHookSpine` (not
+hand-maintained strings). Re-run after `intentcall.yaml` hook config changes.
+
+**Jaspr / plain Dart — add dev dependency:**
+
+```yaml
+dev_dependencies:
+  intentcall_hooks: ^0.6.0
+```
+
+See [intentcall_hooks README](../intentcall_hooks/README.md) for `user_defines`.
+
+### Manifest generation
+
+Run `dart run build_runner build`, then `intentcall manifest export --check`. Do not hand-edit descriptor rows in `agent_manifest.json`.

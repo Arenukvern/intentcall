@@ -1,6 +1,7 @@
 import 'package:meta/meta.dart';
 
-import '../naming/qualified_name.dart';
+import '../models/qualified_name.dart';
+import 'agent_entity_property_role.dart';
 
 enum AgentEntityPropertyValueType {
   string,
@@ -8,7 +9,7 @@ enum AgentEntityPropertyValueType {
   number,
   boolean,
   object,
-  array,
+  list,
 }
 
 enum AgentEntityPrivacy { public, private, sensitive }
@@ -23,6 +24,7 @@ final class AgentEntityPropertyDescriptor {
     this.isSearchable = false,
     this.isIndexed = false,
     this.privacy,
+    this.role = AgentEntityPropertyRole.none,
   }) {
     validateBareName(name);
   }
@@ -34,4 +36,5 @@ final class AgentEntityPropertyDescriptor {
   final bool isSearchable;
   final bool isIndexed;
   final AgentEntityPrivacy? privacy;
+  final AgentEntityPropertyRole role;
 }

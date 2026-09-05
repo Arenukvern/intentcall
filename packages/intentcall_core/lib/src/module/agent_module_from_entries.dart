@@ -1,4 +1,4 @@
-import '../authoring/agent_call_entry.dart';
+import '../models/agent_call_entry.dart';
 import '../registry/agent_registry.dart';
 import 'agent_module.dart';
 

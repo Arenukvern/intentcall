@@ -1,1 +1,4 @@
+analyzer:
+  errors:
+    leading_newlines_in_multiline_strings: ignore
 include: ../../analysis_options.yaml

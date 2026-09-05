@@ -8,7 +8,6 @@ analyzer:
     # Incremental cleanup: style infos remain visible but do not fail CI.
     lines_longer_than_80_chars: ignore
     public_member_api_docs: ignore
-    unnecessary_library_directive: ignore
   exclude:
     - "**/*.g.dart"
     - packages/intentcall_codegen/example/**

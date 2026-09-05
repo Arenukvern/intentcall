@@ -1,0 +1,37 @@
+name: intentcall_platform_apple
+description: PRE-RELEASE — Apple (iOS/macOS) federated implementation for intentcall_platform.
+version: 0.6.0
+license: MIT
+repository: https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_platform_apple
+issue_tracker: https://github.com/Arenukvern/intentcall/issues
+homepage: https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_platform_apple
+topics:
+  - mcp
+  - flutter
+  - ios
+  - macos
+
+environment:
+  sdk: ">=3.12.0 <4.0.0"
+  flutter: ">=3.24.0"
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+  intentcall_bridge: ^0.6.0
+
+flutter:
+  plugin:
+    implements: intentcall_platform
+    platforms:
+      ios:
+        pluginClass: IntentCallPlatformPlugin
+        sharedDarwinSource: true
+      macos:
+        pluginClass: IntentCallPlatformPlugin
+        sharedDarwinSource: true
+
+dev_dependencies:
+  lints: ^6.1.0
+  xsoulspace_lints: ^0.1.2

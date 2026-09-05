@@ -1,13 +1,36 @@
+import 'package:collection/collection.dart';
 import 'package:meta/meta.dart';
 
+import 'json_utils.dart';
+
+/// Stable identity for an indexable app object exposed to agents.
+///
+/// The triple `(namespace, typeName, identifier)` must be unique within an app.
+/// Agents use refs to open, update, or reference entities across transports.
+///
+/// ## Wire JSON (AX)
+///
+/// ```json
+/// {
+///   "namespace": "notes",
+///   "type_name": "note",
+///   "identifier": "note-1"
+/// }
+/// ```
 @immutable
 final class AgentEntityRef {
+  /// Creates a reference with the given [namespace], [typeName], and [identifier].
+  ///
+  /// All three strings must be non-empty when parsed from JSON.
   const AgentEntityRef({
     required this.namespace,
     required this.typeName,
     required this.identifier,
   });
 
+  /// Parses [json] produced by [toJson].
+  ///
+  /// Throws [ArgumentError] when required fields are missing or empty.
   factory AgentEntityRef.fromJson(final Map<String, Object?> json) =>
       AgentEntityRef(
         namespace: _requiredString(json, 'namespace'),
@@ -15,10 +38,16 @@ final class AgentEntityRef {
         identifier: _requiredString(json, 'identifier'),
       );
 
+  /// App domain grouping entities (for example `notes`, `music`).
   final String namespace;
+
+  /// Entity kind within [namespace] (for example `note`, `playlist`).
   final String typeName;
+
+  /// Stable id for this entity within ([namespace], [typeName]).
   final String identifier;
 
+  /// Serializes to JSON using snake_case keys (`type_name`).
   Map<String, Object?> toJson() => <String, Object?>{
     'namespace': namespace,
     'type_name': typeName,
@@ -37,8 +66,28 @@ final class AgentEntityRef {
   int get hashCode => Object.hash(namespace, typeName, identifier);
 }
 
+/// JSON-safe snapshot of an app entity for search, shortcuts, and agent context.
+///
+/// [properties] holds domain fields agents may read or filter on. Display
+/// fields (`title`, `subtitle`, `keywords`, …) support human and voice UIs.
+/// Only JSON-encodable values are allowed in [properties] (`String`, `int`,
+/// `double`, `bool`, `List`, and nested `Map` with string keys).
+///
+/// ## Wire JSON (AX)
+///
+/// See package README for the full shape. Use [toJson] / [fromJson] for
+/// round-tripping across native stores, manifest export, and MCP resources.
+///
+/// ## Display
+///
+/// Prefer [effectiveTitle] when rendering a single line of text; it falls back
+/// from [title] to [displayName].
 @immutable
 final class AgentEntitySnapshot {
+  /// Creates a snapshot for [ref] with JSON-safe [properties].
+  ///
+  /// [keywords] entries are trimmed; empty strings throw [ArgumentError].
+  /// [deleted] marks tombstones so indexes can remove stale entries.
   AgentEntitySnapshot({
     required this.ref,
     required final Map<String, Object?> properties,
@@ -62,8 +111,12 @@ final class AgentEntitySnapshot {
            return trimmed;
          }),
        ),
-       properties = _jsonObject(properties);
+       properties = jsonDecodeNullableStringKeyMap(properties);
 
+  /// Parses [json] produced by [toJson].
+  ///
+  /// Throws [ArgumentError] when `ref` or `properties` are not objects, or when
+  /// nested values are not JSON-safe.
   factory AgentEntitySnapshot.fromJson(final Map<String, Object?> json) {
     final rawRef = json['ref'];
     if (rawRef is! Map) {
@@ -79,7 +132,9 @@ final class AgentEntitySnapshot {
     }
     return AgentEntitySnapshot(
       ref: AgentEntityRef.fromJson(Map<String, Object?>.from(rawRef)),
-      properties: _jsonObject(Map<String, Object?>.from(rawProperties)),
+      properties: jsonDecodeNullableStringKeyMap(
+        Map<String, Object?>.from(rawProperties),
+      ),
       title: _optionalString(json, 'title'),
       subtitle: _optionalString(json, 'subtitle'),
       keywords: _optionalStringList(json, 'keywords'),
@@ -94,22 +149,49 @@ final class AgentEntitySnapshot {
     );
   }
 
+  /// Identity of this entity.
   final AgentEntityRef ref;
+
+  /// Domain-specific JSON-safe fields (scalars, lists, nested maps).
   final Map<String, Object?> properties;
+
+  /// Primary display title.
   final String? title;
+
+  /// Secondary display line.
   final String? subtitle;
+
+  /// Search keywords (non-empty, trimmed).
   final List<String> keywords;
+
+  /// Thumbnail image URL.
   final String? thumbnailUrl;
+
+  /// Canonical web or app URL for this entity.
   final String? url;
+
+  /// Alternate display name when [title] is absent.
   final String? displayName;
+
+  /// Platform deep link or custom scheme URI to open this entity.
   final String? deepLink;
+
+  /// Last modification time (serialized as UTC ISO-8601).
   final DateTime? updatedAt;
+
+  /// When `true`, indexes should treat this snapshot as a tombstone.
   final bool deleted;
+
+  /// Opaque revision or etag for change detection.
   final String? version;
+
+  /// Hint for staleness (for example `fresh`, `stale`); adapter-defined.
   final String? freshness;
 
+  /// [title] if set, otherwise [displayName].
   String? get effectiveTitle => title ?? displayName;
 
+  /// Serializes to JSON using snake_case keys.
   Map<String, Object?> toJson() => <String, Object?>{
     'ref': ref.toJson(),
     'properties': properties,
@@ -190,7 +272,7 @@ List<String> _optionalStringList(
     return const <String>[];
   }
   if (value is! List) {
-    throw ArgumentError.value(value, key, 'Expected an array of strings.');
+    throw ArgumentError.value(value, key, 'Expected an list of strings.');
   }
   return List<String>.unmodifiable(
     value.map((final item) {
@@ -203,14 +285,8 @@ List<String> _optionalStringList(
 }
 
 bool? _optionalBool(final Map<String, Object?> json, final String key) {
-  final value = json[key];
-  if (value == null) {
-    return null;
-  }
-  if (value is bool) {
-    return value;
-  }
-  throw ArgumentError.value(value, key, 'Expected a boolean.');
+  final rawValue = json[key];
+  return jsonDecodeNullableThrowableBool(rawValue);
 }
 
 DateTime? _optionalDateTime(final Map<String, Object?> json, final String key) {
@@ -219,82 +295,13 @@ DateTime? _optionalDateTime(final Map<String, Object?> json, final String key) {
     return null;
   }
   if (value is String) {
-    return DateTime.parse(value).toUtc();
+    return DateTime.tryParse(value)?.toUtc();
   }
   throw ArgumentError.value(value, key, 'Expected an ISO-8601 string.');
 }
 
-Map<String, Object?> _jsonObject(final Map<String, Object?> value) =>
-    Map<String, Object?>.unmodifiable(
-      value.map((final key, final value) => MapEntry(key, _jsonValue(value))),
-    );
+bool _jsonEquals(final Object? left, final Object? right) =>
+    const DeepCollectionEquality().equals(left, right);
 
-Object? _jsonValue(final Object? value) {
-  if (value == null || value is String || value is bool || value is int) {
-    return value;
-  }
-  if (value is double) {
-    if (!value.isFinite) {
-      throw ArgumentError.value(value, 'value', 'Expected a finite number.');
-    }
-    return value;
-  }
-  if (value is List) {
-    return List<Object?>.unmodifiable(value.map(_jsonValue));
-  }
-  if (value is Map) {
-    return Map<String, Object?>.unmodifiable(
-      value.map((final key, final value) {
-        if (key is! String) {
-          throw ArgumentError.value(key, 'key', 'Expected a string key.');
-        }
-        return MapEntry(key, _jsonValue(value));
-      }),
-    );
-  }
-  throw ArgumentError.value(value, 'value', 'Expected a JSON-safe value.');
-}
-
-bool _jsonEquals(final Object? left, final Object? right) {
-  if (identical(left, right)) {
-    return true;
-  }
-  if (left is Map && right is Map) {
-    if (left.length != right.length) {
-      return false;
-    }
-    for (final entry in left.entries) {
-      if (!right.containsKey(entry.key) ||
-          !_jsonEquals(entry.value, right[entry.key])) {
-        return false;
-      }
-    }
-    return true;
-  }
-  if (left is List && right is List) {
-    if (left.length != right.length) {
-      return false;
-    }
-    for (var i = 0; i < left.length; i += 1) {
-      if (!_jsonEquals(left[i], right[i])) {
-        return false;
-      }
-    }
-    return true;
-  }
-  return left == right;
-}
-
-int _jsonHash(final Object? value) {
-  if (value is Map) {
-    return Object.hashAllUnordered(
-      value.entries.map(
-        (final entry) => Object.hash(entry.key, _jsonHash(entry.value)),
-      ),
-    );
-  }
-  if (value is List) {
-    return Object.hashAll(value.map(_jsonHash));
-  }
-  return value.hashCode;
-}
+int _jsonHash(final Object? value) =>
+    const DeepCollectionEquality().hash(value);

@@ -15,14 +15,14 @@ void main() {
       handler: _toolHandler,
     );
     const mcpResource = mcp.ResourceRegistration(
-      uri: 'intentcall://resource/app/state',
+      uri: 'demoapp://resource/app/state',
       name: 'app_state',
       description: 'App state',
       mimeType: 'application/json',
       handler: _resourceHandler,
     );
     const mcpTemplate = mcp.ResourceTemplateRegistration(
-      uriTemplate: 'intentcall://resource/app/{id}',
+      uriTemplate: 'demoapp://resource/app/{id}',
       name: 'app_resource',
       description: 'App resource',
       mimeType: 'application/json',
@@ -34,8 +34,8 @@ void main() {
     const core.ResourceTemplateRegistration coreTemplate = mcpTemplate;
 
     expect(coreTool.name, 'echo');
-    expect(coreResource.uri, 'intentcall://resource/app/state');
-    expect(coreTemplate.uriTemplate, 'intentcall://resource/app/{id}');
+    expect(coreResource.uri, 'demoapp://resource/app/state');
+    expect(coreTemplate.uriTemplate, 'demoapp://resource/app/{id}');
     expect(
       await coreTool.handler(const <String, Object?>{}),
       isA<AgentResult>(),
@@ -71,7 +71,7 @@ void main() {
             AgentResult.success(data: arguments),
       );
       final coreResource = core.ResourceRegistration(
-        uri: 'intentcall://resource/app/state',
+        uri: 'demoapp://resource/app/state',
         name: 'app_state',
         description: 'App state',
         mimeType: 'application/json',
@@ -79,7 +79,7 @@ void main() {
             AgentResult.success(data: <String, Object?>{'uri': uri}),
       );
       final coreTemplate = core.ResourceTemplateRegistration(
-        uriTemplate: 'intentcall://resource/app/{id}',
+        uriTemplate: 'demoapp://resource/app/{id}',
         name: 'app_resource',
         description: 'App resource',
         mimeType: 'application/json',
@@ -109,8 +109,8 @@ void main() {
       await Future<void>.delayed(Duration.zero);
 
       expect(publishedTools, contains('app_echo'));
-      expect(publishedResources, contains('intentcall://resource/app/state'));
-      expect(publishedTemplates, contains('intentcall://resource/app/{id}'));
+      expect(publishedResources, contains('demoapp://resource/app/state'));
+      expect(publishedTemplates, contains('demoapp://resource/app/{id}'));
 
       await adapter.detach();
     },

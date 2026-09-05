@@ -1,19 +1,20 @@
-library;
-
-export 'src/adapter/agent_adapter.dart';
-export 'src/authoring/agent_call_entry.dart';
 export 'src/entity/agent_entity_index.dart';
 export 'src/entity/agent_entity_property_descriptor.dart';
+export 'src/entity/agent_entity_property_role.dart';
 export 'src/entity/agent_entity_provider.dart';
+export 'src/entity/agent_entity_snapshot_keys.dart';
 export 'src/entity/agent_entity_snapshot_projection.dart';
+export 'src/entity/agent_entity_snapshot_schema.dart';
 export 'src/entity/agent_entity_type_descriptor.dart';
 export 'src/intent/agent_intent_descriptor.dart';
 export 'src/intent/agent_intent_kind.dart';
 export 'src/intent/agent_invocation.dart';
 export 'src/intent/registered_agent_intent.dart';
+export 'src/interfaces/agent_adapter.dart';
+export 'src/models/agent_call_entry.dart';
+export 'src/models/qualified_name.dart';
 export 'src/module/agent_module.dart';
 export 'src/module/agent_module_from_entries.dart';
-export 'src/naming/qualified_name.dart';
 export 'src/registration/resource_registration.dart';
 export 'src/registration/resource_template_registration.dart';
 export 'src/registration/tool_registration.dart';

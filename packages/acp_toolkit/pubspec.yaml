@@ -1,0 +1,27 @@
+name: dart_acp_toolkit
+description: >-
+  Standalone Agent Client Protocol (ACP) server library — JSON-RPC 2.0 over
+  stdio with pluggable agent backends. Pure Dart.
+version: 0.1.0-dev.1
+license: MIT
+repository: https://github.com/Arenukvern/intentcall/tree/main/packages/acp_toolkit
+issue_tracker: https://github.com/Arenukvern/intentcall/issues
+homepage: https://github.com/Arenukvern/intentcall/tree/main/packages/acp_toolkit
+topics:
+  - acp
+  - agent
+  - jsonrpc
+  - stdio
+  - ide
+environment:
+  sdk: ">=3.12.0 <4.0.0"
+
+dependencies:
+  intentcall_core: ^0.6.0
+  intentcall_schema: ^0.6.0
+  meta: ^1.18.0
+  from_json_to_json: ^0.5.0
+publish_to: none
+dev_dependencies:
+  lints: ^6.1.0
+  test: ^1.31.0

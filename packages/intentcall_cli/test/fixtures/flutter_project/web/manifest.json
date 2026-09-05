@@ -1,0 +1,22 @@
+{
+    "name": "demo_flutter",
+    "start_url": ".",
+    "shortcuts": [
+        {
+            "name": "Cart Total",
+            "short_name": "Cart Total",
+            "description": "Return cart total",
+            "url": "/agent/invoke?name=app_cart_total"
+        }
+    ],
+    "protocol_handlers": [
+        {
+            "protocol": "web+intentcall",
+            "url": "/agent/invoke?protocol=%s"
+        },
+        {
+            "protocol": "web+intentcall",
+            "url": "/agent/invoke?name=app_cart_total&payload=%s"
+        }
+    ]
+}

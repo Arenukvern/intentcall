@@ -50,14 +50,23 @@ A: Test helpers have `test` as a dependency, which must not bleed into productio
 **Q: Why is there an `intentcall_codegen` package?**
 A: Codegen is strictly optional — many adopters will register intents by hand. Keeping it separate means the core registry has zero `build_runner` dependency, and users who opt in to `@AgentTool` get a clean code-generation surface without it affecting tree-shaking for others.
 
+**Q: Why `intentcall_cli` instead of `flutter-mcp-toolkit` for platform sync?**
+A: Platform projection (`agent_manifest.json`, native emitters, `PlatformSync`) is framework-agnostic. `intentcall_cli` owns that contract; [mcp_flutter](https://github.com/Arenukvern/mcp_flutter) delegates to it. See [ADR 0019](decisions/0019-framework-neutral-intentcall-cli.md).
+
+**Q: Why is `agent_manifest.json` generated rather than hand-edited?**
+A: Manifest rows are a projection cache for platform emitters, not a second runtime catalog. Semantic truth lives in `AgentRegistry`; projection policy lives in `@AgentProjection` or `.intentcall/projection.yaml`. CI proves manifest freshness with `intentcall manifest export --check`.
+
 **Q: Why is IntentPack direction separate from today's registry API?**
 A: `AgentRegistry`, `AgentCallEntry`, and `RegisteredAgentIntent` are the current shipped authoring/runtime model. IntentPack is the proposed portable packaging layer above them: one app-level unit that can carry entries, schemas, examples, side-effect metadata, safety policy, platform projection hints, adapter hints, and compatibility metadata. Keeping that distinction explicit lets the repo document the destination without pretending the stable public API already exists.
 
 **Q: Why are additive actions, typed entities, and indexing lifecycle not a new core runtime?**
 A: They are a projection layer over the existing source concepts. Actions remain registry entries. Typed entities are app-owned Dart snapshots with stable ids, display fields, and search/index fields. Indexing or donation is a lifecycle that copies those snapshots into a platform projection cache. Keeping this additive avoids turning `intentcall_core` into an Apple-shaped runtime while still letting Apple be the first concrete typed-entity/indexing projection. See [ADR 0018](decisions/0018-additive-actions-typed-entities-indexing-lifecycle.md).
 
-**Q: Why are there separate `intentcall_apple` / `intentcall_android` / `intentcall_gemma` packages instead of one `intentcall_native`?**
-A: Native surface adapters differ sharply in their platform SDKs and entitlement requirements. A single `intentcall_native` would force all three sets of platform SDKs into every build. Platform-specific packages let Flutter tree-shaker and pubspec `platforms` keys exclude irrelevant targets cleanly.
+**Q: Why were `intentcall_apple` / `intentcall_android` removed, and what replaced them?**
+A: Those packages were sparse-manifest generators. They were **deleted** (zero consumers, pre-1.0). Canonical projection is `intentcall_platform_sync` (`PlatformSync` / `ManifestExporter`). Runtime native code lives in federated Flutter plugins `intentcall_platform_apple` / `intentcall_platform_android` under the `intentcall_platform` umbrella ([ADR 0025](decisions/0025-platform-subset-federated-plugins.md)). On Apple, generated `AppIntent` structs compile in the app `Runner` target but import `intentcall_platform_apple` for handoff (`IntentCallNativeBridge.enqueue`) and snapshot stores — do not duplicate that logic in emitted Swift. `intentcall_gemma` remains a separate surface adapter.
+
+**Q: Why are there two `IntentCallNativeBridge` types?**
+A: Different languages, same handoff story. Dart `IntentCallNativeBridge.bindRegistry(...)` in `intentcall_platform_sync` authorizes envelopes into the registry after the app wakes. Swift `IntentCallNativeBridge.enqueue(...)` in `intentcall_platform_apple` queues native App Intent invocations and optionally opens the app-owned `protocolScheme` URL. Generated Runner Swift calls the Swift facade only.
 
 ## Runtime sessions
 

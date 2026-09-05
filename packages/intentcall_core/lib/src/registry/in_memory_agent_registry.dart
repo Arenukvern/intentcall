@@ -6,7 +6,7 @@ import '../entity/agent_entity_type_descriptor.dart';
 import '../intent/agent_intent_descriptor.dart';
 import '../intent/agent_invocation.dart';
 import '../intent/registered_agent_intent.dart';
-import '../naming/qualified_name.dart';
+import '../models/qualified_name.dart';
 import 'agent_registry.dart';
 import 'agent_registry_errors.dart';
 import 'registry_events.dart';

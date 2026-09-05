@@ -1,15 +1,32 @@
 import 'dart:convert';
 
-import 'agent_result.dart';
+import 'package:from_json_to_json/from_json_to_json.dart';
 
-/// Coerces VM service-extension wire values (`Map` values often [String]) to
-/// types expected by [validateAgainstSchema], using [schema] property types.
+import 'agent_result.dart';
+import 'json_utils.dart';
+
+/// Coerces wire [arguments] to types expected by [validateAgainstSchema].
+///
+/// VM service extensions and similar transports often deliver every value as a
+/// [String]. This function uses [schema] `properties` `type` fields to parse
+/// integers, numbers, booleans, JSON objects, and JSON lists before
+/// validation.
+///
+/// Typical pipeline:
+///
+/// ```dart
+/// final args = coerceArgumentsForSchema(schema, wire.toAgentArguments());
+/// validateAgainstSchema(schema, args);
+/// ```
+///
+/// Empty strings for non-string types are **omitted** from the result so
+/// optional fields can stay unset. Unrecognized types pass through unchanged.
 AgentArguments coerceArgumentsForSchema(
   final InputSchema schema,
   final AgentArguments arguments,
 ) {
   if (schema['type'] != 'object') {
-    return Map<String, Object?>.from(arguments);
+    return jsonDecodeMap(arguments);
   }
 
   final properties = _propertySchemas(schema);
@@ -50,11 +67,11 @@ Object? _coercePropertyValue(
     }
     return switch (type) {
       'string' => value,
-      'integer' => int.tryParse(trimmed) ?? value,
+      'integer' => jsonDecodeNullableInt(trimmed) ?? value,
       'number' => num.tryParse(trimmed) ?? value,
-      'boolean' => _parseWireBool(trimmed) ?? value,
-      'object' => _parseWireJsonMap(trimmed) ?? value,
-      'array' => _parseWireJsonList(trimmed, propertySchema) ?? value,
+      'boolean' => jsonDecodeNullableBool(trimmed) ?? value,
+      'object' => jsonDecodeNullableMapAs<String, Object>(trimmed) ?? value,
+      'list' => _parseWireJsonList(trimmed, propertySchema) ?? value,
       _ => value,
     };
   }
@@ -62,8 +79,8 @@ Object? _coercePropertyValue(
   if (type == 'object' && value is Map) {
     return _coerceObjectValue(propertySchema, Map<String, Object?>.from(value));
   }
-  if (type == 'array' && value is List) {
-    return _coerceArrayValue(propertySchema, value);
+  if (type == 'list' && value is List) {
+    return _coerceListValue(propertySchema, value);
   }
 
   return value;
@@ -112,7 +129,8 @@ Map<String, Object?> _coerceOpenObjectMap(final Map<String, Object?> value) {
 Object? _coerceOpenObjectEntryValue(final Object? value) {
   if (value is String) {
     final trimmed = value.trim();
-    if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+    // TODO(arenukvern): add trim case for jsonDecodeString
+    if (verifyMapDecodability(trimmed)) {
       final parsed = _parseWireJsonMap(trimmed);
       if (parsed != null) {
         return _coerceOpenObjectMap(parsed);
@@ -126,11 +144,11 @@ Object? _coerceOpenObjectEntryValue(final Object? value) {
   return value;
 }
 
-List<Object?> _coerceArrayValue(
-  final Map<String, Object?> arraySchema,
+List<Object?> _coerceListValue(
+  final Map<String, Object?> listSchema,
   final List<dynamic> value,
 ) {
-  final itemSchema = arraySchema['items'];
+  final itemSchema = listSchema['items'];
   if (itemSchema is! Map) {
     return value;
   }
@@ -143,36 +161,17 @@ List<Object?> _coerceArrayValue(
 
 List<Object?>? _parseWireJsonList(
   final String trimmed,
-  final Map<String, Object?> arraySchema,
+  final Map<String, Object?> listSchema,
 ) {
   final decoded = jsonDecode(trimmed);
   if (decoded is! List) {
     return null;
   }
-  return _coerceArrayValue(arraySchema, decoded);
+  return _coerceListValue(listSchema, decoded);
 }
 
-Map<String, Object?>? _parseWireJsonMap(final String trimmed) {
-  final decoded = jsonDecode(trimmed);
-  if (decoded is Map<String, Object?>) {
-    return decoded;
-  }
-  if (decoded is Map) {
-    return Map<String, Object?>.from(decoded);
-  }
-  return null;
-}
-
-bool? _parseWireBool(final String normalized) {
-  final lower = normalized.toLowerCase();
-  if (lower == '1' || lower == 'true' || lower == 'yes') {
-    return true;
-  }
-  if (lower == '0' || lower == 'false' || lower == 'no') {
-    return false;
-  }
-  return null;
-}
+Map<String, Object?>? _parseWireJsonMap(final String trimmed) =>
+    jsonDecodeNullableMapAs(json);
 
 Map<String, Map<String, Object?>> _propertySchemas(
   final Map<String, Object?> schema,

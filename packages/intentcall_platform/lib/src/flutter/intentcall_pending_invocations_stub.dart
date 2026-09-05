@@ -1,4 +1,4 @@
-import '../invocation/intentcall_invocation.dart';
+import 'package:intentcall_platform_sync/intentcall_platform_sync.dart';
 
 /// VM-safe fallback for host tests and non-Flutter analysis.
 final class IntentCallPendingInvocations {

@@ -8,6 +8,8 @@ import 'dart:math';
 
 import 'package:meta/meta.dart';
 
+import 'json_helpers.dart';
+
 @immutable
 final class LockAcquisition {
   const LockAcquisition({
@@ -133,7 +135,7 @@ final class StateLockManager {
 
     try {
       final raw = lockFile.readAsStringSync();
-      final decoded = _decodeMap(raw);
+      final decoded = jsonDecodeObjectOrEmpty(raw);
       final token = decoded['token']?.toString();
 
       if (token != acquisition.token) {
@@ -149,7 +151,7 @@ final class StateLockManager {
   _recoverStaleLockIfNeeded(final io.File lockFile) async {
     try {
       final raw = lockFile.readAsStringSync();
-      final owner = _decodeMap(raw);
+      final owner = jsonDecodeObjectOrEmpty(raw);
       final createdAtRaw = owner['createdAt']?.toString();
       final createdAt = createdAtRaw == null
           ? null
@@ -169,17 +171,6 @@ final class StateLockManager {
     } on Exception {
       return (recovered: false, owner: null);
     }
-  }
-
-  Map<String, Object?> _decodeMap(final String raw) {
-    final decoded = jsonDecode(raw);
-    if (decoded is Map<String, Object?>) {
-      return decoded;
-    }
-    if (decoded is Map) {
-      return decoded.cast<String, Object?>();
-    }
-    return const <String, Object?>{};
   }
 
   String _nextToken() {
