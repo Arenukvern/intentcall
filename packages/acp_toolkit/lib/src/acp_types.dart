@@ -37,7 +37,19 @@ enum AcpStopReason {
 
 /// Parameters for `session/new`.
 class AcpSessionNewRequest {
-  const AcpSessionNewRequest({required this.cwd, this.mcpServers = const []});
+  const AcpSessionNewRequest({
+    required this.cwd,
+    this.mcpServers = const [],
+
+    /// ACP wire `_meta` on the session/new params — carried through
+    /// opaquely (additive; the ACP spec reserves `_meta` for protocol
+    /// extensions). The tier contract uses `_meta.sessionTier` (a
+    /// once-per-session actor tier declaration); other `_meta` entries
+    /// ride unchanged so agents never lose protocol-extension data.
+    /// Absent or non-object `_meta` → null (tolerated and dropped, the
+    /// same convention as every other unknown param).
+    this.meta,
+  });
 
   factory AcpSessionNewRequest.fromJson(Map<String, Object?> json) =>
       AcpSessionNewRequest(
@@ -45,11 +57,25 @@ class AcpSessionNewRequest {
         mcpServers: (json['mcpServers'] as List<Object?>? ?? [])
             .whereType<Map<String, Object?>>()
             .toList(),
+        meta: json['_meta'] is Map<String, Object?>
+            ? Map<String, Object?>.from(json['_meta'] as Map)
+            : null,
       );
 
   /// Absolute working directory per spec; falls back to '.' when absent.
   final String cwd;
   final List<Map<String, Object?>> mcpServers;
+
+  /// The wire `_meta` object (null when absent/not an object).
+  final Map<String, Object?>? meta;
+
+  /// Serializes the params back to the wire (round-trip: `_meta` rides
+  /// unchanged; absent meta omits the key entirely).
+  Map<String, Object?> toJson() => {
+    'cwd': cwd,
+    'mcpServers': mcpServers,
+    if (meta != null) '_meta': meta,
+  };
 }
 
 /// Parameters for `session/prompt`.
