@@ -152,6 +152,7 @@ Each manifest entry can declare a manifest-local `"dispatchMode"`:
 | `"inlineRuntime"` | The current exposed runtime completes the call without app wake. Apple supports explicit `nativeInline` main-app Swift handlers today; `dartExtensionInline` is experimental scaffold-only. |
 | `"openApp"` | Queue or route an envelope and open/wake the app for Dart dispatch. This is the default for existing manifests. |
 | `"queueOnly"` | Queue an envelope without opening the app or URL fallback. This is diagnostic/fallback dispatch, not product proof. |
+| `"awaitApp"` | Wait up to 10 seconds for the running Flutter host and return the Dart result in the App Intents dialog. Does not use the handoff queue. Opt in per entry. See ADR 0027. |
 
 Apple inline runtime entries must opt in explicitly:
 

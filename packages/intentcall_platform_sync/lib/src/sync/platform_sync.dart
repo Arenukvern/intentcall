@@ -8,6 +8,7 @@ import '../emitters/apple_swift_app_intents_emitter.dart';
 import '../emitters/linux_desktop_entry_emitter.dart';
 import '../emitters/web_manifest_emitter.dart';
 import '../emitters/web_mcp_js_emitter.dart';
+import '../emitters/windows_app_actions_emitter.dart';
 import '../emitters/windows_protocol_emitter.dart';
 import '../projection/manifest_merger.dart';
 import 'apple_info_plist_protocol_sync.dart';
@@ -41,6 +42,8 @@ final class PlatformSyncResult {
     this.linuxDesktopPath,
     this.windowsProtocolPath,
     this.windowsMsixFragmentPath,
+    this.windowsAppActionsPath,
+    this.windowsAppActionsFragmentPath,
     this.wroteManifest = false,
     this.wroteWebMcpJs = false,
     this.wroteAndroidShortcuts = false,
@@ -53,6 +56,8 @@ final class PlatformSyncResult {
     this.wroteLinuxDesktop = false,
     this.wroteWindowsProtocol = false,
     this.wroteWindowsMsixFragment = false,
+    this.wroteWindowsAppActions = false,
+    this.wroteWindowsAppActionsFragment = false,
   });
 
   final String manifestPath;
@@ -70,6 +75,8 @@ final class PlatformSyncResult {
   final String? linuxDesktopPath;
   final String? windowsProtocolPath;
   final String? windowsMsixFragmentPath;
+  final String? windowsAppActionsPath;
+  final String? windowsAppActionsFragmentPath;
   final bool wroteManifest;
   final bool wroteWebMcpJs;
   final bool wroteAndroidShortcuts;
@@ -82,6 +89,8 @@ final class PlatformSyncResult {
   final bool wroteLinuxDesktop;
   final bool wroteWindowsProtocol;
   final bool wroteWindowsMsixFragment;
+  final bool wroteWindowsAppActions;
+  final bool wroteWindowsAppActionsFragment;
 
   bool get changed => artifacts.any((final artifact) => artifact.changed);
 }
@@ -122,12 +131,17 @@ final class PlatformSync {
     this.linuxDesktopFileName = 'intentcall_protocol.desktop',
     this.windowsProtocolFileName = 'intentcall_protocol.reg',
     this.windowsMsixFragmentFileName = 'intentcall_protocol_msix.xml',
+    this.windowsAppActionsFileName =
+        WindowsAppActionsEmitter.registrationFileName,
+    this.windowsAppActionsFragmentFileName =
+        WindowsAppActionsEmitter.manifestFragmentFileName,
     this.webManifestEmitter = const WebManifestEmitter(),
     this.webMcpJsEmitter = const WebMcpJsEmitter(),
     this.androidShortcutsEmitter = const AndroidShortcutsXmlEmitter(),
     this.appleSwiftEmitter = const AppleSwiftAppIntentsEmitter(),
     this.linuxDesktopEmitter = const LinuxDesktopEntryEmitter(),
     this.windowsProtocolEmitter = const WindowsProtocolEmitter(),
+    this.windowsAppActionsEmitter = const WindowsAppActionsEmitter(),
     this.manifestMerger = const ManifestMerger(),
   });
 
@@ -145,12 +159,15 @@ final class PlatformSync {
   final String linuxDesktopFileName;
   final String windowsProtocolFileName;
   final String windowsMsixFragmentFileName;
+  final String windowsAppActionsFileName;
+  final String windowsAppActionsFragmentFileName;
   final WebManifestEmitter webManifestEmitter;
   final WebMcpJsEmitter webMcpJsEmitter;
   final AndroidShortcutsXmlEmitter androidShortcutsEmitter;
   final AppleSwiftAppIntentsEmitter appleSwiftEmitter;
   final LinuxDesktopEntryEmitter linuxDesktopEmitter;
   final WindowsProtocolEmitter windowsProtocolEmitter;
+  final WindowsAppActionsEmitter windowsAppActionsEmitter;
   final ManifestMerger manifestMerger;
 
   AgentManifest readManifest(final String projectRoot) {
@@ -361,14 +378,34 @@ final class PlatformSync {
     }
     final regFile = File(p.join(windowsDir.path, windowsProtocolFileName));
     final msixFile = File(p.join(windowsDir.path, windowsMsixFragmentFileName));
+    final actionsFile = File(
+      p.join(windowsDir.path, windowsAppActionsFileName),
+    );
+    final actionsFragmentFile = File(
+      p.join(windowsDir.path, windowsAppActionsFragmentFileName),
+    );
     final nextReg = windowsProtocolEmitter.emit(manifest);
     final nextMsix = windowsProtocolEmitter.emitMsixFragment(manifest);
+    final nextActions = windowsAppActionsEmitter.emitRegistration(manifest);
+    final nextActionsFragment = windowsAppActionsEmitter.emitManifestFragment(
+      manifest,
+    );
     final regChanged =
         !regFile.existsSync() || regFile.readAsStringSync() != nextReg;
     final msixChanged =
         !msixFile.existsSync() || msixFile.readAsStringSync() != nextMsix;
+    final actionsChanged = _optionalTextChanged(
+      file: actionsFile,
+      next: nextActions,
+    );
+    final actionsFragmentChanged = _optionalTextChanged(
+      file: actionsFragmentFile,
+      next: nextActionsFragment,
+    );
     var wroteReg = false;
     var wroteMsix = false;
+    var wroteActions = false;
+    var wroteActionsFragment = false;
     if (!dryRun) {
       if (regChanged) {
         regFile.writeAsStringSync(nextReg);
@@ -378,6 +415,16 @@ final class PlatformSync {
         msixFile.writeAsStringSync(nextMsix);
         wroteMsix = true;
       }
+      wroteActions = _writeOptionalText(
+        file: actionsFile,
+        next: nextActions,
+        changed: actionsChanged,
+      );
+      wroteActionsFragment = _writeOptionalText(
+        file: actionsFragmentFile,
+        next: nextActionsFragment,
+        changed: actionsFragmentChanged,
+      );
     }
     return PlatformSyncResult(
       manifestPath: _resolveManifestFile(projectRoot).path,
@@ -395,12 +442,60 @@ final class PlatformSync {
           path: msixFile.path,
           changed: msixChanged,
         ),
+        if (nextActions != null)
+          PlatformSyncArtifact(
+            target: 'windows',
+            kind: 'app-actions-registration',
+            path: actionsFile.path,
+            changed: actionsChanged,
+          ),
+        if (nextActionsFragment != null)
+          PlatformSyncArtifact(
+            target: 'windows',
+            kind: 'app-actions-manifest-fragment',
+            path: actionsFragmentFile.path,
+            changed: actionsFragmentChanged,
+          ),
       ],
       windowsProtocolPath: regFile.path,
       windowsMsixFragmentPath: msixFile.path,
+      windowsAppActionsPath: nextActions == null ? null : actionsFile.path,
+      windowsAppActionsFragmentPath: nextActionsFragment == null
+          ? null
+          : actionsFragmentFile.path,
       wroteWindowsProtocol: wroteReg,
       wroteWindowsMsixFragment: wroteMsix,
+      wroteWindowsAppActions: wroteActions,
+      wroteWindowsAppActionsFragment: wroteActionsFragment,
     );
+  }
+
+  bool _optionalTextChanged({
+    required final File file,
+    required final String? next,
+  }) {
+    if (next == null) {
+      return file.existsSync();
+    }
+    return !file.existsSync() || file.readAsStringSync() != next;
+  }
+
+  bool _writeOptionalText({
+    required final File file,
+    required final String? next,
+    required final bool changed,
+  }) {
+    if (!changed) {
+      return false;
+    }
+    if (next == null) {
+      if (file.existsSync()) {
+        file.deleteSync();
+      }
+      return true;
+    }
+    file.writeAsStringSync(next);
+    return true;
   }
 
   bool checkPlatforms(
@@ -478,9 +573,23 @@ final class PlatformSync {
     if (!reg.existsSync() || !msix.existsSync()) {
       return false;
     }
-    return reg.readAsStringSync() == windowsProtocolEmitter.emit(manifest) &&
-        msix.readAsStringSync() ==
-            windowsProtocolEmitter.emitMsixFragment(manifest);
+    if (reg.readAsStringSync() != windowsProtocolEmitter.emit(manifest) ||
+        msix.readAsStringSync() !=
+            windowsProtocolEmitter.emitMsixFragment(manifest)) {
+      return false;
+    }
+    final actions = File(
+      p.join(projectRoot, windowsDirName, windowsAppActionsFileName),
+    );
+    final actionsFragment = File(
+      p.join(projectRoot, windowsDirName, windowsAppActionsFragmentFileName),
+    );
+    final nextActions = windowsAppActionsEmitter.emitRegistration(manifest);
+    final nextFragment = windowsAppActionsEmitter.emitManifestFragment(
+      manifest,
+    );
+    return !_optionalTextChanged(file: actions, next: nextActions) &&
+        !_optionalTextChanged(file: actionsFragment, next: nextFragment);
   }
 
   PlatformSyncResult _syncApple({
@@ -667,6 +776,11 @@ final class PlatformSync {
     windowsProtocolPath: right.windowsProtocolPath ?? left.windowsProtocolPath,
     windowsMsixFragmentPath:
         right.windowsMsixFragmentPath ?? left.windowsMsixFragmentPath,
+    windowsAppActionsPath:
+        right.windowsAppActionsPath ?? left.windowsAppActionsPath,
+    windowsAppActionsFragmentPath:
+        right.windowsAppActionsFragmentPath ??
+        left.windowsAppActionsFragmentPath,
     wroteManifest: left.wroteManifest || right.wroteManifest,
     wroteWebMcpJs: left.wroteWebMcpJs || right.wroteWebMcpJs,
     wroteAndroidShortcuts:
@@ -684,6 +798,11 @@ final class PlatformSync {
         left.wroteWindowsProtocol || right.wroteWindowsProtocol,
     wroteWindowsMsixFragment:
         left.wroteWindowsMsixFragment || right.wroteWindowsMsixFragment,
+    wroteWindowsAppActions:
+        left.wroteWindowsAppActions || right.wroteWindowsAppActions,
+    wroteWindowsAppActionsFragment:
+        left.wroteWindowsAppActionsFragment ||
+        right.wroteWindowsAppActionsFragment,
   );
 
   File _resolveManifestFile(final String projectRoot) {

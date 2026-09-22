@@ -44,10 +44,25 @@ class IntentCallEntityKeyBundle {
   String keywordsKey;
 }
 
+class IntentCallAwaitResultDto {
+  late bool ok;
+  String? code;
+  late String dialog;
+}
+
 @HostApi()
 // ignore: one_member_abstracts
 abstract class IntentCallInvocationsHostApi {
   List<IntentCallInvocationEnvelopeDto> takePendingInvocations();
+}
+
+@FlutterApi()
+// ignore: one_member_abstracts
+abstract class IntentCallAwaitingFlutterApi {
+  @async
+  IntentCallAwaitResultDto invoke(
+    final IntentCallInvocationEnvelopeDto envelope,
+  );
 }
 
 @HostApi()

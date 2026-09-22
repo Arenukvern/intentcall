@@ -117,7 +117,7 @@ void main() {
 
     test('emits list items object validation', () {
       final js = const WebMcpJsEmitter().emit(_fixtureAgentManifest);
-      expect(js, contains('validateListItems'));
+      expect(js, contains('validateArrayItems'));
       expect(js, contains('validateObjectProperties'));
       expect(js, contains('must be an object.'));
       expect(js, contains('Missing required property "'));
@@ -167,9 +167,10 @@ void main() {
 
       expect(result['fetchCalled'], isFalse);
       expect(result['toolCount'], 1);
-      expect(result['result'], isA<Map>());
-      expect((result['result']! as Map)['ok'], isFalse);
-      expect((result['result']! as Map)['code'], 'runtime_unavailable');
+      expect(result['hasSignal'], isTrue);
+      final outcome = result['outcome']! as Map;
+      expect(outcome['status'], 'rejected');
+      expect(outcome['code'], 'runtime_unavailable');
     });
 
     test(
@@ -183,9 +184,35 @@ void main() {
         );
 
         expect(result['fetchCalled'], isFalse);
-        expect((result['result']! as Map)['code'], 'runtime_unavailable');
+        final outcome = result['outcome']! as Map;
+        expect(outcome['status'], 'rejected');
+        expect(outcome['code'], 'runtime_unavailable');
       },
     );
+
+    test('rejects a failed Dart handler result', () async {
+      final js = const WebMcpJsEmitter().emit(_fixtureAgentManifest);
+      final result = await _runWebMcpJs(
+        js,
+        dartHook:
+            'async function () { return { ok: false, code: "contract_failure", message: "nope" }; }',
+      );
+      final outcome = result['outcome']! as Map;
+      expect(outcome['status'], 'rejected');
+      expect(outcome['code'], 'contract_failure');
+      expect(outcome['message'], 'nope');
+    });
+
+    test('resolves a successful Dart handler result', () async {
+      final js = const WebMcpJsEmitter().emit(_fixtureAgentManifest);
+      final result = await _runWebMcpJs(
+        js,
+        dartHook: 'async function () { return { ok: true, text: "hi" }; }',
+      );
+      final outcome = result['outcome']! as Map;
+      expect(outcome['status'], 'fulfilled');
+      expect((outcome['result']! as Map)['text'], 'hi');
+    });
 
     test('opt-in runtime fallback calls configured fetch path', () async {
       final js = const WebMcpJsEmitter(
@@ -198,7 +225,9 @@ void main() {
 
       expect(result['fetchCalled'], isTrue);
       expect(result['fetchUrl'], '/secure-agent/invoke?name=app_cart_total');
-      expect((result['result']! as Map)['via'], 'fetch');
+      final outcome = result['outcome']! as Map;
+      expect(outcome['status'], 'fulfilled');
+      expect((outcome['result']! as Map)['via'], 'fetch');
     });
 
     test('skips non-tool intents', () {
@@ -661,8 +690,9 @@ Future<Map<String, Object?>> _runWebMcpJs(
 Object.defineProperty(globalThis, 'document', {
   value: {
     modelContext: {
-      registerTool(tool) {
+      registerTool(tool, options) {
         globalThis.__registered.push(tool);
+        globalThis.__hasSignal = !!(options && options.signal);
       }
     }
   },
@@ -682,12 +712,25 @@ globalThis.fetch = async function(url) {
 };
 ${dartHook == null ? '' : 'globalThis.__intentcallWebMcpDartExecute = $dartHook;'}
 $js
-const result = await globalThis.__registered[0].execute({});
+const tool = globalThis.__registered[0];
+let outcome;
+try {
+  const result = await tool.execute({});
+  outcome = { status: 'fulfilled', result: result };
+} catch (error) {
+  outcome = {
+    status: 'rejected',
+    code: error && error.code ? error.code : null,
+    message: error && error.message ? error.message : null,
+    details: error && error.details ? error.details : null,
+  };
+}
 console.log(JSON.stringify({
   toolCount: globalThis.__registered.length,
-  result,
+  outcome,
   fetchCalled: globalThis.__fetchCalled,
-  fetchUrl: globalThis.__fetchUrl
+  fetchUrl: globalThis.__fetchUrl,
+  hasSignal: globalThis.__hasSignal === true
 }));
 ''';
   final process = await Process.run('node', <String>[

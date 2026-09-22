@@ -15,6 +15,8 @@ final class IntentCallInvocationSource {
   static const String nativeGenerated = 'native.generated';
   static const String appleDartExtensionInline = 'apple.dart_extension_inline';
   static const String deepLink = 'deeplink';
+  static const String appleAwaitApp = 'apple.await_app';
+  static const String windowsAppAction = 'windows.app_action';
 }
 
 final class IntentCallInvocationEnvelope {

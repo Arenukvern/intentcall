@@ -25,7 +25,8 @@ final class AppleSwiftAppIntentsEmitter {
     final bridgeProtocolScheme =
         intentTools.any(
           (final tool) =>
-              tool.dispatchMode == AgentManifestDispatchMode.openApp,
+              tool.dispatchMode == AgentManifestDispatchMode.openApp ||
+              tool.dispatchMode == AgentManifestDispatchMode.awaitApp,
         )
         ? protocolScheme
         : null;
@@ -58,9 +59,12 @@ final class AppleSwiftAppIntentsEmitter {
       final parameters = _swiftParameters(tool);
       final argumentLines = _swiftArgumentLines(parameters);
       final opensApp = tool.dispatchMode == AgentManifestDispatchMode.openApp;
+      final awaitsApp = tool.dispatchMode == AgentManifestDispatchMode.awaitApp;
       final typedResult = tool.inlineRuntime?.result;
       final mode = inlineRuntime == null
-          ? opensApp
+          ? awaitsApp
+                ? _AppleIntentMode.awaitApp
+                : opensApp
                 ? _AppleIntentMode.openApp
                 : _AppleIntentMode.queueOnly
           : _AppleIntentMode.nativeInline;
@@ -87,7 +91,18 @@ final class AppleSwiftAppIntentsEmitter {
       for (final line in argumentLines) {
         buffer.writeln('    $line');
       }
-      if (inlineRuntime == null) {
+      if (awaitsApp) {
+        final schemeArgument = bridgeProtocolScheme == null
+            ? ''
+            : ', fallbackProtocolScheme: ${_swiftOptionalString(bridgeProtocolScheme)}';
+        buffer
+          ..writeln(
+            '    let outcome = await IntentCallNativeBridge.invokeAwaiting(qualifiedName: "${escapeSwiftString(tool.qualifiedName)}", arguments: arguments$schemeArgument)',
+          )
+          ..writeln(
+            '    return .result(dialog: IntentDialog(stringLiteral: outcome.dialog))',
+          );
+      } else if (inlineRuntime == null) {
         final schemeArgument = opensApp && bridgeProtocolScheme != null
             ? ', fallbackProtocolScheme: ${_swiftOptionalString(bridgeProtocolScheme)}'
             : '';
@@ -506,11 +521,12 @@ String _swiftEntitySnapshotSupport(
   return buffer.toString();
 }
 
-enum _AppleIntentMode { nativeInline, openApp, queueOnly }
+enum _AppleIntentMode { nativeInline, openApp, queueOnly, awaitApp }
 
 String _swiftModeProperties(final _AppleIntentMode mode) {
   final supportedModes = switch (mode) {
-    _AppleIntentMode.openApp => '.foreground(.immediate)',
+    _AppleIntentMode.openApp ||
+    _AppleIntentMode.awaitApp => '.foreground(.immediate)',
     _AppleIntentMode.nativeInline ||
     _AppleIntentMode.queueOnly => '.background',
   };
@@ -518,16 +534,16 @@ String _swiftModeProperties(final _AppleIntentMode mode) {
     ..writeln('  @available(iOS 26.0, macOS 26.0, *)')
     ..writeln('  static var supportedModes: IntentModes { $supportedModes }');
   if (mode != _AppleIntentMode.nativeInline) {
-    buffer.writeln(
-      '  static var openAppWhenRun: Bool = ${mode == _AppleIntentMode.openApp ? 'true' : 'false'}',
-    );
+    final opens =
+        mode == _AppleIntentMode.openApp || mode == _AppleIntentMode.awaitApp;
+    buffer.writeln('  static var openAppWhenRun: Bool = $opens');
   }
   return buffer.toString();
 }
 
 String _swiftExecutionTargetProperty(final _AppleIntentMode mode) {
   final target = switch (mode) {
-    _AppleIntentMode.nativeInline => '.main',
+    _AppleIntentMode.nativeInline || _AppleIntentMode.awaitApp => '.main',
     _AppleIntentMode.openApp || _AppleIntentMode.queueOnly => '.default',
   };
   return '''

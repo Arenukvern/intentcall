@@ -21,6 +21,9 @@ public class IntentCallPlatformPlugin: NSObject, FlutterPlugin {
       binaryMessenger: binaryMessenger,
       api: bridge
     )
+    IntentCallNativeBridge.registerAwaitingApi(
+      IntentCallAwaitingFlutterApi(binaryMessenger: binaryMessenger)
+    )
   }
 }
 

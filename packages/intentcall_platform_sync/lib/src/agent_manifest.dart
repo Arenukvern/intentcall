@@ -6,7 +6,7 @@ import 'package:intentcall_core/intentcall_core.dart';
 const kAgentManifestSchemaVersion = 1;
 
 /// Manifest-local native dispatch behavior.
-enum AgentManifestDispatchMode { inlineRuntime, openApp, queueOnly }
+enum AgentManifestDispatchMode { inlineRuntime, openApp, queueOnly, awaitApp }
 
 /// Runtime implementation used for [AgentManifestDispatchMode.inlineRuntime].
 enum AgentManifestInlineRuntimeKind { nativeInline, dartExtensionInline }
@@ -91,6 +91,7 @@ enum AgentManifestSurface {
   webMcp,
   windowsProtocolActivation,
   windowsMsixProtocol,
+  windowsAppActions,
   linuxSchemeHandler,
 }
 
@@ -741,6 +742,7 @@ extension AgentManifestSurfaceKey on AgentManifestSurface {
     AgentManifestSurface.windowsProtocolActivation =>
       'windows.protocolActivation',
     AgentManifestSurface.windowsMsixProtocol => 'windows.msixProtocol',
+    AgentManifestSurface.windowsAppActions => 'windows.appActions',
     AgentManifestSurface.linuxSchemeHandler => 'linux.schemeHandler',
   };
 }

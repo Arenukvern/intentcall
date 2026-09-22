@@ -15,6 +15,9 @@ import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 private object IntentCallPlatformBridgePigeonUtils {
 
+  fun createConnectionError(channelName: String): FlutterError {
+    return FlutterError("channel-error",  "Unable to establish connection on channel: '$channelName'.", "")  }
+
   fun wrapResult(result: Any?): List<Any?> {
     return listOf(result)
   }
@@ -349,6 +352,48 @@ data class IntentCallEntityKeyBundle (
     return result
   }
 }
+
+/** Generated class from Pigeon that represents data sent in messages. */
+data class IntentCallAwaitResultDto (
+  val ok: Boolean,
+  val code: String? = null,
+  val dialog: String
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): IntentCallAwaitResultDto {
+      val ok = pigeonVar_list[0] as Boolean
+      val code = pigeonVar_list[1] as String?
+      val dialog = pigeonVar_list[2] as String
+      return IntentCallAwaitResultDto(ok, code, dialog)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      ok,
+      code,
+      dialog,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    val other = other as IntentCallAwaitResultDto
+    return IntentCallPlatformBridgePigeonUtils.deepEquals(this.ok, other.ok) && IntentCallPlatformBridgePigeonUtils.deepEquals(this.code, other.code) && IntentCallPlatformBridgePigeonUtils.deepEquals(this.dialog, other.dialog)
+  }
+
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + IntentCallPlatformBridgePigeonUtils.deepHash(this.ok)
+    result = 31 * result + IntentCallPlatformBridgePigeonUtils.deepHash(this.code)
+    result = 31 * result + IntentCallPlatformBridgePigeonUtils.deepHash(this.dialog)
+    return result
+  }
+}
 private open class IntentCallPlatformBridgePigeonCodec : StandardMessageCodec() {
   override fun readValueOfType(type: Byte, buffer: ByteBuffer): Any? {
     return when (type) {
@@ -367,6 +412,11 @@ private open class IntentCallPlatformBridgePigeonCodec : StandardMessageCodec() 
           IntentCallEntityKeyBundle.fromList(it)
         }
       }
+      132.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          IntentCallAwaitResultDto.fromList(it)
+        }
+      }
       else -> super.readValueOfType(type, buffer)
     }
   }
@@ -382,6 +432,10 @@ private open class IntentCallPlatformBridgePigeonCodec : StandardMessageCodec() 
       }
       is IntentCallEntityKeyBundle -> {
         stream.write(131)
+        writeValue(stream, value.toList())
+      }
+      is IntentCallAwaitResultDto -> {
+        stream.write(132)
         writeValue(stream, value.toList())
       }
       else -> super.writeValue(stream, value)
@@ -417,6 +471,35 @@ interface IntentCallInvocationsHostApi {
           channel.setMessageHandler(null)
         }
       }
+    }
+  }
+}
+/** Generated class from Pigeon that represents Flutter messages that can be called from Kotlin. */
+class IntentCallAwaitingFlutterApi(private val binaryMessenger: BinaryMessenger, private val messageChannelSuffix: String = "") {
+  companion object {
+    /** The codec used by IntentCallAwaitingFlutterApi. */
+    val codec: MessageCodec<Any?> by lazy {
+      IntentCallPlatformBridgePigeonCodec()
+    }
+  }
+  fun invoke(envelopeArg: IntentCallInvocationEnvelopeDto, callback: (Result<IntentCallAwaitResultDto>) -> Unit)
+{
+    val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
+    val channelName = "dev.flutter.pigeon.intentcall_bridge.IntentCallAwaitingFlutterApi.invoke$separatedMessageChannelSuffix"
+    val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
+    channel.send(listOf(envelopeArg)) {
+      if (it is List<*>) {
+        if (it.size > 1) {
+          callback(Result.failure(FlutterError(it[0] as String, it[1] as String, it[2] as String?)))
+        } else if (it[0] == null) {
+          callback(Result.failure(FlutterError("null-error", "Flutter api returned null value for non-null return value.", "")))
+        } else {
+          val output = it[0] as IntentCallAwaitResultDto
+          callback(Result.success(output))
+        }
+      } else {
+        callback(Result.failure(IntentCallPlatformBridgePigeonUtils.createConnectionError(channelName)))
+      } 
     }
   }
 }

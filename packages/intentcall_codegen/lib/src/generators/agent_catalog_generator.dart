@@ -758,6 +758,7 @@ EntryProjection(
       'android.shortcuts': 'androidShortcuts',
       'windows.protocolActivation': 'windowsProtocolActivation',
       'windows.msixProtocol': 'windowsMsixProtocol',
+      'windows.appActions': 'windowsAppActions',
       'linux.schemeHandler': 'linuxSchemeHandler',
     };
     return manifestKeyToEnum[key];

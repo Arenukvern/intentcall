@@ -3,7 +3,7 @@
 Architecture Decision Records (ADRs) for IntentCall.
 Format: [MADR](https://adr.github.io/madr/) — see any existing ADR for the template.
 
-Next ADR number: **0027**
+Next ADR number: **0028**
 
 ---
 
@@ -28,6 +28,7 @@ Next ADR number: **0027**
 | [0024](0024-dart-hooks-and-pigeon-bridge-consistency.md)           | accepted | Dart Hooks and Pigeon Bridge Consistency                                 | 2026-07-08 |
 | [0025](0025-platform-subset-federated-plugins.md)                  | accepted | Platform Subset and Federated Flutter Plugins                            | 2026-07-08 |
 | [0026](0026-acp-registry-projection.md)                            | accepted | Agent Client Protocol (ACP) as a Registry Projection                     | 2026-08-22 |
+| [0027](0027-agent-usable-projection-results.md)                    | accepted | Agent-usable projection results                                         | 2026-09-22 |
 
 ---
 

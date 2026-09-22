@@ -34,6 +34,16 @@ Object? _extractReplyValueOrThrow(
   return replyList.firstOrNull;
 }
 
+
+List<Object?> wrapResponse({Object? result, PlatformException? error, bool empty = false}) {
+  if (empty) {
+    return <Object?>[];
+  }
+  if (error == null) {
+    return <Object?>[result];
+  }
+  return <Object?>[error.code, error.message, error.details];
+}
 bool _deepEquals(Object? a, Object? b) {
   if (identical(a, b)) {
     return true;
@@ -275,6 +285,56 @@ class IntentCallEntityKeyBundle {
   int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
 }
 
+class IntentCallAwaitResultDto {
+  IntentCallAwaitResultDto({
+    required this.ok,
+    this.code,
+    required this.dialog,
+  });
+
+  bool ok;
+
+  String? code;
+
+  String dialog;
+
+  List<Object?> _toList() {
+    return <Object?>[
+      ok,
+      code,
+      dialog,
+    ];
+  }
+
+  Object encode() {
+    return _toList();  }
+
+  static IntentCallAwaitResultDto decode(Object result) {
+    result as List<Object?>;
+    return IntentCallAwaitResultDto(
+      ok: result[0]! as bool,
+      code: result[1] as String?,
+      dialog: result[2]! as String,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! IntentCallAwaitResultDto || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(ok, other.ok) && _deepEquals(code, other.code) && _deepEquals(dialog, other.dialog);
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
+}
+
 
 class _PigeonCodec extends StandardMessageCodec {
   const _PigeonCodec();
@@ -292,6 +352,9 @@ class _PigeonCodec extends StandardMessageCodec {
     }    else if (value is IntentCallEntityKeyBundle) {
       buffer.putUint8(131);
       writeValue(buffer, value.encode());
+    }    else if (value is IntentCallAwaitResultDto) {
+      buffer.putUint8(132);
+      writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
     }
@@ -306,6 +369,8 @@ class _PigeonCodec extends StandardMessageCodec {
         return IntentCallEntityOpenEnvelopeDto.decode(readValue(buffer)!);
       case 131:
         return IntentCallEntityKeyBundle.decode(readValue(buffer)!);
+      case 132:
+        return IntentCallAwaitResultDto.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
     }
@@ -342,6 +407,37 @@ class IntentCallInvocationsHostApi {
     )
     ;
     return (pigeonVar_replyValue! as List<Object?>).cast<IntentCallInvocationEnvelopeDto>();
+  }
+}
+
+abstract class IntentCallAwaitingFlutterApi {
+  static const MessageCodec<Object?> pigeonChannelCodec = _PigeonCodec();
+
+  Future<IntentCallAwaitResultDto> invoke(IntentCallInvocationEnvelopeDto envelope);
+
+  static void setUp(IntentCallAwaitingFlutterApi? api, {BinaryMessenger? binaryMessenger, String messageChannelSuffix = '',}) {
+    messageChannelSuffix = messageChannelSuffix.isNotEmpty ? '.$messageChannelSuffix' : '';
+    {
+      final pigeonVar_channel = BasicMessageChannel<Object?>(
+          'dev.flutter.pigeon.intentcall_bridge.IntentCallAwaitingFlutterApi.invoke$messageChannelSuffix', pigeonChannelCodec,
+          binaryMessenger: binaryMessenger);
+      if (api == null) {
+        pigeonVar_channel.setMessageHandler(null);
+      } else {
+        pigeonVar_channel.setMessageHandler((Object? message) async {
+          final List<Object?> args = message! as List<Object?>;
+          final IntentCallInvocationEnvelopeDto arg_envelope = args[0]! as IntentCallInvocationEnvelopeDto;
+          try {
+            final IntentCallAwaitResultDto output = await api.invoke(arg_envelope);
+            return wrapResponse(result: output);
+          } on PlatformException catch (e) {
+            return wrapResponse(error: e);
+          }          catch (e) {
+            return wrapResponse(error: PlatformException(code: 'error', message: e.toString()));
+          }
+        });
+      }
+    }
   }
 }
 

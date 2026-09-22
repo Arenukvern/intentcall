@@ -3,11 +3,10 @@ import 'package:intentcall_platform_sync/intentcall_platform_sync.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('registerAgentWebMcpFromEntries is safe on VM', () {
-    expect(
-      () => registerAgentWebMcpFromEntries(<AgentCallEntry>{}),
-      returnsNormally,
-    );
+  test('registerAgentWebMcpFromEntries reports unavailable on VM', () {
+    final report = registerAgentWebMcpFromEntries(<AgentCallEntry>{});
+    expect(report.available, isFalse);
+    expect(report.registered, isEmpty);
     expect(
       () => registerAgentWebMcpFromEntries(
         <AgentCallEntry>{},

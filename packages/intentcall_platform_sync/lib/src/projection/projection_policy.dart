@@ -14,6 +14,7 @@ bool defaultSurfaceInclude(final AgentManifestSurface surface) =>
       AgentManifestSurface.windowsProtocolActivation ||
       AgentManifestSurface.windowsMsixProtocol ||
       AgentManifestSurface.linuxSchemeHandler => true,
+      AgentManifestSurface.windowsAppActions => false,
     };
 
 /// Platform tokens required for a manifest surface family to default on.
@@ -28,7 +29,8 @@ Set<String> platformsForManifestSurface(final AgentManifestSurface surface) =>
       AgentManifestSurface.appleSpotlight ||
       AgentManifestSurface.appleEntities => {'ios', 'macos'},
       AgentManifestSurface.windowsProtocolActivation ||
-      AgentManifestSurface.windowsMsixProtocol => {'windows'},
+      AgentManifestSurface.windowsMsixProtocol ||
+      AgentManifestSurface.windowsAppActions => {'windows'},
       AgentManifestSurface.linuxSchemeHandler => {'linux'},
     };
 
@@ -39,7 +41,8 @@ bool defaultSurfaceIncludeForPlatforms(
   // ADR 0016 / 0022: shortcuts, entities, spotlight never auto-enable.
   if (surface == AgentManifestSurface.appleAppShortcuts ||
       surface == AgentManifestSurface.appleSpotlight ||
-      surface == AgentManifestSurface.appleEntities) {
+      surface == AgentManifestSurface.appleEntities ||
+      surface == AgentManifestSurface.windowsAppActions) {
     return false;
   }
   // ADR 0022: App Intent structs default on for ios/macos when platforms scoped.

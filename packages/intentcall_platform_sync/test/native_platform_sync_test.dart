@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:intentcall_platform_sync/intentcall_platform_sync.dart';
@@ -335,6 +336,101 @@ void main() {
     );
     expect(sync.checkIos(temp.path), isTrue);
   });
+
+  test(
+    'PlatformSync gates awaitApp, openApp, Windows App Actions, and WebMCP',
+    () {
+      const scheme = 'demoapp';
+      const windowsQualifiedName = 'app_windows_echo';
+      final temp = _resultBearingProjectionProject(
+        _resultBearingProjectionManifest(includeWindowsAppActions: true),
+      );
+      const sync = PlatformSync();
+      final result = sync.syncPlatforms(
+        projectRoot: temp.path,
+        platforms: ['web', 'ios', 'macos', 'windows'],
+      );
+
+      expect(result.wroteWebMcpJs, isTrue);
+      expect(result.wroteIosGenerated, isTrue);
+      expect(result.wroteMacosGenerated, isTrue);
+      expect(result.wroteWindowsAppActions, isTrue);
+      expect(result.wroteWindowsAppActionsFragment, isTrue);
+      expect(
+        sync.checkPlatforms(temp.path, ['web', 'ios', 'macos', 'windows']),
+        isTrue,
+      );
+
+      for (final appleRoot in <String>['ios', 'macos']) {
+        final swift = _generatedAppleSwift(temp.path, appleRoot);
+        // Wake URL is scheme://wake inside IntentCallNativeBridge, not here.
+        final awaitBody = _swiftIntentBody(swift, 'AppAwaitEchoIntent');
+        final openBody = _swiftIntentBody(swift, 'AppOpenEchoIntent');
+        expect(awaitBody, contains('IntentCallNativeBridge.invokeAwaiting'));
+        expect(awaitBody, contains('fallbackProtocolScheme: "$scheme"'));
+        expect(awaitBody, isNot(contains('Queued invocation')));
+        expect(awaitBody, isNot(contains('IntentCallNativeBridge.enqueue')));
+        expect(openBody, contains('Queued invocation'));
+        expect(openBody, contains('IntentCallNativeBridge.enqueue'));
+        expect(swift, isNot(contains('AppWindowsEchoIntent')));
+      }
+
+      final actionsFile = File(
+        p.join(temp.path, 'windows', 'intentcall_app_actions.json'),
+      );
+      final fragmentFile = File(
+        p.join(temp.path, 'windows', 'intentcall_app_actions_manifest.xml'),
+      );
+      expect(actionsFile.existsSync(), isTrue);
+      expect(fragmentFile.existsSync(), isTrue);
+      expect(sync.checkWindows(temp.path), isTrue);
+      final registration =
+          jsonDecode(actionsFile.readAsStringSync()) as Map<String, dynamic>;
+      final action =
+          (registration['actions']! as List<dynamic>).single
+              as Map<String, dynamic>;
+      final invocation = action['invocation']! as Map<String, dynamic>;
+      expect(action['id'], windowsQualifiedName);
+      expect(invocation['uri'], '$scheme://actions/$windowsQualifiedName');
+      final inputs = action['inputs']! as List<dynamic>;
+      expect(
+        inputs.map((final input) => (input as Map<String, dynamic>)['kind']),
+        ['Text'],
+      );
+      final fragment = fragmentFile.readAsStringSync();
+      expect(fragment, contains('ReturnResults="always"'));
+      expect(fragment, contains('com.microsoft.windows.ai.actions'));
+
+      final js = File(
+        p.join(temp.path, 'web', 'intentcall_webmcp.generated.js'),
+      ).readAsStringSync();
+      expect(js, contains('settle('));
+      expect(js, contains('AbortController'));
+      expect(js, contains('__intentcallWebMcpAbort'));
+      expect(sync.checkWeb(temp.path), isTrue);
+
+      File(p.join(temp.path, 'agent_manifest.json')).writeAsStringSync(
+        _resultBearingProjectionManifest(includeWindowsAppActions: false),
+      );
+      expect(sync.checkWindows(temp.path), isFalse);
+      final removed = sync.syncWindows(projectRoot: temp.path);
+      expect(removed.wroteWindowsAppActions, isTrue);
+      expect(removed.wroteWindowsAppActionsFragment, isTrue);
+      expect(actionsFile.existsSync(), isFalse);
+      expect(fragmentFile.existsSync(), isFalse);
+      expect(
+        File(
+          p.join(temp.path, 'windows', 'intentcall_protocol.reg'),
+        ).existsSync(),
+        isTrue,
+      );
+      expect(sync.checkWindows(temp.path), isTrue);
+      expect(
+        sync.checkPlatforms(temp.path, ['web', 'ios', 'macos', 'windows']),
+        isTrue,
+      );
+    },
+  );
 }
 
 File _writeMinimalInfoPlist(
@@ -424,4 +520,121 @@ File _writeMinimalXcodeProject(final String appleRoot) {
 }
 ''');
   return projectFile;
+}
+
+Directory _resultBearingProjectionProject(final String manifestJson) {
+  final temp = Directory.systemTemp.createTempSync(
+    'intentcall_projection_sync_',
+  );
+  addTearDown(() => temp.deleteSync(recursive: true));
+  File(
+    p.join(temp.path, 'agent_manifest.json'),
+  ).writeAsStringSync(manifestJson);
+  final webDir = Directory(p.join(temp.path, 'web'))..createSync();
+  File(p.join(webDir.path, 'manifest.json')).writeAsStringSync('''
+{
+  "name": "demo",
+  "start_url": "."
+}
+''');
+  for (final appleRoot in <String>['ios', 'macos']) {
+    final root = p.join(temp.path, appleRoot);
+    Directory(p.join(root, 'Runner')).createSync(recursive: true);
+    _writeMinimalXcodeProject(root);
+    _writeMinimalInfoPlist(root);
+  }
+  Directory(p.join(temp.path, 'windows')).createSync();
+  return temp;
+}
+
+String _resultBearingProjectionManifest({
+  required final bool includeWindowsAppActions,
+}) {
+  final windowsEntry = includeWindowsAppActions
+      ? '''
+,
+    {
+      "qualifiedName": "app_windows_echo",
+      "namespace": "app",
+      "name": "windows_echo",
+      "description": "Windows echo",
+      "kind": "tool",
+      "surfaces": {
+        "windows.appActions": {"include": true}
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "text": {"type": "string"}
+        },
+        "required": ["text"]
+      }
+    }'''
+      : '';
+  return '''
+{
+  "version": 1,
+  "platform": "flutter",
+  "protocolScheme": "demoapp",
+  "tools": [
+    {
+      "qualifiedName": "app_await_echo",
+      "namespace": "app",
+      "name": "await_echo",
+      "description": "Await echo",
+      "kind": "tool",
+      "dispatchMode": "awaitApp",
+      "surfaces": {
+        "apple.appIntents": {"include": true},
+        "web.webMcp": {"include": true}
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "text": {"type": "string"}
+        },
+        "required": ["text"]
+      }
+    },
+    {
+      "qualifiedName": "app_open_echo",
+      "namespace": "app",
+      "name": "open_echo",
+      "description": "Open echo",
+      "kind": "tool",
+      "dispatchMode": "openApp",
+      "surfaces": {
+        "apple.appIntents": {"include": true}
+      },
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "text": {"type": "string"}
+        },
+        "required": ["text"]
+      }
+    }$windowsEntry
+  ]
+}
+''';
+}
+
+String _generatedAppleSwift(final String projectRoot, final String appleRoot) =>
+    File(
+      p.join(
+        projectRoot,
+        appleRoot,
+        'Runner',
+        'Generated',
+        'IntentCallGenerated.swift',
+      ),
+    ).readAsStringSync();
+
+String _swiftIntentBody(final String swift, final String typeName) {
+  final marker = 'struct $typeName: AppIntent {';
+  final start = swift.indexOf(marker);
+  expect(start, isNonNegative, reason: 'missing $typeName');
+  final nextAvailable = swift.indexOf('\n@available(', start + marker.length);
+  expect(nextAvailable, greaterThan(start), reason: 'unterminated $typeName');
+  return swift.substring(start, nextAvailable);
 }

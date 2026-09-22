@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:js_interop';
 import 'dart:js_interop_unsafe';
@@ -7,6 +8,23 @@ import 'package:intentcall_schema/intentcall_schema.dart';
 
 import '../invocation/intentcall_invocation.dart';
 import '../projection/manifest_surface_index.dart';
+import 'web_mcp_registration_report.dart';
+
+/// Browser-visible failure for a WebMCP `execute` promise.
+final class WebMcpToolExecutionException implements Exception {
+  WebMcpToolExecutionException({
+    required this.code,
+    required this.message,
+    this.details = const <String, Object?>{},
+  });
+
+  final String code;
+  final String message;
+  final Map<String, Object?> details;
+
+  @override
+  String toString() => 'WebMcpToolExecutionException($code): $message';
+}
 
 @JS('JSON.parse')
 external JSAny? _jsonParse(final JSString source);
@@ -28,9 +46,24 @@ var _dartExecuteHookInstalled = false;
 bool isAgentWebMcpToolRegistered(final String qualifiedName) =>
     _webMcpRegisteredToolNames.contains(qualifiedName);
 
-extension type _ModelContext._(JSObject _) implements JSObject {
-  external void registerTool(final _WebMcpToolDefinition toolDefinition);
+extension type _AbortController._(JSObject _) implements JSObject {
+  external factory _AbortController();
+  external void abort();
+  external JSObject get signal;
 }
+
+extension type _RegisterOptions._(JSObject _) implements JSObject {
+  external factory _RegisterOptions({final JSObject signal});
+}
+
+extension type _ModelContext._(JSObject _) implements JSObject {
+  external JSAny? registerTool(
+    final _WebMcpToolDefinition toolDefinition,
+    final _RegisterOptions options,
+  );
+}
+
+final _controllers = <String, _AbortController>{};
 
 extension type _WebMcpToolDefinition._(JSObject _) implements JSObject {
   external factory _WebMcpToolDefinition({
@@ -52,17 +85,25 @@ extension type _WebMcpToolDefinition._(JSObject _) implements JSObject {
 /// it (full [AgentCallEntry.invokeDirect] validation). If no Dart entry exists,
 /// generated JS returns `runtime_unavailable` unless network fallback was
 /// explicitly enabled.
-void registerFromEntries(
+WebMcpRegistrationReport registerFromEntries(
   final Set<AgentCallEntry> entries, {
   required final IntentCallAuthorizationPolicy policy,
   final ManifestSurfaceIndex? surfaceIndex,
 }) {
   final modelContext = _readModelContext();
   if (modelContext == null) {
-    return;
+    return WebMcpRegistrationReport.unavailable(
+      skipped: [
+        for (final entry in entries)
+          if (entry.toRegistration().descriptor.kind == AgentIntentKind.tool)
+            entry.toRegistration().descriptor.qualifiedName,
+      ],
+    );
   }
 
   _ensureDartExecuteHook();
+  final registered = <String>[];
+  final skipped = <String>[];
 
   for (final entry in entries) {
     final descriptor = entry.toRegistration().descriptor;
@@ -76,37 +117,38 @@ void registerFromEntries(
     }
     _entriesByQualifiedName[qualifiedName] = entry;
     _entryPoliciesByQualifiedName[qualifiedName] = policy;
-
-    if (_webMcpRegisteredToolNames.contains(qualifiedName)) {
-      continue;
-    }
-    final toolDefinition = _WebMcpToolDefinition(
-      name: qualifiedName.toJS,
-      description: descriptor.description.toJS,
-      inputSchema: _jsonParse(jsonEncode(descriptor.inputSchema).toJS)!,
-      execute: ((final JSAny? rawArgs) => _invokeEntry(
-        entry,
-        qualifiedName,
-        rawArgs,
-      ).toJS).toJS,
-    );
-    try {
-      modelContext.registerTool(toolDefinition);
-      _webMcpRegisteredToolNames.add(qualifiedName);
-    } on Object {
-      // Duplicate name (JS bootstrap registered first) — JS execute uses hook.
+    if (_registerTool(
+      modelContext,
+      qualifiedName: qualifiedName,
+      description: descriptor.description,
+      inputSchema: descriptor.inputSchema,
+      execute: (final rawArgs) => _invokeEntry(entry, qualifiedName, rawArgs),
+    )) {
+      registered.add(qualifiedName);
+    } else {
+      skipped.add(qualifiedName);
     }
   }
+  return WebMcpRegistrationReport(
+    available: true,
+    registered: registered,
+    skipped: skipped,
+  );
 }
 
-void registerFromRegistry(
+WebMcpRegistrationReport registerFromRegistry(
   final AgentRegistry registry, {
   required final IntentCallAuthorizationPolicy policy,
   final ManifestSurfaceIndex? surfaceIndex,
 }) {
   final modelContext = _readModelContext();
   if (modelContext == null) {
-    return;
+    return WebMcpRegistrationReport.unavailable(
+      skipped: [
+        for (final entry in registry.listEntries())
+          if (entry.descriptor.kind == AgentIntentKind.tool) entry.key,
+      ],
+    );
   }
 
   _ensureDartExecuteHook();
@@ -114,6 +156,8 @@ void registerFromRegistry(
     registry: registry,
     policy: policy,
   );
+  final registered = <String>[];
+  final skipped = <String>[];
 
   for (final entry in registry.listEntries()) {
     final descriptor = entry.descriptor;
@@ -125,27 +169,106 @@ void registerFromRegistry(
       continue;
     }
     _bridgesByQualifiedName[qualifiedName] = bridge;
-
-    if (_webMcpRegisteredToolNames.contains(qualifiedName)) {
-      continue;
-    }
-    final toolDefinition = _WebMcpToolDefinition(
-      name: qualifiedName.toJS,
-      description: descriptor.description.toJS,
-      inputSchema: _jsonParse(jsonEncode(descriptor.inputSchema).toJS)!,
-      execute: ((final JSAny? rawArgs) => _invokeBridge(
-        bridge,
-        qualifiedName,
-        rawArgs,
-      ).toJS).toJS,
-    );
-    try {
-      modelContext.registerTool(toolDefinition);
-      _webMcpRegisteredToolNames.add(qualifiedName);
-    } on Object {
-      // Duplicate name (JS bootstrap registered first) — JS execute uses hook.
+    if (_registerTool(
+      modelContext,
+      qualifiedName: qualifiedName,
+      description: descriptor.description,
+      inputSchema: descriptor.inputSchema,
+      execute: (final rawArgs) => _invokeBridge(bridge, qualifiedName, rawArgs),
+    )) {
+      registered.add(qualifiedName);
+    } else {
+      skipped.add(qualifiedName);
     }
   }
+  _watchRegistry(
+    registry,
+    modelContext: modelContext,
+    bridge: bridge,
+    surfaceIndex: surfaceIndex,
+  );
+  return WebMcpRegistrationReport(
+    available: true,
+    registered: registered,
+    skipped: skipped,
+  );
+}
+
+StreamSubscription<AgentRegistryEvent>? _registryEvents;
+
+void _watchRegistry(
+  final AgentRegistry registry, {
+  required final _ModelContext modelContext,
+  required final IntentCallNativeBridge bridge,
+  required final ManifestSurfaceIndex? surfaceIndex,
+}) {
+  final previous = _registryEvents;
+  if (previous != null) {
+    unawaited(previous.cancel());
+  }
+  _registryEvents = registry.events.listen((final event) {
+    switch (event) {
+      case IntentRegistered(:final qualifiedName):
+        final intent = registry.get(qualifiedName);
+        if (intent == null ||
+            intent.descriptor.kind != AgentIntentKind.tool ||
+            !_includesWebMcp(qualifiedName, surfaceIndex)) {
+          return;
+        }
+        _bridgesByQualifiedName[qualifiedName] = bridge;
+        _registerTool(
+          modelContext,
+          qualifiedName: qualifiedName,
+          description: intent.descriptor.description,
+          inputSchema: intent.descriptor.inputSchema,
+          execute: (final rawArgs) =>
+              _invokeBridge(bridge, qualifiedName, rawArgs),
+        );
+      case IntentUnregistered(:final qualifiedName):
+        _abortPrevious(qualifiedName);
+        _bridgesByQualifiedName.remove(qualifiedName);
+      case EntityTypeRegistered() || EntityTypeUnregistered():
+        break;
+    }
+  });
+}
+
+bool _registerTool(
+  final _ModelContext modelContext, {
+  required final String qualifiedName,
+  required final String description,
+  required final Map<String, Object?> inputSchema,
+  required final Future<JSAny?> Function(JSAny? rawArgs) execute,
+}) {
+  _abortPrevious(qualifiedName);
+  final controller = _AbortController();
+  final toolDefinition = _WebMcpToolDefinition(
+    name: qualifiedName.toJS,
+    description: description.toJS,
+    inputSchema: _jsonParse(jsonEncode(inputSchema).toJS)!,
+    execute: ((final JSAny? rawArgs) => execute(rawArgs).toJS).toJS,
+  );
+  try {
+    modelContext.registerTool(
+      toolDefinition,
+      _RegisterOptions(signal: controller.signal),
+    );
+    _controllers[qualifiedName] = controller;
+    _webMcpRegisteredToolNames.add(qualifiedName);
+    return true;
+  } on Object {
+    controller.abort();
+    return false;
+  }
+}
+
+void _abortPrevious(final String qualifiedName) {
+  _controllers.remove(qualifiedName)?.abort();
+  final abort = globalContext.getProperty('__intentcallWebMcpAbort'.toJS);
+  if (abort != null) {
+    (abort as JSFunction).callAsFunction(null, qualifiedName.toJS);
+  }
+  _webMcpRegisteredToolNames.remove(qualifiedName);
 }
 
 void _ensureDartExecuteHook() {
@@ -214,16 +337,15 @@ Future<JSAny?> _invokeEntry(
       _entryPoliciesByQualifiedName[qualifiedName] ??
       const IntentCallAuthorizationPolicy.denyAll();
   if (!await policy.allows(envelope)) {
-    return _encodeResult(
+    return _reject(
       AgentResult.failure(
         code: 'invocation_denied',
         message: 'Invocation denied for $qualifiedName.',
         details: <String, Object?>{'source': envelope.source},
       ),
-    ).jsify();
+    );
   }
-  final result = await entry.invokeDirect(args);
-  return _encodeResult(result).jsify();
+  return _reject(await entry.invokeDirect(args));
 }
 
 Future<JSAny?> _invokeBridge(
@@ -240,6 +362,17 @@ Future<JSAny?> _invokeBridge(
       source: IntentCallInvocationSource.webMcpDart,
     ),
   );
+  return _reject(result);
+}
+
+Future<JSAny?> _reject(final AgentResult result) async {
+  if (!result.ok) {
+    throw WebMcpToolExecutionException(
+      code: result.code ?? 'tool_failed',
+      message: result.message,
+      details: result.details,
+    );
+  }
   return _encodeResult(result).jsify();
 }
 

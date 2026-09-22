@@ -55,6 +55,10 @@ private func wrapError(_ error: Any) -> [Any?] {
   ]
 }
 
+private func createConnectionError(withChannelName channelName: String) -> PigeonError {
+  return PigeonError(code: "channel-error", message: "Unable to establish connection on channel: '\(channelName)'.", details: "")
+}
+
 private func isNullish(_ value: Any?) -> Bool {
   return value is NSNull || value == nil
 }
@@ -328,6 +332,47 @@ struct IntentCallEntityKeyBundle: Hashable {
   }
 }
 
+/// Generated class from Pigeon that represents data sent in messages.
+struct IntentCallAwaitResultDto: Hashable {
+  var ok: Bool
+  var code: String? = nil
+  var dialog: String
+
+
+  // swift-format-ignore: AlwaysUseLowerCamelCase
+  static func fromList(_ pigeonVar_list: [Any?]) -> IntentCallAwaitResultDto? {
+    let ok = pigeonVar_list[0] as! Bool
+    let code: String? = nilOrValue(pigeonVar_list[1])
+    let dialog = pigeonVar_list[2] as! String
+
+    return IntentCallAwaitResultDto(
+      ok: ok,
+      code: code,
+      dialog: dialog
+    )
+  }
+  func toList() -> [Any?] {
+    return [
+      ok,
+      code,
+      dialog,
+    ]
+  }
+  static func == (lhs: IntentCallAwaitResultDto, rhs: IntentCallAwaitResultDto) -> Bool {
+    if Swift.type(of: lhs) != Swift.type(of: rhs) {
+      return false
+    }
+    return deepEqualsIntentCallPlatformBridge(lhs.ok, rhs.ok) && deepEqualsIntentCallPlatformBridge(lhs.code, rhs.code) && deepEqualsIntentCallPlatformBridge(lhs.dialog, rhs.dialog)
+  }
+
+  func hash(into hasher: inout Hasher) {
+    hasher.combine("IntentCallAwaitResultDto")
+    deepHashIntentCallPlatformBridge(value: ok, hasher: &hasher)
+    deepHashIntentCallPlatformBridge(value: code, hasher: &hasher)
+    deepHashIntentCallPlatformBridge(value: dialog, hasher: &hasher)
+  }
+}
+
 private class IntentCallPlatformBridgePigeonCodecReader: FlutterStandardReader {
   override func readValue(ofType type: UInt8) -> Any? {
     switch type {
@@ -337,6 +382,8 @@ private class IntentCallPlatformBridgePigeonCodecReader: FlutterStandardReader {
       return IntentCallEntityOpenEnvelopeDto.fromList(self.readValue() as! [Any?])
     case 131:
       return IntentCallEntityKeyBundle.fromList(self.readValue() as! [Any?])
+    case 132:
+      return IntentCallAwaitResultDto.fromList(self.readValue() as! [Any?])
     default:
       return super.readValue(ofType: type)
     }
@@ -353,6 +400,9 @@ private class IntentCallPlatformBridgePigeonCodecWriter: FlutterStandardWriter {
       super.writeValue(value.toList())
     } else if let value = value as? IntentCallEntityKeyBundle {
       super.writeByte(131)
+      super.writeValue(value.toList())
+    } else if let value = value as? IntentCallAwaitResultDto {
+      super.writeByte(132)
       super.writeValue(value.toList())
     } else {
       super.writeValue(value)
@@ -397,6 +447,42 @@ class IntentCallInvocationsHostApiSetup {
       }
     } else {
       takePendingInvocationsChannel.setMessageHandler(nil)
+    }
+  }
+}
+/// Generated protocol from Pigeon that represents Flutter messages that can be called from Swift.
+protocol IntentCallAwaitingFlutterApiProtocol {
+  func invoke(envelope envelopeArg: IntentCallInvocationEnvelopeDto, completion: @escaping (Result<IntentCallAwaitResultDto, PigeonError>) -> Void)
+}
+class IntentCallAwaitingFlutterApi: IntentCallAwaitingFlutterApiProtocol {
+  private let binaryMessenger: FlutterBinaryMessenger
+  private let messageChannelSuffix: String
+  init(binaryMessenger: FlutterBinaryMessenger, messageChannelSuffix: String = "") {
+    self.binaryMessenger = binaryMessenger
+    self.messageChannelSuffix = messageChannelSuffix.count > 0 ? ".\(messageChannelSuffix)" : ""
+  }
+  var codec: IntentCallPlatformBridgePigeonCodec {
+    return IntentCallPlatformBridgePigeonCodec.shared
+  }
+  func invoke(envelope envelopeArg: IntentCallInvocationEnvelopeDto, completion: @escaping (Result<IntentCallAwaitResultDto, PigeonError>) -> Void) {
+    let channelName: String = "dev.flutter.pigeon.intentcall_bridge.IntentCallAwaitingFlutterApi.invoke\(messageChannelSuffix)"
+    let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
+    channel.sendMessage([envelopeArg] as [Any?]) { response in
+      guard let listResponse = response as? [Any?] else {
+        completion(.failure(createConnectionError(withChannelName: channelName)))
+        return
+      }
+      if listResponse.count > 1 {
+        let code: String = listResponse[0] as! String
+        let message: String? = nilOrValue(listResponse[1])
+        let details: String? = nilOrValue(listResponse[2])
+        completion(.failure(PigeonError(code: code, message: message, details: details)))
+      } else if listResponse[0] == nil {
+        completion(.failure(PigeonError(code: "null-error", message: "Flutter api returned null value for non-null return value.", details: "")))
+      } else {
+        let result = listResponse[0] as! IntentCallAwaitResultDto
+        completion(.success(result))
+      }
     }
   }
 }

@@ -229,6 +229,7 @@ control.
 | `webMcp` | `web.webMcp` | `true` on `web` |
 | `windowsProtocolActivation` | `windows.protocolActivation` | `true` on `windows` |
 | `windowsMsixProtocol` | `windows.msixProtocol` | `true` on `windows` |
+| `windowsAppActions` | `windows.appActions` | `false` (opt-in, MSIX) |
 | `linuxSchemeHandler` | `linux.schemeHandler` | `true` on `linux` |
 
 `platforms.enabled` in `intentcall.yaml` scopes defaults; explicit
