@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dart_mcp/server.dart';
 import 'package:intentcall_core/intentcall_core.dart';
+import 'package:intentcall_schema/intentcall_schema.dart';
 
 import 'agent_bridge.dart';
 import 'mcp_resource_mapper.dart';
@@ -39,6 +40,7 @@ final class McpPublishAdapter implements AgentAdapter {
     this.unpublishResource,
     this.publishResourceTemplate,
     this.protocolScheme,
+    this.onToolCall,
   });
 
   final McpToolPublisher publishTool;
@@ -49,6 +51,15 @@ final class McpPublishAdapter implements AgentAdapter {
 
   /// App-owned scheme used when a resource descriptor has no explicit [AgentIntentDescriptor.resourceUri].
   final String? protocolScheme;
+
+  /// Called after a tool handler returns. Hosts forward this to
+  /// `AgentInvocationHub.observe`. The adapter does not redraw UI.
+  final void Function(
+    String qualifiedName,
+    Map<String, Object?> arguments,
+    AgentResult result,
+  )?
+  onToolCall;
 
   final Set<String> _publishedTools = <String>{};
   final Set<String> _publishedResources = <String>{};
@@ -204,12 +215,12 @@ final class McpPublishAdapter implements AgentAdapter {
         description: descriptor.description,
         inputSchema: ObjectSchema.fromMap(descriptor.inputSchema),
       ),
-      (final request) async => agentResultToMcpResult(
-        await registry.invoke(
-          key,
-          request.arguments ?? const <String, Object?>{},
-        ),
-      ),
+      (final request) async {
+        final arguments = request.arguments ?? const <String, Object?>{};
+        final result = await registry.invoke(key, arguments);
+        onToolCall?.call(key, arguments, result);
+        return agentResultToMcpResult(result);
+      },
     );
     _publishedTools.add(key);
   }

@@ -4,11 +4,14 @@ import 'package:args/args.dart';
 import 'package:args/command_runner.dart';
 import 'package:intentcall_platform_sync/intentcall_platform_sync.dart'
     hide parsePlatformList;
+import 'package:intentcall_platform_sync/io.dart';
 import 'package:path/path.dart' as p;
 
 import 'commands/apple_app_intents_testing.dart';
+import 'commands/link_command.dart';
 import 'config/host_profiles.dart';
 import 'config/intentcall_config.dart';
+import 'mcp/mcp_serve_plan.dart';
 import 'mcp/stdio_mcp_server.dart';
 import 'utils/cli_utils.dart';
 
@@ -26,6 +29,7 @@ final class IntentCallCommandRunner extends CommandRunner<int> {
     addCommand(_CodegenCommand());
     addCommand(_HooksCommand());
     addCommand(_McpCommand());
+    addCommand(LinkCommand());
     addCommand(_AppleAppIntentsTestingCommand());
   }
 }
@@ -803,24 +807,89 @@ final class _McpServeCommand extends Command<int> {
   Future<int> run() async {
     final results = argResults!;
     final entrypoint = '${results['entrypoint'] ?? ''}'.trim();
-    if (entrypoint.isNotEmpty) {
-      stderr.writeln(
-        'Note: dynamic --entrypoint loading is not implemented yet; '
-        'starting empty registry host.',
-      );
+    final scheme = '${results['scheme'] ?? ''}'.trim();
+    final auto = results['auto'] == true;
+    final vmText = '${results['vm-service-uri'] ?? ''}'.trim();
+    final directoryPath = '${results['directory'] ?? ''}'.trim();
+    final directory = directoryPath.isEmpty
+        ? AgentLinkDirectory()
+        : AgentLinkDirectory(root: Directory(directoryPath));
+    final plan = await planMcpServe(
+      auto: auto,
+      scheme: scheme,
+      directory: directory,
+      vmServiceUri: vmText.isEmpty ? null : Uri.tryParse(vmText),
+    );
+    switch (plan.kind) {
+      case McpServeKind.vm:
+        final launch = resolveFlutterMcpLaunch(
+          vmServiceUri: plan.vmServiceUri!,
+        );
+        if (launch == null) {
+          stderr.writeln(
+            'Debug VM ${plan.vmServiceUri} is available, but the Flutter '
+            'MCP toolkit was not found. Set FLUTTER_MCP_TOOLKIT_DIR.',
+          );
+          return 1;
+        }
+        final process = await Process.start(
+          launch.executable,
+          launch.arguments,
+          workingDirectory: launch.workingDirectory,
+          mode: ProcessStartMode.inheritStdio,
+        );
+        return process.exitCode;
+      case McpServeKind.link:
+        final registry = await registryFromDiscoveredLink(plan.announcement!);
+        await runIntentCallStdioMcpServer(registry: registry);
+        return 0;
+      case McpServeKind.status:
+        if (!auto) {
+          stderr.writeln(plan.statusMessage);
+          return 1;
+        }
+        stderr.writeln(plan.statusMessage);
+        await runIntentCallStdioMcpServer(
+          registry: statusRegistry(plan.statusMessage),
+        );
+        return 0;
+      case McpServeKind.empty:
+        if (entrypoint.isNotEmpty) {
+          stderr.writeln(
+            'Note: dynamic --entrypoint loading is not implemented yet; '
+            'starting empty registry host.',
+          );
+        }
+        await runIntentCallStdioMcpServer();
+        return 0;
     }
-    await runIntentCallStdioMcpServer();
-    return 0;
   }
 
   @override
   ArgParser get argParser {
     final parser = ArgParser();
     _ProjectDirOption.add(parser);
-    parser.addOption(
-      'entrypoint',
-      help: 'Optional Dart entrypoint with AgentModule registrations.',
-    );
+    parser
+      ..addOption(
+        'entrypoint',
+        help: 'Optional Dart entrypoint with AgentModule registrations.',
+      )
+      ..addOption(
+        'scheme',
+        help:
+            'Attach stdio MCP to the live link owner for this protocol scheme.',
+      )
+      ..addOption('directory', help: 'Override the link directory.')
+      ..addFlag(
+        'auto',
+        help:
+            'Prefer a Flutter debug VM, then a published link, otherwise '
+            'serve a status tool instead of an empty registry.',
+      )
+      ..addOption(
+        'vm-service-uri',
+        help: 'Attach the Flutter MCP toolkit to this debug VM service URI.',
+      );
     return parser;
   }
 }

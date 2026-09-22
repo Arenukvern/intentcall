@@ -75,6 +75,19 @@ Spotlight/Siri/Shortcuts discovery, accepted donation or indexing, ranking,
 freshness, deletion behavior, and product UX require a signed consuming app or
 AppIntentsTesting proof where that API covers the scenario.
 
+## Cross-surface link
+
+`AgentSurfaceLink` (`invoke` + `watch`) is the in-process composition API.
+`AgentWebSocketSurface` is the opt-in default for another process. The link
+does not redraw UI. Pass `protocolScheme` when serving and peers find
+`~/.intentcall/links/<scheme>.json`, confirmed with `GET /agent/discover`.
+Browsers use that HTTP URL. `intentcall mcp serve --scheme` proxies tool
+calls to the owner. A Flutter host publishes only with
+`publishSurfaceLink: true`. Loopback tests cover discover and call. A live
+browser plus signed Mac app plus CLI session is still separate proof. See
+[ADR 0028](/decisions/0028-surface-link-no-redraw) and
+[ADR 0029](/decisions/0029-surface-discovery.md).
+
 ## Apple Proof Labels
 
 Keep Apple evidence labels separate:

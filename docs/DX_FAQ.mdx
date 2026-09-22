@@ -634,6 +634,16 @@ AppIntentsTesting runs. See [Platform support — mcp_flutter dogfood](/start_he
 
 ---
 
+## Surface link
+
+**Q: How do I let a page and a coding agent call one registry without WebMCP?**
+A: Bind `AgentInvocationHub` to the registry. Serve `AgentWebSocketSurface` from `package:intentcall_platform_sync/io.dart` if another process must connect. Point `AgentHttpInvoke.through` at the hub for `POST /agent/invoke?name=`. Pass `McpPublishAdapter.onToolCall` through to `hub.observe` so MCP calls show up on `watch`. Do not rebuild the UI in that callback. Update state inside the tool handler. See [ADR 0028](/decisions/0028-surface-link-no-redraw).
+
+**Q: How do CLI, macOS, web, and MCP find that server?**
+A: Pass `protocolScheme` to `AgentWebSocketSurface.serve`. It writes `~/.intentcall/links/<scheme>.json` and answers `GET /agent/discover` on the same port. Dart peers use `AgentLinkDirectory.find`. A browser uses the discover URL. `intentcall link discover` and `intentcall link call` read the directory. `intentcall mcp serve --auto --scheme <scheme>` prefers a Flutter debug VM (`--vm-service-uri` or a short `flutter attach --machine` probe) and otherwise proxies the published link. If neither door is open, the server stays up with `intentcall_app_status` instead of an empty tool list. A Flutter app publishes only with `publishSurfaceLink: true`. See [ADR 0029](/decisions/0029-surface-discovery.md).
+
+---
+
 ## 🧪 Testing
 
 **Q: How do I test an adapter against the contract?**

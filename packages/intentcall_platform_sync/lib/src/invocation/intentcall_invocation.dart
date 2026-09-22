@@ -17,6 +17,8 @@ final class IntentCallInvocationSource {
   static const String deepLink = 'deeplink';
   static const String appleAwaitApp = 'apple.await_app';
   static const String windowsAppAction = 'windows.app_action';
+  static const String websocket = 'websocket';
+  static const String mcp = 'mcp';
 }
 
 final class IntentCallInvocationEnvelope {

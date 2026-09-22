@@ -11,6 +11,8 @@ import 'intentcall_invoke_link_stub.dart'
     if (dart.library.ui) 'intentcall_invoke_link.dart';
 import 'intentcall_lifecycle_wake_signals_stub.dart'
     if (dart.library.ui) 'intentcall_lifecycle_wake_signals.dart';
+import 'intentcall_link_publisher_stub.dart'
+    if (dart.library.io) 'intentcall_link_publisher_io.dart';
 import 'intentcall_pending_entity_opens_stub.dart'
     if (dart.library.ui) 'intentcall_pending_entity_opens.dart';
 import 'intentcall_pending_invocations_stub.dart'
@@ -46,6 +48,9 @@ final class IntentCallFlutterHost {
     required this.onError,
     required this.onEntityOpen,
     required this.drainOnStart,
+    required this._publishSurfaceLink,
+    required this._protocolScheme,
+    required this._linkDirectory,
     this._wakeSignals,
     this._lifecycleWakeSignals,
     this._deepLinkListener,
@@ -69,6 +74,8 @@ final class IntentCallFlutterHost {
     final IntentCallResultCallback? onDenied,
     final IntentCallErrorCallback? onError,
     final IntentCallEntityOpenCallback? onEntityOpen,
+    final bool publishSurfaceLink = false,
+    final String? linkDirectory,
   }) {
     final lifecycleWakeSignals = wakeSignals == null && drainOnResume
         ? IntentCallLifecycleWakeSignals()
@@ -112,6 +119,9 @@ final class IntentCallFlutterHost {
       wakeSignals: wakeSignals ?? lifecycleWakeSignals?.resumeSignals,
       lifecycleWakeSignals: lifecycleWakeSignals,
       deepLinkListener: deepLinkListener,
+      publishSurfaceLink: publishSurfaceLink,
+      protocolScheme: protocolScheme,
+      linkDirectory: linkDirectory,
     );
     return host;
   }
@@ -131,6 +141,10 @@ final class IntentCallFlutterHost {
   final Stream<IntentCallDrainTrigger>? _wakeSignals;
   final IntentCallLifecycleWakeSignals? _lifecycleWakeSignals;
   final IntentCallInvokeLinkListener? _deepLinkListener;
+  final bool _publishSurfaceLink;
+  final String? _protocolScheme;
+  final String? _linkDirectory;
+  Future<void> Function()? _closeSurfaceLink;
   final StreamController<IntentCallHostEvent> _events =
       StreamController<IntentCallHostEvent>.broadcast();
   StreamSubscription<IntentCallDrainTrigger>? _wakeSubscription;
@@ -142,6 +156,14 @@ final class IntentCallFlutterHost {
   Stream<IntentCallHostEvent> get events => _events.stream;
 
   Future<List<AgentResult>> start() async {
+    final scheme = _protocolScheme;
+    if (_publishSurfaceLink && scheme != null && scheme.isNotEmpty) {
+      _closeSurfaceLink = await publishIntentCallSurfaceLink(
+        bridge: bridge,
+        protocolScheme: scheme,
+        linkDirectory: _linkDirectory,
+      );
+    }
     registerIntentCallAwaitingHandler(bridge);
     if (registerWebMcp) {
       registerAgentWebMcpFromRegistry(
@@ -274,6 +296,11 @@ final class IntentCallFlutterHost {
 
   Future<void> dispose() async {
     _disposed = true;
+    final closeLink = _closeSurfaceLink;
+    _closeSurfaceLink = null;
+    if (closeLink != null) {
+      await closeLink();
+    }
     await _wakeSubscription?.cancel();
     _wakeSubscription = null;
     await _deepLinkListener?.dispose();

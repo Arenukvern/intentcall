@@ -15,6 +15,8 @@ export 'src/emitters/web_mcp_js_emitter.dart';
 export 'src/emitters/windows_app_actions_emitter.dart';
 export 'src/emitters/windows_protocol_emitter.dart';
 export 'src/init/platform_hooks_init.dart';
+export 'src/invocation/agent_http_invoke.dart';
+export 'src/invocation/agent_surface_link.dart';
 export 'src/invocation/intentcall_entity_open.dart';
 export 'src/invocation/intentcall_invocation.dart';
 export 'src/invocation/windows_app_action.dart';

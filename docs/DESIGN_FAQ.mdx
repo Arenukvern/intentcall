@@ -104,6 +104,12 @@ A: Maintaining a custom MCP wire implementation would duplicate protocol work tr
 **Q: Why does `intentcall_webmcp` exist separately from `intentcall_mcp`?**
 A: WebMCP's browser-hosted tool registration model requires different lifecycle management from request/response MCP. Current WebMCP drafts use `document.modelContext`; compatibility with older `navigator.modelContext` experiments should be treated as a shim, not the primary contract. A failed tool rejects the `execute` promise. See [ADR 0027](/decisions/0027-agent-usable-projection-results).
 
+**Q: Does a tool call redraw the page or the Flutter app?**
+A: No. `AgentSurfaceLink.invoke` returns an `AgentResult`. `watch` emits that result to subscribers. Neither call schedules a frame or patches the DOM. The handler updates the same state a button handler would, and the UI rebuilds through that existing path. If the handler does not touch state, the screen stays still. See [ADR 0028](/decisions/0028-surface-link-no-redraw).
+
+**Q: How do web, CLI, and macOS share one registry?**
+A: One process owns the registry and mounts `AgentInvocationHub`. The page posts to `/agent/invoke` when WebMCP is absent. A coding agent uses the Dart MCP adapter. A default WebSocket, `AgentWebSocketSurface`, carries `invoke` and `observed` frames for other processes. Apps can replace that socket with their own `AgentSurfaceLink`. The Mac app, the CLI, and the page do not discover each other until the owner serves the link and the others connect. See [ADR 0028](/decisions/0028-surface-link-no-redraw).
+
 **Q: Why doesn't an IDE agent call App Intents or Windows App Actions directly?**
 A: IDE and CLI agents speak MCP or ACP. WebMCP's consumer is an agent in the browser. App Intents' consumers are Siri, Shortcuts, and Spotlight. Windows App Actions' consumer is the Windows action runtime, and only a packaged app can register them. `dispatchMode: awaitApp` returns the Dart result to those platform callers. It does not replace `intentcall_mcp`. See [ADR 0027](/decisions/0027-agent-usable-projection-results).
 
