@@ -115,6 +115,7 @@ void main() {
         asked = true;
         expect(request.toolCallId, 'call_1');
         expect(request.title, 'Write file');
+        expect(request.details, '--- before\n+++ after');
         return AcpPermissionOutcome.allow;
       },
     );
@@ -131,7 +132,11 @@ void main() {
           {'optionId': 'allow', 'name': 'Allow', 'kind': 'allow_once'},
           {'optionId': 'reject', 'name': 'Reject', 'kind': 'reject_once'},
         ],
-        '_meta': {'title': 'Write file', 'kind': 'edit'},
+        '_meta': {
+          'title': 'Write file',
+          'kind': 'edit',
+          'details': '--- before\n+++ after',
+        },
       },
     })));
     fromServer.add(utf8.encode('\n'));

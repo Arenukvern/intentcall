@@ -349,6 +349,7 @@ final class AcpClient {
       toolCallId: params['toolCallId'] as String? ?? '',
       title: meta['title'] as String? ?? '',
       kind: meta['kind'] as String? ?? 'other',
+      details: meta['details'] as String?,
     );
     final outcome = await delegate(request);
     final wantedKind = switch (outcome) {
