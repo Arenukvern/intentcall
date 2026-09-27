@@ -151,6 +151,13 @@ Future<Uri?> discoverFlutterVmServiceUri({
     return null;
   }
   final completer = Completer<Uri?>();
+  // stderr is drained (bounded) so a chatty run cannot fill the pipe and
+  // wedge the flutter tool; its tail explains a null discovery.
+  final stderrTail = StringBuffer();
+  process.stderr
+      .transform(utf8.decoder)
+      .transform(const LineSplitter())
+      .listen(stderrTail.writeln);
   process.stdout
       .transform(utf8.decoder)
       .transform(const LineSplitter())
@@ -161,7 +168,24 @@ Future<Uri?> discoverFlutterVmServiceUri({
         }
       });
   final result = await completer.future.timeout(budget, onTimeout: () => null);
+  // The discovery child is never abandoned: stop it and await verified
+  // death before returning.
   process.kill();
+  try {
+    await process.exitCode.timeout(const Duration(seconds: 5));
+  } on TimeoutException {
+    process.kill(ProcessSignal.sigkill);
+    await process.exitCode.timeout(
+      const Duration(seconds: 5),
+      onTimeout: () => -1,
+    );
+  }
+  if (result == null && stderrTail.isNotEmpty) {
+    stderr.writeln(
+      'flutter attach discovery found no VM service URI; tool stderr '
+      'tail:\n${stderrTail.toString().trim()}',
+    );
+  }
   return result;
 }
 

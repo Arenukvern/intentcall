@@ -539,6 +539,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.6.0"
+  resource_composition:
+    dependency: transitive
+    description:
+      name: resource_composition
+      sha256: f9ce41b205c04b522a81fc02d17d27cc702156e59e126e23006ea716f2ea0a3b
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.4.0"
   schemantic:
     dependency: transitive
     description:

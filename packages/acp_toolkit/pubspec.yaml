@@ -22,6 +22,8 @@ dependencies:
   intentcall_schema: ^0.6.0
   meta: ^1.18.0
   from_json_to_json: ^0.5.0
+  # oka ADR-0026 R3.3 adapter: composition contract (zero-dep, vendor-neutral).
+  resource_composition: ^0.4.0
 publish_to: none
 dev_dependencies:
   lints: ^6.1.0

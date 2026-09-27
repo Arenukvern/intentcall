@@ -838,7 +838,27 @@ final class _McpServeCommand extends Command<int> {
           workingDirectory: launch.workingDirectory,
           mode: ProcessStartMode.inheritStdio,
         );
-        return process.exitCode;
+        // The handoff child owns the terminal from here; without forwarding,
+        // an IDE killing this CLI parent would orphan the toolkit (it has no
+        // parent-death signal of its own under inheritStdio). Dart's signal
+        // watchers replace this process's default disposition, which is
+        // exactly what we want: SIGINT/SIGTERM go to the child, and this
+        // parent exits with the conventional shell code instead of
+        // outliving or abandoning it.
+        var signalExitCode = 0;
+        ProcessSignal.sigint.watch().listen((final signal) {
+          signalExitCode = 130;
+          process.kill(signal);
+        });
+        ProcessSignal.sigterm.watch().listen((final signal) {
+          signalExitCode = 143;
+          process.kill(signal);
+        });
+        final code = await process.exitCode;
+        if (signalExitCode != 0) {
+          exit(signalExitCode);
+        }
+        return code;
       case McpServeKind.link:
         final registry = await registryFromDiscoveredLink(plan.announcement!);
         await runIntentCallStdioMcpServer(registry: registry);

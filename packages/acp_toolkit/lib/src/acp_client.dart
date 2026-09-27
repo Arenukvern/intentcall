@@ -134,6 +134,10 @@ final class AcpClient {
   /// agent only speaks an older one.
   final int protocolVersion;
 
+  /// The spawned agent process's pid, when this client owns one — for
+  /// liveness observation only (never an unverified signal).
+  int? get processPid => _process?.pid;
+
   /// Called when the agent sends `session/request_permission`. When null,
   /// permission requests are answered as rejected (safe default).
   final AcpPermissionDelegate? permissionHandler;
@@ -228,6 +232,10 @@ final class AcpClient {
   }
 
   /// Kills the agent process (when owned) and stops listening.
+  ///
+  /// The kill is awaited to verified death: SIGTERM, a bounded grace, then
+  /// SIGKILL — dispose never returns while the agent still runs, and never
+  /// leaves the kill fire-and-forget.
   Future<void> dispose() async {
     _closed = true;
     await _subscription?.cancel();
@@ -235,7 +243,18 @@ final class AcpClient {
       completer.completeError(StateError('ACP client disposed'));
     }
     _pending.clear();
-    _process?.kill();
+    final process = _process;
+    if (process == null) return;
+    process.kill();
+    try {
+      await process.exitCode.timeout(const Duration(seconds: 5));
+    } on TimeoutException {
+      process.kill(ProcessSignal.sigkill);
+      await process.exitCode.timeout(
+        const Duration(seconds: 5),
+        onTimeout: () => -1,
+      );
+    }
   }
 
   void _ensureInitialized() {
