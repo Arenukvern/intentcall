@@ -11,3 +11,5 @@ analyzer:
     unnecessary_library_directive: ignore
   exclude:
     - "**/*.g.dart"
+    - build/**
+    - android/**
