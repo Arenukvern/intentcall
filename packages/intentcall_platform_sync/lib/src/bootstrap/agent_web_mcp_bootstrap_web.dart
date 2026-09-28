@@ -46,15 +46,17 @@ var _dartExecuteHookInstalled = false;
 bool isAgentWebMcpToolRegistered(final String qualifiedName) =>
     _webMcpRegisteredToolNames.contains(qualifiedName);
 
+/// The standard browser `AbortController`; `@JS` is load-bearing — an
+/// unannotated external factory would look up `globalThis._AbortController`
+/// (a global nothing defines) and crash with `is not a constructor`.
+@JS('AbortController')
 extension type _AbortController._(JSObject _) implements JSObject {
   external factory _AbortController();
   external void abort();
   external JSObject get signal;
 }
 
-extension type _RegisterOptions._(JSObject _) implements JSObject {
-  external factory _RegisterOptions({final JSObject signal});
-}
+extension type _RegisterOptions._(JSObject _) implements JSObject {}
 
 extension type _ModelContext._(JSObject _) implements JSObject {
   external JSAny? registerTool(
@@ -65,14 +67,31 @@ extension type _ModelContext._(JSObject _) implements JSObject {
 
 final _controllers = <String, _AbortController>{};
 
-extension type _WebMcpToolDefinition._(JSObject _) implements JSObject {
-  external factory _WebMcpToolDefinition({
-    final JSString name,
-    final JSString description,
-    final JSAny inputSchema,
-    final JSFunction execute,
-  });
-}
+extension type _WebMcpToolDefinition._(JSObject _) implements JSObject {}
+
+/// Object literal for `modelContext.registerTool` — the WebMCP API
+/// defines the shape; there is no global `_WebMcpToolDefinition`
+/// constructor to bind an external factory to.
+_WebMcpToolDefinition _webMcpToolDefinition({
+  required final JSString name,
+  required final JSString description,
+  required final JSAny inputSchema,
+  required final JSFunction execute,
+}) =>
+    _WebMcpToolDefinition._(
+      <String, JSAny?>{
+        'name': name,
+        'description': description,
+        'inputSchema': inputSchema,
+        'execute': execute,
+      }.jsify()! as JSObject,
+    );
+
+/// Object literal for the `registerTool` options bag.
+_RegisterOptions _registerOptions(final JSObject signal) =>
+    _RegisterOptions._(
+      <String, JSAny?>{'signal': signal}.jsify()! as JSObject,
+    );
 
 /// Registers tools on `document.modelContext` after [MCPToolkitExtensions.addEntries].
 ///
@@ -242,7 +261,7 @@ bool _registerTool(
 }) {
   _abortPrevious(qualifiedName);
   final controller = _AbortController();
-  final toolDefinition = _WebMcpToolDefinition(
+  final toolDefinition = _webMcpToolDefinition(
     name: qualifiedName.toJS,
     description: description.toJS,
     inputSchema: _jsonParse(jsonEncode(inputSchema).toJS)!,
@@ -251,7 +270,7 @@ bool _registerTool(
   try {
     modelContext.registerTool(
       toolDefinition,
-      _RegisterOptions(signal: controller.signal),
+      _registerOptions(controller.signal),
     );
     _controllers[qualifiedName] = controller;
     _webMcpRegisteredToolNames.add(qualifiedName);
