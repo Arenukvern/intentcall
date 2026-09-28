@@ -102,7 +102,11 @@ public enum IntentCallNativeBridge {
     }
   }
 
-  public static func registerAwaitingApi(_ api: IntentCallAwaitingFlutterApi?) {
+  /// Internal: the Pigeon-generated `IntentCallAwaitingFlutterApiProtocol`
+  /// is internal, so a public signature here would not compile ("parameter
+  /// uses an internal type"). Only `IntentCallPlatformPlugin` calls this,
+  /// same module.
+  static func registerAwaitingApi(_ api: IntentCallAwaitingFlutterApi?) {
     awaitingApi = api
   }
 
