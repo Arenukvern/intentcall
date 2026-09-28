@@ -6,6 +6,7 @@ export 'src/entity/agent_entity_snapshot_keys.dart';
 export 'src/entity/agent_entity_snapshot_projection.dart';
 export 'src/entity/agent_entity_snapshot_schema.dart';
 export 'src/entity/agent_entity_type_descriptor.dart';
+export 'src/intent/agent_automation_hint.dart';
 export 'src/intent/agent_intent_descriptor.dart';
 export 'src/intent/agent_intent_kind.dart';
 export 'src/intent/agent_invocation.dart';

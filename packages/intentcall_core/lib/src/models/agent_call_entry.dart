@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:intentcall_schema/intentcall_schema.dart';
 
+import '../intent/agent_automation_hint.dart';
 import '../intent/agent_intent_descriptor.dart';
 import '../intent/agent_intent_kind.dart';
 import '../intent/agent_invocation.dart';
@@ -20,6 +21,7 @@ typedef AgentCallEntryValue = ({
   String? methodName,
   String? resourceUri,
   String? mimeType,
+  IntentAutomationHint? automation,
 });
 
 extension type const AgentCallEntry._(
@@ -32,6 +34,7 @@ extension type const AgentCallEntry._(
     required final InputSchema inputSchema,
     required final AgentCallHandler handler,
     final String? methodName,
+    final IntentAutomationHint? automation,
   }) => AgentCallEntry._(
     MapEntry(name, (
       namespace: namespace,
@@ -42,6 +45,7 @@ extension type const AgentCallEntry._(
       methodName: methodName,
       resourceUri: null,
       mimeType: null,
+      automation: automation,
     )),
   );
 
@@ -53,6 +57,7 @@ extension type const AgentCallEntry._(
     final InputSchema? inputSchema,
     final String? methodName,
     final String? mimeType,
+    final IntentAutomationHint? automation,
   }) => AgentCallEntry._(
     MapEntry(name, (
       namespace: namespace,
@@ -63,6 +68,7 @@ extension type const AgentCallEntry._(
       methodName: methodName,
       resourceUri: null,
       mimeType: mimeType ?? 'application/json',
+      automation: automation,
     )),
   );
 
@@ -80,6 +86,7 @@ extension type const AgentCallEntry._(
         methodName: value.methodName,
         resourceUri: value.resourceUri,
         mimeType: value.mimeType,
+        automation: value.automation,
       ),
       execute: (final invocation) async =>
           await value.handler(invocation.arguments),

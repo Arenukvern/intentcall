@@ -4,6 +4,18 @@
 
 ### Features
 
+- Add `IntentAutomationAction` (click/type/key/navigate/evaluate) to
+  `IntentAutomationHint`; locator requirements are per-action (navigate
+  and evaluate take invocation operands instead). `fromJson` tolerates
+  pre-action hints (absent action = click).
+
+
+- Add `IntentAutomationHint` (ADR: universal_automation family ADR 0038):
+  an intent descriptor may declare an optional `automation` hint — driver
+  transport + locator — so invocation layers can route to an
+  `AutomationDriver` action. IntentCall stays the intent/truth layer; it
+  grows no drivers.
+
 - Add portable typed entity descriptors, property descriptors, providers, index
   interfaces, and registry events so applications can describe entities and
   indexing lifecycle without Apple-specific vocabulary in core.

@@ -2,6 +2,7 @@ import 'package:intentcall_schema/intentcall_schema.dart' as schema;
 import 'package:meta/meta.dart';
 
 import '../models/qualified_name.dart';
+import 'agent_automation_hint.dart';
 import 'agent_intent_kind.dart';
 
 @immutable
@@ -15,6 +16,7 @@ final class AgentIntentDescriptor {
     this.methodName,
     this.resourceUri,
     this.mimeType,
+    this.automation,
   }) {
     validateNamespace(namespace);
     validateBareName(name);
@@ -28,6 +30,10 @@ final class AgentIntentDescriptor {
   final String? methodName;
   final String? resourceUri;
   final String? mimeType;
+
+  /// Optional driver-routing hint (ADR 0038): how an `AutomationDriver`
+  /// could execute this intent. IntentCall never drives; it only states.
+  final IntentAutomationHint? automation;
 
   String get qualifiedName => qualifyName(namespace: namespace, name: name);
 
