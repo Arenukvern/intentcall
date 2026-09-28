@@ -209,11 +209,20 @@ final class McpPublishAdapter implements AgentAdapter {
     required final String key,
     required final AgentIntentDescriptor descriptor,
   }) {
+    final hint = descriptor.automation;
     publishTool(
       Tool(
         name: key,
         description: descriptor.description,
         inputSchema: ObjectSchema.fromMap(descriptor.inputSchema),
+        // ADR 0038 wire projection: the automation hint rides `_meta`
+        // under the IntentCall namespace — machine-readable for
+        // driver-routing clients, invisible to unaware ones.
+        meta: hint == null
+            ? null
+            : Meta.fromMap({
+              'dev.intentcall/automation': hint.toJson(),
+            }),
       ),
       (final request) async {
         final arguments = request.arguments ?? const <String, Object?>{};

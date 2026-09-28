@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Features
+
+- Project `IntentAutomationHint` onto the MCP wire: tool `_meta` carries
+  `dev.intentcall/automation` (driver, action, locator) when the intent
+  declares a hint; hint-less tools stay wire-identical to before.
+
 ### Fixes
 
 - Ignore typed entity registry events in the MCP publish adapter until MCP gets
