@@ -300,8 +300,11 @@ hand-maintained strings). Re-run after `intentcall.yaml` hook config changes.
 
 ```yaml
 dev_dependencies:
-  intentcall_hooks: ^0.6.0
+  intentcall_hooks: ^<latest>
 ```
+
+Resolve `<latest>` from pub.dev (or `just print-hosted-deps` in this
+repo) — docs stay version-neutral so a train bump can't strand them.
 
 See [intentcall_hooks README](../intentcall_hooks/README.md) for `user_defines`.
 

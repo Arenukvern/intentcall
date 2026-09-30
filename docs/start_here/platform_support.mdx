@@ -80,7 +80,7 @@ AppIntentsTesting proof where that API covers the scenario.
 `AgentSurfaceLink` (`invoke` + `watch`) is the in-process composition API.
 `AgentWebSocketSurface` is the opt-in default for another process. The link
 does not redraw UI. Pass `protocolScheme` when serving and peers find
-`~/.intentcall/links/<scheme>.json`, confirmed with `GET /agent/discover`.
+`$HOME/.intentcall/links/<scheme>.json`, confirmed with `GET /agent/discover`.
 Browsers use that HTTP URL. `intentcall mcp serve --scheme` proxies tool
 calls to the owner. A Flutter host publishes only with
 `publishSurfaceLink: true`. Loopback tests cover discover and call. A live

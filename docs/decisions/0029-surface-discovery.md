@@ -21,7 +21,7 @@ Discovery only exchanges addresses and invocations.
 The process that owns the registry may publish an `AgentLinkAnnouncement`.
 
 1. **Dart peers** (CLI, macOS, MCP) read
-   `~/.intentcall/links/<protocolScheme>.json`. `find` confirms the record
+   `$HOME/.intentcall/links/<protocolScheme>.json`. `find` confirms the record
    with `GET /agent/discover` on that host. A dead process does not match.
 2. **Browser peers** cannot read that directory. The same server answers
    `GET /agent/discover` and `POST /agent/invoke`, and upgrades
@@ -54,7 +54,7 @@ Tradeoffs:
 - The directory is local to the user account. It is not a network registry.
 - `find` treats a failed discover request as absence. A slow owner looks down.
 - Two live owners for one scheme: the newer file wins, then HTTP must agree.
-- Publishing opens a localhost port. Apps that do not pass
+- Publishing opens a loopback port. Apps that do not pass
   `publishSurfaceLink: true` do not listen.
 - This is not a proof that Siri, a browser, and a CLI are connected on one
   machine at once. The tests use loopback peers.

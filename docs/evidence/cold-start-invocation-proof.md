@@ -19,7 +19,7 @@ federated plugin store:
 Run it:
 
 ```bash
-xcrun swiftc -o /tmp/probe docs/evidence/cold_start_native_half_probe.swift && /tmp/probe
+xcrun swiftc -o "$TMPDIR/cold_start_probe" docs/evidence/cold_start_native_half_probe.swift && "$TMPDIR/cold_start_probe"
 ```
 
 ## What the Dart half already proves (repo tests)
