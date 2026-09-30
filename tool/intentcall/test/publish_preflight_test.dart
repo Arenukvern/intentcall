@@ -563,6 +563,16 @@ Future<Directory> _createReleaseTrainFixture() async {
 
   _writePubspec(
     repo,
+    'acp_toolkit',
+    version: '0.1.0-dev.1',
+    publishToNone: true,
+    dependencies:
+        '  intentcall_core: ^0.6.0\n'
+        '  intentcall_schema: ^0.6.0\n',
+  );
+
+  _writePubspec(
+    repo,
     'intentcall_gemma',
     version: '0.1.0',
     publishToNone: true,
