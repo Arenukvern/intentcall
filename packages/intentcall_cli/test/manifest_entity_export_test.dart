@@ -1,4 +1,3 @@
-import 'package:intentcall_cli/src/catalog/catalog_loader.dart';
 import 'package:intentcall_core/intentcall_core.dart';
 import 'package:intentcall_platform_sync/intentcall_platform_sync.dart';
 import 'package:test/test.dart';

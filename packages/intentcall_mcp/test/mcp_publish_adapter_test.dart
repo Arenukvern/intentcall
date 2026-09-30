@@ -11,7 +11,7 @@ void main() {
     final registry = InMemoryAgentRegistry();
     final publishedTools = <String, Map<String, Object?>>{};
     final adapter = McpPublishAdapter(
-      publishTool: (tool, _) => publishedTools[tool.name] =
+      publishTool: (final tool, _) => publishedTools[tool.name] =
           Map<String, Object?>.from(tool as Map),
       unpublishTool: (_) {},
     );
@@ -27,7 +27,6 @@ void main() {
           inputSchema: const {'type': 'object'},
           automation: IntentAutomationHint(
             driver: 'toolkit',
-            action: IntentAutomationAction.click,
             locator: const {'name': 'Buy'},
           ),
         ),
@@ -42,7 +41,7 @@ void main() {
     final meta = wire!['_meta'] as Map<String, Object?>?;
     expect(meta, isNotNull);
     final projected =
-        meta!['dev.intentcall/automation'] as Map<String, Object?>;
+        meta!['dev.intentcall/automation']! as Map<String, Object?>;
     expect(projected['driver'], 'toolkit');
     expect(projected['action'], 'click');
     expect(projected['locator'], {'name': 'Buy'});

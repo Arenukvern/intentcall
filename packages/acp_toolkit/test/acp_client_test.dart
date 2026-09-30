@@ -27,7 +27,7 @@ final class _ControllerSink implements StringSink {
 
 /// Captures each written line as a decoded JSON map, optionally forwarding.
 final class _RecordingSink implements StringSink {
-  _RecordingSink({StringSink? forward}) : _forward = forward;
+  _RecordingSink({this._forward});
 
   final StringSink? _forward;
   final List<Map<String, Object?>> lines = [];

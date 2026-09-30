@@ -116,7 +116,7 @@ final class _Owner {
   final AgentLinkDirectory directory;
   final AgentWebSocketSurface surface;
   final AgentInvocationHub hub;
-  var paints = 0;
+  int paints = 0;
 
   static Future<_Owner> start() async {
     final directory = AgentLinkDirectory(

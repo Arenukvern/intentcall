@@ -1,4 +1,3 @@
-import 'acp_types.dart';
 
 /// The REMOTE MOVER contract (R7 production #4) — server→client
 /// `session/propose_move`.
@@ -10,6 +9,7 @@ import 'acp_types.dart';
 /// tree — what the model may see is exactly what the projection law
 /// allows. The host validates, materializes, and verifies every proposed
 /// move; the client never executes anything.
+library;
 
 /// The parameters of one server→client `session/propose_move` request.
 class AcpMoveProposal {

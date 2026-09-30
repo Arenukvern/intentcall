@@ -62,7 +62,7 @@ void main() {
       ),
     );
     final mcpJson =
-        jsonDecode((mcpResult.content.single as TextContent).text!)
+        jsonDecode((mcpResult.content.single as TextContent).text)
             as Map<String, Object?>;
 
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);

@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:intentcall_cli/src/catalog/catalog_loader.dart';
 import 'package:intentcall_platform_sync/intentcall_platform_sync.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';

@@ -82,18 +82,17 @@ typedef AcpUpdateHandler = void Function(AcpSessionUpdate update);
 final class AcpClient {
   /// Connects to an already-running agent's streams.
   ///
-  /// [agentOutput] is the agent's stdout; [agentInput] receives lines that
+  /// [agentOutput] is the agent's stdout; [_agentInput] receives lines that
   /// are written to the agent's stdin.
   AcpClient({
     required Stream<List<int>> agentOutput,
-    required StringSink agentInput,
+    required this._agentInput,
     this.protocolVersion = 1,
     this.permissionHandler,
     this.serverRequestHandler,
     this.onOutOfTurnEvent,
-    Process? process,
-  }) : _agentInput = agentInput,
-       _process = process {
+    this._process,
+  }) {
     _subscription = agentOutput
         .transform(utf8.decoder)
         .transform(const LineSplitter())
