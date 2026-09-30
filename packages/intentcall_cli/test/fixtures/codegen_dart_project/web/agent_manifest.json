@@ -40,6 +40,9 @@
         "windows.msixProtocol": {
           "include": false
         },
+        "windows.appActions": {
+          "include": false
+        },
         "linux.schemeHandler": {
           "include": false
         }
