@@ -1,6 +1,7 @@
 // The IntentCall adapter (oka ADR-0026 R3.3): an ACP agent subprocess as a
 // composition component — readiness is the `initialize` handshake, stop is
 // a verified death.
+import 'dart:isolate';
 import 'dart:io';
 
 import 'package:dart_acp_toolkit/dart_acp_toolkit.dart';
@@ -10,7 +11,24 @@ import 'package:test/test.dart';
 void main() {
   test('spawns the echo agent, becomes ready via the handshake, and stops '
       'with verified death', () async {
+    // `dart run bin/acp_server.dart` resolves the script relative to the
+    // inherited working directory; pin it to the package root so the test
+    // passes from any cwd (just test runs from the workspace root). Walk
+    // up to pubspec.yaml — resolvePackageUri depth varies by resolution
+    // mode (workspace vs standalone package config).
+    final resolvedPackageUri = await Isolate.resolvePackageUri(
+      Uri.parse('package:dart_acp_toolkit/dart_acp_toolkit.dart'),
+    );
+    if (resolvedPackageUri == null) {
+      throw StateError('package:dart_acp_toolkit could not be resolved');
+    }
+    var packageDir = File.fromUri(resolvedPackageUri).parent;
+    while (!File('${packageDir.path}/pubspec.yaml').existsSync()) {
+      packageDir = packageDir.parent;
+    }
+    final packageRoot = packageDir.path;
     final provider = AcpAgentProvider(
+      workingDirectory: packageRoot,
       command: <String>[
         Platform.resolvedExecutable,
         'run',
