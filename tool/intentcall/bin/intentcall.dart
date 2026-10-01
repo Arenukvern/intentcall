@@ -27,6 +27,7 @@ const publishOrder = [
 ];
 
 const flutterPublishPackages = {
+  'intentcall_bridge',
   'intentcall_platform',
   'intentcall_platform_apple',
   'intentcall_platform_android',
@@ -1669,8 +1670,7 @@ Future<int> publishRelease(
   }
 
   final packageDir = p.join(repoRoot.path, 'packages', release.package);
-  final isPlatform = flutterPublishPackages.contains(release.package);
-  final exec = isPlatform ? 'flutter' : 'dart';
+  final exec = publishExecutableFor(repoRoot, release.package);
 
   if (dryRun) {
     final args = ['pub', 'publish', '--dry-run'];
@@ -1838,6 +1838,26 @@ Future<int> runPublishTrain(
   if (packages.isEmpty) {
     stderr.writeln('FAIL: no packages/* pubspecs found.');
     return 66;
+  }
+  // Edges come from the pubspecs' own same-train pins (the exact signal
+  // waitForReleaseDependencies uses at publish time) — a section scan can
+  // miss them, which mis-orders the train and stalls on the dependency
+  // wait (bridge→core was missed exactly this way).
+  for (var i = 0; i < packages.length; i++) {
+    final pkg = packages[i];
+    final pubspec = File(
+      p.join(repoRoot.path, 'packages', pkg.name, 'pubspec.yaml'),
+    );
+    if (!pubspec.existsSync()) continue;
+    final release = PackageRelease(package: pkg.name, version: pkg.version);
+    final edges = sameTrainDependencies(pubspec.readAsStringSync(), release)
+        .where((dep) => packages.any((other) => other.name == dep))
+        .toSet();
+    packages[i] = _WorkspacePackage(
+      name: pkg.name,
+      version: pkg.version,
+      siblingDependencies: edges,
+    );
   }
   final List<_WorkspacePackage> order;
   try {
@@ -2111,6 +2131,32 @@ Future<int> runCommand(
     mode: ProcessStartMode.inheritStdio,
   );
   return process.exitCode;
+}
+
+
+/// `flutter pub publish` for any package with an SDK Flutter dependency —
+/// plain `dart pub publish` cannot resolve `flutter: sdk:` deps and stalls
+/// (bridge gained a Flutter dependency in the 1.0.0 train). Auto-detected
+/// from the pubspec so the set cannot drift; [flutterPublishPackages]
+/// remains as documentation.
+String publishExecutableFor(Directory repoRoot, String packageName) {
+  final pubspec = File(
+    p.join(repoRoot.path, 'packages', packageName, 'pubspec.yaml'),
+  );
+  if (pubspec.existsSync()) {
+    final content = pubspec.readAsStringSync();
+    final depsSection = RegExp(
+      r'^dependencies:\s*$',
+      multiLine: true,
+    ).firstMatch(content);
+    if (depsSection != null &&
+        RegExp(r'^\s+flutter:\s*$', multiLine: true).hasMatch(
+          content.substring(depsSection.end),
+        )) {
+      return 'flutter';
+    }
+  }
+  return flutterPublishPackages.contains(packageName) ? 'flutter' : 'dart';
 }
 
 final class PackageRelease {
