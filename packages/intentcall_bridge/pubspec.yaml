@@ -20,6 +20,7 @@ resolution: workspace
 dependencies:
   flutter:
     sdk: flutter
+  meta: ^1.19.0
 
 dev_dependencies:
   lints: ^6.1.0
