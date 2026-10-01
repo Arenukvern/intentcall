@@ -1,4 +1,4 @@
-import '../adapter/agent_adapter.dart';
+import '../interfaces/agent_adapter.dart';
 import '../module/agent_module.dart';
 import '../registry/agent_registry.dart';
 import '../registry/in_memory_agent_registry.dart';

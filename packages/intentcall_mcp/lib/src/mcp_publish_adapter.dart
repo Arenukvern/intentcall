@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dart_mcp/server.dart';
 import 'package:intentcall_core/intentcall_core.dart';
+import 'package:intentcall_schema/intentcall_schema.dart';
 
 import 'agent_bridge.dart';
 import 'mcp_resource_mapper.dart';
@@ -38,6 +39,8 @@ final class McpPublishAdapter implements AgentAdapter {
     this.publishResource,
     this.unpublishResource,
     this.publishResourceTemplate,
+    this.protocolScheme,
+    this.onToolCall,
   });
 
   final McpToolPublisher publishTool;
@@ -45,6 +48,18 @@ final class McpPublishAdapter implements AgentAdapter {
   final McpResourcePublisher? publishResource;
   final McpResourceUnpublisher? unpublishResource;
   final McpResourceTemplatePublisher? publishResourceTemplate;
+
+  /// App-owned scheme used when a resource descriptor has no explicit [AgentIntentDescriptor.resourceUri].
+  final String? protocolScheme;
+
+  /// Called after a tool handler returns. Hosts forward this to
+  /// `AgentInvocationHub.observe`. The adapter does not redraw UI.
+  final void Function(
+    String qualifiedName,
+    Map<String, Object?> arguments,
+    AgentResult result,
+  )?
+  onToolCall;
 
   final Set<String> _publishedTools = <String>{};
   final Set<String> _publishedResources = <String>{};
@@ -194,18 +209,27 @@ final class McpPublishAdapter implements AgentAdapter {
     required final String key,
     required final AgentIntentDescriptor descriptor,
   }) {
+    final hint = descriptor.automation;
     publishTool(
       Tool(
         name: key,
         description: descriptor.description,
         inputSchema: ObjectSchema.fromMap(descriptor.inputSchema),
+        // ADR 0038 wire projection: the automation hint rides `_meta`
+        // under the IntentCall namespace — machine-readable for
+        // driver-routing clients, invisible to unaware ones.
+        meta: hint == null
+            ? null
+            : Meta.fromMap({
+              'dev.intentcall/automation': hint.toJson(),
+            }),
       ),
-      (final request) async => agentResultToMcpResult(
-        await registry.invoke(
-          key,
-          request.arguments ?? const <String, Object?>{},
-        ),
-      ),
+      (final request) async {
+        final arguments = request.arguments ?? const <String, Object?>{};
+        final result = await registry.invoke(key, arguments);
+        onToolCall?.call(key, arguments, result);
+        return agentResultToMcpResult(result);
+      },
     );
     _publishedTools.add(key);
   }
@@ -231,7 +255,7 @@ final class McpPublishAdapter implements AgentAdapter {
         );
     publish(
       Resource(
-        uri: registration?.uri ?? d.effectiveResourceUri,
+        uri: registration?.uri ?? _resolvedResourceUri(d),
         name: registration?.name ?? d.name,
         description: registration?.description ?? d.description,
         mimeType: registration?.mimeType ?? d.mimeType ?? 'application/json',
@@ -247,7 +271,7 @@ final class McpPublishAdapter implements AgentAdapter {
     if (publishTemplate == null || _publishedResourceTemplates.contains(key)) {
       return;
     }
-    final uriTemplate = registration?.uri ?? d.effectiveResourceUri;
+    final uriTemplate = registration?.uri ?? _resolvedResourceUri(d);
     if (_publishedResourceTemplatePatterns.contains(uriTemplate)) {
       return;
     }
@@ -309,6 +333,20 @@ final class McpPublishAdapter implements AgentAdapter {
     _publishedResourceTemplates.add(key);
     _publishedResourceTemplatePatterns.add(uriTemplate);
     _resourceTemplatePatternByKey[key] = uriTemplate;
+  }
+
+  String _resolvedResourceUri(final AgentIntentDescriptor descriptor) {
+    if (descriptor.resourceUri != null) {
+      return descriptor.resourceUri!;
+    }
+    final scheme = protocolScheme?.trim() ?? '';
+    if (scheme.isEmpty) {
+      throw StateError(
+        'McpPublishAdapter needs protocolScheme for resource '
+        '"${descriptor.qualifiedName}" without an explicit resourceUri.',
+      );
+    }
+    return descriptor.effectiveResourceUri(scheme);
   }
 
   void _unpublishTransportKey(final String key) {

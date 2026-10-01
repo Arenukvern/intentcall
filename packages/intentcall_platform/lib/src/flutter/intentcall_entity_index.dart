@@ -1,11 +1,34 @@
+import 'package:from_json_to_json/from_json_to_json.dart';
 import 'package:intentcall_core/intentcall_core.dart';
 import 'package:intentcall_schema/intentcall_schema.dart';
 
 import 'intentcall_entity_index_channel_stub.dart'
     if (dart.library.ui) 'intentcall_entity_index_channel.dart';
+import 'intentcall_entity_key_bundle.dart';
 
 typedef IntentCallPlatformInvoke =
     Future<Object?> Function(String method, Object? arguments);
+
+/// Manifest-projected entity field keys for native snapshot channels.
+IntentCallEntityKeyBundle entityKeyBundleFromDescriptor(
+  final AgentEntityTypeDescriptor descriptor,
+) {
+  String? byRole(final AgentEntityPropertyRole role) {
+    for (final property in descriptor.properties) {
+      if (property.role == role) {
+        return property.name;
+      }
+    }
+    return null;
+  }
+
+  return IntentCallEntityKeyBundle(
+    idKey: descriptor.identifierName,
+    titleKey: byRole(AgentEntityPropertyRole.title) ?? 'title',
+    subtitleKey: byRole(AgentEntityPropertyRole.subtitle) ?? 'subtitle',
+    keywordsKey: byRole(AgentEntityPropertyRole.keywords) ?? 'keywords',
+  );
+}
 
 /// Dart-facing writer for native entity snapshots used by platform projections.
 ///
@@ -18,19 +41,6 @@ final class IntentCallPlatformEntityIndex {
 
   final IntentCallPlatformInvoke _invoke;
 
-  Future<int> upsertAgentSnapshots({
-    required final Iterable<AgentEntitySnapshot> snapshots,
-  }) async {
-    var count = 0;
-    for (final entry in _snapshotsByEntityType(snapshots).entries) {
-      count += await upsertSnapshots(
-        entityType: entry.key,
-        snapshots: entry.value.map(_snapshotFromModel),
-      );
-    }
-    return count;
-  }
-
   Future<int> upsertAgentSnapshotsForType({
     required final AgentEntityTypeDescriptor descriptor,
     required final Iterable<AgentEntitySnapshot> snapshots,
@@ -39,14 +49,20 @@ final class IntentCallPlatformEntityIndex {
     snapshots: snapshots.map(
       (final snapshot) => projectAgentEntitySnapshot(snapshot, descriptor),
     ),
+    keys: entityKeyBundleFromDescriptor(descriptor),
   );
 
   Future<int> deleteAgentRefs({
     required final Iterable<AgentEntityRef> refs,
+    final IntentCallEntityKeyBundle? keys,
   }) async {
     var count = 0;
     for (final entry in _refsByEntityType(refs).entries) {
-      count += await deleteSnapshots(entityType: entry.key, ids: entry.value);
+      count += await deleteSnapshots(
+        entityType: entry.key,
+        ids: entry.value,
+        keys: keys,
+      );
     }
     return count;
   }
@@ -54,11 +70,13 @@ final class IntentCallPlatformEntityIndex {
   Future<int> upsertSnapshots({
     required final String entityType,
     required final Iterable<Map<String, Object?>> snapshots,
+    final IntentCallEntityKeyBundle? keys,
   }) async {
     final rows = snapshots.map(_snapshotRow).toList(growable: false);
     final result = await _invoke('upsertEntitySnapshots', <String, Object?>{
       'entityType': _entityType(entityType),
       'snapshots': rows,
+      'keys': keys ?? intentCallDefaultEntityKeyBundle(),
     });
     return _intResult(result, fallback: rows.length);
   }
@@ -66,11 +84,13 @@ final class IntentCallPlatformEntityIndex {
   Future<int> deleteSnapshots({
     required final String entityType,
     required final Iterable<String> ids,
+    final IntentCallEntityKeyBundle? keys,
   }) async {
     final idRows = ids.map(_entityId).toList(growable: false);
     final result = await _invoke('deleteEntitySnapshots', <String, Object?>{
       'entityType': _entityType(entityType),
       'ids': idRows,
+      'keys': keys ?? intentCallDefaultEntityKeyBundle(),
     });
     return _intResult(result, fallback: idRows.length);
   }
@@ -95,10 +115,12 @@ final class IntentCallPlatformEntityIndex {
     required final String entityType,
     required final String query,
     final int? limit,
+    final IntentCallEntityKeyBundle? keys,
   }) async {
     final arguments = <String, Object?>{
       'entityType': _entityType(entityType),
       'query': query.trim(),
+      'keys': keys ?? intentCallDefaultEntityKeyBundle(),
     };
     if (limit != null) {
       arguments['limit'] = limit;
@@ -106,19 +128,6 @@ final class IntentCallPlatformEntityIndex {
     final result = await _invoke('searchEntitySnapshots', arguments);
     return _snapshotRows(result);
   }
-}
-
-Map<String, List<AgentEntitySnapshot>> _snapshotsByEntityType(
-  final Iterable<AgentEntitySnapshot> snapshots,
-) {
-  final groups = <String, List<AgentEntitySnapshot>>{};
-  for (final snapshot in snapshots) {
-    final entityType = _entityType(
-      '${snapshot.ref.namespace}_${snapshot.ref.typeName}',
-    );
-    groups.putIfAbsent(entityType, () => <AgentEntitySnapshot>[]).add(snapshot);
-  }
-  return groups;
 }
 
 Map<String, List<String>> _refsByEntityType(
@@ -131,23 +140,6 @@ Map<String, List<String>> _refsByEntityType(
   }
   return groups;
 }
-
-Map<String, Object?> _snapshotFromModel(final AgentEntitySnapshot snapshot) =>
-    <String, Object?>{
-      'id': snapshot.ref.identifier,
-      if (snapshot.effectiveTitle != null) 'title': snapshot.effectiveTitle,
-      if (snapshot.subtitle != null) 'subtitle': snapshot.subtitle,
-      if (snapshot.keywords.isNotEmpty) 'keywords': snapshot.keywords,
-      if (snapshot.thumbnailUrl != null) 'thumbnailUrl': snapshot.thumbnailUrl,
-      if (snapshot.url != null) 'url': snapshot.url,
-      if (snapshot.deepLink != null) 'deepLink': snapshot.deepLink,
-      if (snapshot.updatedAt != null)
-        'updatedAt': snapshot.updatedAt!.toUtc().toIso8601String(),
-      if (snapshot.deleted) 'deleted': true,
-      if (snapshot.version != null) 'version': snapshot.version,
-      if (snapshot.freshness != null) 'freshness': snapshot.freshness,
-      if (snapshot.properties.isNotEmpty) 'properties': snapshot.properties,
-    };
 
 String _entityType(final String value) {
   final trimmed = value.trim();
@@ -174,15 +166,8 @@ Map<String, Object?> _snapshotRow(final Map<String, Object?> snapshot) {
   return <String, Object?>{...snapshot, 'id': id};
 }
 
-int _intResult(final Object? result, {required final int fallback}) {
-  if (result is int) {
-    return result;
-  }
-  if (result is num) {
-    return result.toInt();
-  }
-  return fallback;
-}
+int _intResult(final Object? result, {required final int fallback}) =>
+    jsonDecodeNullableInt(result) ?? fallback;
 
 List<Map<String, Object?>> _snapshotRows(final Object? result) {
   if (result is! List) {

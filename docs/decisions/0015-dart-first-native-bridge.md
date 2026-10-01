@@ -4,7 +4,9 @@ Date: 2026-06-26
 
 ## Status
 
-Accepted
+Accepted. Amended by [ADR 0027](0027-agent-usable-projection-results.md):
+`dispatchMode: awaitApp` returns the Dart handler result to the platform
+caller. `openApp` and `queueOnly` still return dispatch status only.
 
 ## Context
 

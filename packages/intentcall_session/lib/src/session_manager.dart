@@ -335,12 +335,12 @@ final class IntentSessionManager {
 
   Map<String, Object?> _detailsMap(final Object? value) {
     if (value is Map) {
-      return jsonObjectOrEmpty(value);
+      return jsonDecodeObjectOrEmpty(value);
     }
     if (value == null) {
       return const <String, Object?>{};
     }
-    final decoded = jsonObjectOrEmpty(value);
+    final decoded = jsonDecodeObjectOrEmpty(value);
     if (decoded.isNotEmpty) {
       return decoded;
     }

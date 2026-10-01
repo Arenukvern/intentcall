@@ -50,14 +50,23 @@ A: Test helpers have `test` as a dependency, which must not bleed into productio
 **Q: Why is there an `intentcall_codegen` package?**
 A: Codegen is strictly optional — many adopters will register intents by hand. Keeping it separate means the core registry has zero `build_runner` dependency, and users who opt in to `@AgentTool` get a clean code-generation surface without it affecting tree-shaking for others.
 
+**Q: Why `intentcall_cli` instead of `flutter-mcp-toolkit` for platform sync?**
+A: Platform projection (`agent_manifest.json`, native emitters, `PlatformSync`) is framework-agnostic. `intentcall_cli` owns that contract; [mcp_flutter](https://github.com/Arenukvern/mcp_flutter) delegates to it. See [ADR 0019](decisions/0019-framework-neutral-intentcall-cli.md).
+
+**Q: Why is `agent_manifest.json` generated rather than hand-edited?**
+A: Manifest rows are a projection cache for platform emitters, not a second runtime catalog. Semantic truth lives in `AgentRegistry`; projection policy lives in `@AgentProjection` or `.intentcall/projection.yaml`. CI proves manifest freshness with `intentcall manifest export --check`.
+
 **Q: Why is IntentPack direction separate from today's registry API?**
 A: `AgentRegistry`, `AgentCallEntry`, and `RegisteredAgentIntent` are the current shipped authoring/runtime model. IntentPack is the proposed portable packaging layer above them: one app-level unit that can carry entries, schemas, examples, side-effect metadata, safety policy, platform projection hints, adapter hints, and compatibility metadata. Keeping that distinction explicit lets the repo document the destination without pretending the stable public API already exists.
 
 **Q: Why are additive actions, typed entities, and indexing lifecycle not a new core runtime?**
 A: They are a projection layer over the existing source concepts. Actions remain registry entries. Typed entities are app-owned Dart snapshots with stable ids, display fields, and search/index fields. Indexing or donation is a lifecycle that copies those snapshots into a platform projection cache. Keeping this additive avoids turning `intentcall_core` into an Apple-shaped runtime while still letting Apple be the first concrete typed-entity/indexing projection. See [ADR 0018](decisions/0018-additive-actions-typed-entities-indexing-lifecycle.md).
 
-**Q: Why are there separate `intentcall_apple` / `intentcall_android` / `intentcall_gemma` packages instead of one `intentcall_native`?**
-A: Native surface adapters differ sharply in their platform SDKs and entitlement requirements. A single `intentcall_native` would force all three sets of platform SDKs into every build. Platform-specific packages let Flutter tree-shaker and pubspec `platforms` keys exclude irrelevant targets cleanly.
+**Q: Why were `intentcall_apple` / `intentcall_android` removed, and what replaced them?**
+A: Those packages were sparse-manifest generators. They were **deleted** (zero consumers, pre-1.0). Canonical projection is `intentcall_platform_sync` (`PlatformSync` / `ManifestExporter`). Runtime native code lives in federated Flutter plugins `intentcall_platform_apple` / `intentcall_platform_android` under the `intentcall_platform` umbrella ([ADR 0025](decisions/0025-platform-subset-federated-plugins.md)). On Apple, generated `AppIntent` structs compile in the app `Runner` target but import `intentcall_platform_apple` for handoff (`IntentCallNativeBridge.enqueue`) and snapshot stores — do not duplicate that logic in emitted Swift. `intentcall_gemma` remains a separate surface adapter.
+
+**Q: Why are there two `IntentCallNativeBridge` types?**
+A: Different languages, same handoff story. Dart `IntentCallNativeBridge.bindRegistry(...)` in `intentcall_platform_sync` authorizes envelopes into the registry after the app wakes. Swift `IntentCallNativeBridge.enqueue(...)` in `intentcall_platform_apple` queues native App Intent invocations and optionally opens the app-owned `protocolScheme` URL. Generated Runner Swift calls the Swift facade only.
 
 ## Runtime sessions
 
@@ -93,13 +102,22 @@ A: MCP is one wire format today; WebMCP, Apple App Intents, Android AppFunctions
 A: Maintaining a custom MCP wire implementation would duplicate protocol work tracked upstream in the Dart ecosystem. `dart_mcp` is the canonical Dart MCP library; IntentCall wraps it with the registry bridge, staying thin.
 
 **Q: Why does `intentcall_webmcp` exist separately from `intentcall_mcp`?**
-A: WebMCP's browser-hosted tool registration model requires different lifecycle management from request/response MCP. Current WebMCP drafts use `document.modelContext`; compatibility with older `navigator.modelContext` experiments should be treated as a shim, not the primary contract.
+A: WebMCP's browser-hosted tool registration model requires different lifecycle management from request/response MCP. Current WebMCP drafts use `document.modelContext`; compatibility with older `navigator.modelContext` experiments should be treated as a shim, not the primary contract. A failed tool rejects the `execute` promise. See [ADR 0027](/decisions/0027-agent-usable-projection-results).
+
+**Q: Does a tool call redraw the page or the Flutter app?**
+A: No. `AgentSurfaceLink.invoke` returns an `AgentResult`. `watch` emits that result to subscribers. Neither call schedules a frame or patches the DOM. The handler updates the same state a button handler would, and the UI rebuilds through that existing path. If the handler does not touch state, the screen stays still. See [ADR 0028](/decisions/0028-surface-link-no-redraw).
+
+**Q: How do web, CLI, and macOS share one registry?**
+A: One process owns the registry and mounts `AgentInvocationHub`. The page posts to `/agent/invoke` when WebMCP is absent. A coding agent uses the Dart MCP adapter. A default WebSocket, `AgentWebSocketSurface`, carries `invoke` and `observed` frames for other processes. Apps can replace that socket with their own `AgentSurfaceLink`. The Mac app, the CLI, and the page do not discover each other until the owner serves the link and the others connect. See [ADR 0028](/decisions/0028-surface-link-no-redraw).
+
+**Q: Why doesn't an IDE agent call App Intents or Windows App Actions directly?**
+A: IDE and CLI agents speak MCP or ACP. WebMCP's consumer is an agent in the browser. App Intents' consumers are Siri, Shortcuts, and Spotlight. Windows App Actions' consumer is the Windows action runtime, and only a packaged app can register them. `dispatchMode: awaitApp` returns the Dart result to those platform callers. It does not replace `intentcall_mcp`. See [ADR 0027](/decisions/0027-agent-usable-projection-results).
 
 **Q: Why does IntentCall use deep links if the goal is native agent integration?**
 A: Deep links are the universal fallback, not the whole vision. Some platforms expose semantic agent/action registries; others only provide launch routing today. IntentCall preserves one invocation contract across both: native metadata where the platform supports it, and app-owned `<scheme>://invoke/...` or platform protocol handlers where it does not. Treat plain deep links as untrusted input unless they originate from generated native wrappers or an app-provided allowlist.
 
 **Q: How should platform support be described during pre-release?**
-A: Be explicit about tiers. WebMCP is a Dart-first in-page registration surface. Apple App Intents currently generate parameter wrappers that either dispatch to Dart after launch/wake or, with explicit `nativeInline`, call app-owned Swift handlers in the main app target. Apple inline runtimes can generate primitive typed App Intents returns when `inlineRuntime.result` is declared. Apple `dartExtensionInline` has a scaffold and VM-safe Dart runtime bridge, but remains experimental until a fixture extension proves target membership, FlutterEngine boot, plugin allowlisting, shared storage/IPC, limits, and live OS invocation. Android AppFunctions and Windows App Actions are roadmap native semantic targets; Android App Actions and shortcuts are assistant/shortcut fulfillment; Windows protocol activation and Linux `x-scheme-handler` are protocol fallback. AAIF is ecosystem alignment around agent infrastructure, not a Linux desktop intent API.
+A: Be explicit about tiers. WebMCP is a Dart-first in-page registration surface; failed executions reject, and a missing `modelContext` is a registration report rather than a silent success. Apple App Intents for `openApp` still queue and wake. `awaitApp` waits up to 10 seconds for the running Flutter host and returns the Dart `AgentResult` in the dialog; that contract is covered by emitter tests, not by a signed Shortcuts run. Apple inline runtimes can generate primitive typed App Intents returns when `inlineRuntime.result` is declared. Apple `dartExtensionInline` has a scaffold and VM-safe Dart runtime bridge, but remains experimental until a fixture extension proves target membership, FlutterEngine boot, plugin allowlisting, shared storage/IPC, limits, and live OS invocation. Android AppFunctions remain roadmap. Windows App Actions URI registration is an opt-in artifact (`windows.appActions`); protocol activation stays fallback. Unpackaged Flutter Windows builds cannot register App Actions. Agent Launchers are a different product and are not this projection. AAIF is ecosystem alignment around agent infrastructure, not a Linux desktop intent API. See [ADR 0027](/decisions/0027-agent-usable-projection-results).
 
 Windows App Actions URI launch and plain Windows protocol activation should not
 be collapsed into the same support claim. App Actions are a semantic action

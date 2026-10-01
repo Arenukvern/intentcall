@@ -10,10 +10,9 @@ typedef AgentValidator = void Function(AgentArguments arguments);
 final class RegisteredAgentIntent {
   RegisteredAgentIntent({
     required this.descriptor,
-    required final AgentExecutor execute,
+    required this._execute,
     final AgentValidator? validate,
-  }) : _execute = execute,
-       _validate =
+  }) : _validate =
            validate ??
            ((final args) {
              final coerced = coerceArgumentsForSchema(

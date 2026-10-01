@@ -39,6 +39,31 @@ void main() {
     expect(results.single.data['correlationId'], 'native-1');
   });
 
+  test('IntentCallFlutterHost drains pending native entity opens', () async {
+    final opens = <IntentCallEntityOpenEnvelope>[];
+    final host = IntentCallFlutterHost.bindRegistry(
+      registry: _registry(),
+      takePendingInvocations: () async => const <IntentCallInvocationEnvelope>[],
+      takePendingEntityOpens: () async => <IntentCallEntityOpenEnvelope>[
+        IntentCallEntityOpenEnvelope(
+          id: 'open-1',
+          entityType: 'notes_note',
+          entityId: 'note-1',
+          source: IntentCallEntityOpenSource.nativeEntityGenerated,
+        ),
+      ],
+      onEntityOpen: opens.add,
+    );
+
+    await host.start();
+
+    expect(opens, hasLength(1));
+    expect(opens.single.id, 'open-1');
+    expect(opens.single.entityType, 'notes_note');
+    expect(opens.single.entityId, 'note-1');
+    expect(opens.single.source, IntentCallEntityOpenSource.nativeEntityGenerated);
+  });
+
   test('IntentCallFlutterHost reports denied invocations', () async {
     IntentCallInvocationEnvelope? deniedEnvelope;
     AgentResult? deniedResult;

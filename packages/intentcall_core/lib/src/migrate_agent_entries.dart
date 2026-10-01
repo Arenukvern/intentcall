@@ -44,7 +44,7 @@ final class MigrateAgentEntriesReport {
 ///
 /// Limitations (documented in migration_mcp_call_entry_to_agent_call_entry.md):
 /// - Extension types wrapping MCPCallEntry need manual namespace/handler review.
-/// - Nested [ObjectSchema] / array fields are only partially preserved; see
+/// - Nested [ObjectSchema] / list fields are only partially preserved; see
 ///   `TODO(migrate)` comments in generated `inputSchema` and refine manually.
 /// - Does not remove MCPCallEntry bridge types (Phase 6b).
 final class MigrateAgentEntriesMigrator {
@@ -394,8 +394,8 @@ final class MigrateAgentEntriesMigrator {
     final properties = <String, String>{};
     final typePattern = RegExp(
       r"'([^']+)':\s*(?:const\s+)?"
-      '(StringSchema|IntegerSchema|BooleanSchema|NumberSchema|ObjectSchema|ArraySchema|'
-      r'Schema\.string|Schema\.int|Schema\.bool|Schema\.num|Schema\.object|Schema\.array)\b',
+      '(StringSchema|IntegerSchema|BooleanSchema|NumberSchema|ObjectSchema|ArraySchema|ListSchema'
+      r'Schema\.string|Schema\.int|Schema\.bool|Schema\.num|Schema\.object|Schema\.array|Schema\.list)\b',
     );
     for (final match in typePattern.allMatches(section)) {
       if (_braceDepthAt(section, match.start) != 0) {
@@ -405,7 +405,7 @@ final class MigrateAgentEntriesMigrator {
       final schemaType = match.group(2)!;
       properties[name] = switch (schemaType) {
         'ObjectSchema' || 'Schema.object' => 'object',
-        'ArraySchema' || 'Schema.array' => 'array',
+        'ArraySchema' || 'Schema.list' => 'list',
         _ => _jsonTypeForSchemaConstructor(schemaType),
       };
     }
@@ -458,7 +458,7 @@ final class MigrateAgentEntriesMigrator {
     final detailed = <String, Map<String, Object?>>{};
     final pattern = RegExp(
       r"'([^']+)':\s*(?:const\s+)?"
-      r'(ObjectSchema|ArraySchema|Schema\.object|Schema\.array)\s*\(',
+      r'(ObjectSchema|ArraySchema|Schema\.object|Schema\.list)\s*\(',
     );
     for (final match in pattern.allMatches(section)) {
       if (_braceDepthAt(section, match.start) != 0) {
@@ -474,7 +474,10 @@ final class MigrateAgentEntriesMigrator {
       final body = section.substring(openParen + 1, closeParen);
       final json = switch (constructor) {
         'ObjectSchema' || 'Schema.object' => _objectSchemaBodyToJsonMap(body),
-        'ArraySchema' || 'Schema.array' => _arraySchemaBodyToJsonMap(body),
+        'ArraySchema' ||
+        'ListSchema' ||
+        'Schema.array' ||
+        'Schema.list' => _listSchemaBodyToJsonMap(body),
         _ => null,
       };
       if (json != null) {
@@ -484,40 +487,40 @@ final class MigrateAgentEntriesMigrator {
     return detailed;
   }
 
-  Map<String, Object?>? _arraySchemaBodyToJsonMap(final String arrayBody) {
-    final primitiveItem = _extractPrimitiveArrayItemType(arrayBody);
+  Map<String, Object?>? _listSchemaBodyToJsonMap(final String listBody) {
+    final primitiveItem = _extractPrimitiveArrayItemType(listBody);
     if (primitiveItem != null) {
       return <String, Object?>{
-        'type': 'array',
+        'type': 'list',
         'items': <String, Object?>{'type': primitiveItem},
       };
     }
 
-    final objectItems = _extractObjectSchemaItemsBody(arrayBody);
+    final objectItems = _extractObjectSchemaItemsBody(listBody);
     if (objectItems == null) {
-      return RegExp(r'items\s*:').hasMatch(arrayBody)
+      return RegExp(r'items\s*:').hasMatch(listBody)
           ? null
-          : <String, Object?>{'type': 'array'};
+          : <String, Object?>{'type': 'list'};
     }
 
     final itemsJson = _objectSchemaBodyToJsonMap(objectItems);
     if (itemsJson == null) {
       return null;
     }
-    return <String, Object?>{'type': 'array', 'items': itemsJson};
+    return <String, Object?>{'type': 'list', 'items': itemsJson};
   }
 
-  String? _topLevelArrayItemsTail(final String arrayBody) {
-    for (final match in RegExp(r'\bitems\s*:').allMatches(arrayBody)) {
-      if (_braceDepthAt(arrayBody, match.start) == 0) {
-        return arrayBody.substring(match.end).trim();
+  String? _topLevelArrayItemsTail(final String listBody) {
+    for (final match in RegExp(r'\bitems\s*:').allMatches(listBody)) {
+      if (_braceDepthAt(listBody, match.start) == 0) {
+        return listBody.substring(match.end).trim();
       }
     }
     return null;
   }
 
-  String? _extractPrimitiveArrayItemType(final String arrayBody) {
-    final itemsTail = _topLevelArrayItemsTail(arrayBody);
+  String? _extractPrimitiveArrayItemType(final String listBody) {
+    final itemsTail = _topLevelArrayItemsTail(listBody);
     if (itemsTail == null) {
       return null;
     }
@@ -532,8 +535,8 @@ final class MigrateAgentEntriesMigrator {
     return _jsonTypeForSchemaConstructor(match.group(1)!);
   }
 
-  String? _extractObjectSchemaItemsBody(final String arrayBody) {
-    final itemsTail = _topLevelArrayItemsTail(arrayBody);
+  String? _extractObjectSchemaItemsBody(final String listBody) {
+    final itemsTail = _topLevelArrayItemsTail(listBody);
     if (itemsTail == null) {
       return null;
     }
@@ -696,7 +699,7 @@ final class MigrateAgentEntriesMigrator {
   ) {
     final reasons = <String>[];
     if (_hasUnpreservedNestedArraySchemaItems(schemaBody, detailedProperties)) {
-      reasons.add('nested ArraySchema items');
+      reasons.add('nested ListSchema items');
     }
     if (_hasUnpreservedNestedObjectSchemaProperties(
       schemaBody,
@@ -724,10 +727,10 @@ final class MigrateAgentEntriesMigrator {
       return false;
     }
 
-    const arrayCtor = r'(?:ArraySchema|Schema\.array)\s*\(';
+    const listCtor = r'(?:ArraySchema|Schema\.list|Schema\.array)\s*\(';
     const complexItem =
-        r'(?:ObjectSchema|ArraySchema|Schema\.object|Schema\.array)\s*\(';
-    final pattern = RegExp("'([^']+)':\\s*(?:const\\s+)?$arrayCtor");
+        r'(?:ObjectSchema|ArraySchema|Schema\.object|Schema\.list|Schema\.array)\s*\(';
+    final pattern = RegExp("'([^']+)':\\s*(?:const\\s+)?$listCtor");
     for (final match in pattern.allMatches(section)) {
       if (_braceDepthAt(section, match.start) != 0) {
         continue;
@@ -738,10 +741,10 @@ final class MigrateAgentEntriesMigrator {
       if (closeParen == null) {
         continue;
       }
-      final arrayBody = section.substring(openParen + 1, closeParen);
+      final listBody = section.substring(openParen + 1, closeParen);
       if (!RegExp(
         'items\\s*:\\s*(?:const\\s+)?$complexItem',
-      ).hasMatch(arrayBody)) {
+      ).hasMatch(listBody)) {
         continue;
       }
       final detailed = detailedProperties[name];

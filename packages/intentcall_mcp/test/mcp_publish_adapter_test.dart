@@ -7,6 +7,62 @@ import 'package:intentcall_schema/intentcall_schema.dart';
 import 'package:test/test.dart';
 
 void main() {
+  test('automation hints project onto tool _meta under the IntentCall namespace', () async {
+    final registry = InMemoryAgentRegistry();
+    final publishedTools = <String, Map<String, Object?>>{};
+    final adapter = McpPublishAdapter(
+      publishTool: (final tool, _) => publishedTools[tool.name] =
+          Map<String, Object?>.from(tool as Map),
+      unpublishTool: (_) {},
+    );
+    await adapter.attach(registry);
+
+    registry.register(
+      RegisteredAgentIntent(
+        descriptor: AgentIntentDescriptor(
+          namespace: 'app',
+          name: 'buy_item',
+          description: 'Buys an item',
+          kind: AgentIntentKind.tool,
+          inputSchema: const {'type': 'object'},
+          automation: IntentAutomationHint(
+            driver: 'toolkit',
+            locator: const {'name': 'Buy'},
+          ),
+        ),
+        execute: (_) async => AgentResult.success(),
+      ),
+    );
+    await Future<void>.delayed(Duration.zero);
+
+    final wire = publishedTools['app_buy_item'];
+    expect(wire, isNotNull);
+    // The MCP wire name for tool metadata is `_meta`.
+    final meta = wire!['_meta'] as Map<String, Object?>?;
+    expect(meta, isNotNull);
+    final projected =
+        meta!['dev.intentcall/automation']! as Map<String, Object?>;
+    expect(projected['driver'], 'toolkit');
+    expect(projected['action'], 'click');
+    expect(projected['locator'], {'name': 'Buy'});
+
+    // A tool without a hint stays wire-identical to before: no meta key.
+    registry.register(
+      RegisteredAgentIntent(
+        descriptor: AgentIntentDescriptor(
+          namespace: 'app',
+          name: 'plain',
+          description: 'No hint',
+          kind: AgentIntentKind.tool,
+          inputSchema: const {'type': 'object'},
+        ),
+        execute: (_) async => AgentResult.success(),
+      ),
+    );
+    await Future<void>.delayed(Duration.zero);
+    expect(publishedTools['app_plain']!.containsKey('_meta'), isFalse);
+  });
+
   test(
     'McpPublishAdapter hot-syncs resource on IntentRegistered event',
     () async {
@@ -214,7 +270,7 @@ void main() {
             FutureOr<ReadResourceResult> Function(ReadResourceRequest)
           >{};
       final publishedTemplates = <String>[];
-      const uri = 'intentcall://resource/app/state';
+      const uri = 'demoapp://resource/app/state';
 
       final adapter = McpPublishAdapter(
         publishTool: (_, final _) {},
@@ -306,7 +362,7 @@ void main() {
     'McpPublishAdapter clears resource template patterns on detach and reattach',
     () async {
       final registry = InMemoryAgentRegistry();
-      const template = 'intentcall://resource/app/{id}';
+      const template = 'demoapp://resource/app/{id}';
       registry.register(
         RegisteredAgentIntent(
           descriptor: AgentIntentDescriptor(

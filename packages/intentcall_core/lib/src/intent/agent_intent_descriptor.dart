@@ -1,7 +1,8 @@
-import 'package:intentcall_schema/intentcall_schema.dart';
+import 'package:intentcall_schema/intentcall_schema.dart' as schema;
 import 'package:meta/meta.dart';
 
-import '../naming/qualified_name.dart';
+import '../models/qualified_name.dart';
+import 'agent_automation_hint.dart';
 import 'agent_intent_kind.dart';
 
 @immutable
@@ -15,6 +16,7 @@ final class AgentIntentDescriptor {
     this.methodName,
     this.resourceUri,
     this.mimeType,
+    this.automation,
   }) {
     validateNamespace(namespace);
     validateBareName(name);
@@ -24,15 +26,20 @@ final class AgentIntentDescriptor {
   final String name;
   final String description;
   final AgentIntentKind kind;
-  final InputSchema inputSchema;
+  final schema.InputSchema inputSchema;
   final String? methodName;
   final String? resourceUri;
   final String? mimeType;
+
+  /// Optional driver-routing hint (ADR 0038): how an `AutomationDriver`
+  /// could execute this intent. IntentCall never drives; it only states.
+  final IntentAutomationHint? automation;
 
   String get qualifiedName => qualifyName(namespace: namespace, name: name);
 
   String get effectiveMethodName => methodName ?? name;
 
-  String get effectiveResourceUri =>
-      resourceUri ?? AgentResultEnvelope.resourceUriForName(name);
+  String effectiveResourceUri(final String protocolScheme) =>
+      resourceUri ??
+      schema.resourceUri(protocolScheme: protocolScheme, resourceName: name);
 }

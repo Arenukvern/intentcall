@@ -11,3 +11,4 @@ build/
 .flutter-plugins-dependencies
 node_modules/
 package-lock.json
+.gitnexus

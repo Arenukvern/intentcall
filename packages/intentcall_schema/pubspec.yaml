@@ -1,5 +1,7 @@
 name: intentcall_schema
-description: PRE-RELEASE — Transport-agnostic agent result envelopes and JSON Schema validation.
+description: >-
+  PRE-RELEASE — Wire contract for IntentCall: AgentResult envelopes, JSON Schema
+  validation, entity snapshots, and VM service wire parsing. Pure Dart.
 version: 0.6.0
 license: MIT
 repository: https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_schema
@@ -11,11 +13,15 @@ topics:
   - dart
 
 environment:
-  sdk: ">=3.11.0 <4.0.0"
+  sdk: ">=3.12.0 <4.0.0"
 resolution: workspace
 
 dependencies:
+  collection: ^1.19.1
+  from_json_to_json: ^0.5.0
+  is_dart_empty_or_not: ^0.4.0
   meta: ^1.17.0
+  schemantic: ^0.2.2
 
 dev_dependencies:
   lints: ^6.1.0

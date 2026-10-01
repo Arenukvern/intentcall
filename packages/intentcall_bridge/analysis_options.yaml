@@ -1,0 +1,4 @@
+analyzer:
+  exclude:
+    - build/**
+include: package:xsoulspace_lints/public_library.yaml

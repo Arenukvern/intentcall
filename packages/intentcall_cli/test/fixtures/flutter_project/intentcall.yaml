@@ -1,0 +1,13 @@
+host: flutter
+protocolScheme: demoapp
+layout:
+  manifest: web/agent_manifest.json
+  webDir: web
+platforms:
+  enabled:
+    - web
+defaults:
+  dispatchMode: openApp
+  surfaces:
+    webMcp: true
+    webManifestShortcuts: true

@@ -28,6 +28,10 @@ IntentCall platform manifests use a manifest-local `dispatchMode` field:
   and opens or wakes the app so Dart can drain and execute it.
 - `queueOnly` means the surface records an invocation envelope but must not ask
   the platform to open or wake the app.
+- `awaitApp`, added by [ADR 0027](0027-agent-usable-projection-results.md),
+  waits for the running app's Dart handler and returns that result. It does
+  not use the at-most-once handoff queue. `openApp` and `queueOnly` are
+  unchanged.
 
 The field belongs to `intentcall_platform` manifest parsing first. It is not a
 wire-schema field in `intentcall_schema`, and it is not an `AgentIntentKind`;

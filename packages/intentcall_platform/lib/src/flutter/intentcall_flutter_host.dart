@@ -1,20 +1,27 @@
 import 'dart:async';
 
 import 'package:intentcall_core/intentcall_core.dart';
+import 'package:intentcall_platform_sync/intentcall_platform_sync.dart';
 import 'package:intentcall_schema/intentcall_schema.dart';
 
-import '../bootstrap/agent_web_mcp_bootstrap.dart';
-import '../invocation/intentcall_invocation.dart';
+import 'intentcall_awaiting_registration_stub.dart'
+    if (dart.library.ui) 'intentcall_awaiting_registration.dart';
 import 'intentcall_host_events.dart';
 import 'intentcall_invoke_link_stub.dart'
     if (dart.library.ui) 'intentcall_invoke_link.dart';
 import 'intentcall_lifecycle_wake_signals_stub.dart'
     if (dart.library.ui) 'intentcall_lifecycle_wake_signals.dart';
+import 'intentcall_link_publisher_stub.dart'
+    if (dart.library.io) 'intentcall_link_publisher_io.dart';
+import 'intentcall_pending_entity_opens_stub.dart'
+    if (dart.library.ui) 'intentcall_pending_entity_opens.dart';
 import 'intentcall_pending_invocations_stub.dart'
     if (dart.library.ui) 'intentcall_pending_invocations.dart';
 
 typedef IntentCallPendingReader =
     Future<List<IntentCallInvocationEnvelope>> Function();
+typedef IntentCallEntityOpenReader =
+    Future<List<IntentCallEntityOpenEnvelope>> Function();
 typedef IntentCallEnvelopeCallback =
     void Function(IntentCallInvocationEnvelope envelope);
 typedef IntentCallResultCallback =
@@ -25,39 +32,50 @@ typedef IntentCallErrorCallback =
       Object error,
       StackTrace stackTrace,
     );
+typedef IntentCallEntityOpenCallback =
+    void Function(IntentCallEntityOpenEnvelope envelope);
 
 final class IntentCallFlutterHost {
   IntentCallFlutterHost._({
     required this.bridge,
     required this.takePendingInvocations,
+    required this.takePendingEntityOpens,
     required this.registerWebMcp,
+    required this.webMcpSurfaceIndex,
     required this.onEnvelope,
     required this.onResult,
     required this.onDenied,
     required this.onError,
+    required this.onEntityOpen,
     required this.drainOnStart,
-    final Stream<IntentCallDrainTrigger>? wakeSignals,
-    final IntentCallLifecycleWakeSignals? lifecycleWakeSignals,
-    final IntentCallInvokeLinkListener? deepLinkListener,
-  }) : _wakeSignals = wakeSignals,
-       _lifecycleWakeSignals = lifecycleWakeSignals,
-       _deepLinkListener = deepLinkListener;
+    required this._publishSurfaceLink,
+    required this._protocolScheme,
+    required this._linkDirectory,
+    this._wakeSignals,
+    this._lifecycleWakeSignals,
+    this._deepLinkListener,
+  });
 
   factory IntentCallFlutterHost.bindRegistry({
     required final AgentRegistry registry,
     final IntentCallAuthorizationPolicy policy =
         const IntentCallAuthorizationPolicy.denyAll(),
     final bool registerWebMcp = false,
+    final ManifestSurfaceIndex? webMcpSurfaceIndex,
     final bool drainOnStart = true,
     final bool drainOnResume = true,
     final bool listenForDeepLinks = false,
     final String? protocolScheme,
     final IntentCallPendingReader? takePendingInvocations,
+    final IntentCallEntityOpenReader? takePendingEntityOpens,
     final Stream<IntentCallDrainTrigger>? wakeSignals,
     final IntentCallEnvelopeCallback? onEnvelope,
     final IntentCallResultCallback? onResult,
     final IntentCallResultCallback? onDenied,
     final IntentCallErrorCallback? onError,
+    final IntentCallEntityOpenCallback? onEntityOpen,
+    final bool publishSurfaceLink = false,
+    final String? linkDirectory,
   }) {
     final lifecycleWakeSignals = wakeSignals == null && drainOnResume
         ? IntentCallLifecycleWakeSignals()
@@ -84,32 +102,49 @@ final class IntentCallFlutterHost {
       ),
       takePendingInvocations:
           takePendingInvocations ??
-          const IntentCallPendingInvocations().takePending,
+          // ignore: prefer_const_constructors
+          IntentCallPendingInvocations().takePending,
+      takePendingEntityOpens:
+          takePendingEntityOpens ??
+          // ignore: prefer_const_constructors
+          IntentCallPendingEntityOpens().takePending,
       registerWebMcp: registerWebMcp,
+      webMcpSurfaceIndex: webMcpSurfaceIndex,
       onEnvelope: onEnvelope,
       onResult: onResult,
       onDenied: onDenied,
       onError: onError,
+      onEntityOpen: onEntityOpen,
       drainOnStart: drainOnStart,
       wakeSignals: wakeSignals ?? lifecycleWakeSignals?.resumeSignals,
       lifecycleWakeSignals: lifecycleWakeSignals,
       deepLinkListener: deepLinkListener,
+      publishSurfaceLink: publishSurfaceLink,
+      protocolScheme: protocolScheme,
+      linkDirectory: linkDirectory,
     );
     return host;
   }
 
   final IntentCallNativeBridge bridge;
   final IntentCallPendingReader takePendingInvocations;
+  final IntentCallEntityOpenReader takePendingEntityOpens;
   final bool registerWebMcp;
+  final ManifestSurfaceIndex? webMcpSurfaceIndex;
   final IntentCallEnvelopeCallback? onEnvelope;
   final IntentCallResultCallback? onResult;
   final IntentCallResultCallback? onDenied;
   final IntentCallErrorCallback? onError;
+  final IntentCallEntityOpenCallback? onEntityOpen;
   final bool drainOnStart;
 
   final Stream<IntentCallDrainTrigger>? _wakeSignals;
   final IntentCallLifecycleWakeSignals? _lifecycleWakeSignals;
   final IntentCallInvokeLinkListener? _deepLinkListener;
+  final bool _publishSurfaceLink;
+  final String? _protocolScheme;
+  final String? _linkDirectory;
+  Future<void> Function()? _closeSurfaceLink;
   final StreamController<IntentCallHostEvent> _events =
       StreamController<IntentCallHostEvent>.broadcast();
   StreamSubscription<IntentCallDrainTrigger>? _wakeSubscription;
@@ -121,8 +156,21 @@ final class IntentCallFlutterHost {
   Stream<IntentCallHostEvent> get events => _events.stream;
 
   Future<List<AgentResult>> start() async {
+    final scheme = _protocolScheme;
+    if (_publishSurfaceLink && scheme != null && scheme.isNotEmpty) {
+      _closeSurfaceLink = await publishIntentCallSurfaceLink(
+        bridge: bridge,
+        protocolScheme: scheme,
+        linkDirectory: _linkDirectory,
+      );
+    }
+    registerIntentCallAwaitingHandler(bridge);
     if (registerWebMcp) {
-      registerAgentWebMcpFromRegistry(bridge.registry, policy: bridge.policy);
+      registerAgentWebMcpFromRegistry(
+        bridge.registry,
+        policy: bridge.policy,
+        surfaceIndex: webMcpSurfaceIndex,
+      );
     }
     await _deepLinkListener?.start();
     _wakeSubscription ??= _wakeSignals?.listen((final trigger) {
@@ -181,6 +229,10 @@ final class IntentCallFlutterHost {
     final results = <AgentResult>[];
     for (final envelope in pending) {
       results.add(await execute(envelope, trigger: trigger));
+    }
+    final pendingOpens = await takePendingEntityOpens();
+    for (final open in pendingOpens) {
+      onEntityOpen?.call(open);
     }
     _emit(
       IntentCallHostEvent(
@@ -244,6 +296,11 @@ final class IntentCallFlutterHost {
 
   Future<void> dispose() async {
     _disposed = true;
+    final closeLink = _closeSurfaceLink;
+    _closeSurfaceLink = null;
+    if (closeLink != null) {
+      await closeLink();
+    }
     await _wakeSubscription?.cancel();
     _wakeSubscription = null;
     await _deepLinkListener?.dispose();

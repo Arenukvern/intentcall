@@ -1,0 +1,56 @@
+schema: steward/scenario-manifest/v1
+repo: intentcall
+scenario: intentcall.manifest-resource-uri
+status: runnable
+source:
+  git: https://github.com/Arenukvern/intentcall
+  commit: ec1fbb07775c3125e7fc5e5446995b5ef6042ac4
+  steward_contract: steward.yaml
+safe_first_probe: intentcall.validate
+required_actions:
+  - intentcall.manifest-resource-uri-check
+steps:
+  - run: dart test packages/intentcall_platform_sync/test/manifest_resource_uri_policy_test.dart
+artifacts:
+  - id: steward_contract
+    kind: yaml
+    path: steward.yaml
+    required: true
+    durability: input
+  - id: manifest_resource_uri_policy_test
+    kind: dart
+    path: packages/intentcall_platform_sync/test/manifest_resource_uri_policy_test.dart
+    required: true
+    durability: behavior
+  - id: resource_uri_helper
+    kind: dart
+    path: packages/intentcall_schema/lib/src/resource_uri.dart
+    required: true
+    durability: behavior
+  - id: manifest_merger
+    kind: dart
+    path: packages/intentcall_platform_sync/lib/src/projection/manifest_merger.dart
+    required: true
+    durability: behavior
+  - id: flutter_fixture_manifest
+    kind: json
+    path: packages/intentcall_cli/test/fixtures/flutter_project/web/agent_manifest.json
+    required: true
+    durability: input
+  - id: jaspr_fixture_manifest
+    kind: json
+    path: packages/intentcall_cli/test/fixtures/jaspr_web_project/web/agent_manifest.json
+    required: true
+    durability: input
+  - id: codegen_fixture_manifest
+    kind: json
+    path: packages/intentcall_cli/test/fixtures/codegen_dart_project/web/agent_manifest.json
+    required: true
+    durability: input
+  - id: codegen_example_manifest
+    kind: json
+    path: packages/intentcall_codegen/example/web/agent_manifest.json
+    required: true
+    durability: input
+blocked_by: null
+owner: intentcall

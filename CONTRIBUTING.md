@@ -4,7 +4,7 @@ Thanks for your interest! IntentCall is a pre-release platform library. Contribu
 
 ## Prerequisites
 
-- [Dart SDK](https://dart.dev/get-dart) `^3.11.0`
+- [Dart SDK](https://dart.dev/get-dart) `^3.12.0`
 - [Flutter SDK](https://flutter.dev/docs/get-started/install) (stable) — required for `intentcall_platform`
 - [just](https://github.com/casey/just) task runner (recommended)
 - [Node.js](https://nodejs.org/) `>=18` and [pnpm](https://pnpm.io/) `>=9` — for `just docs-check` (docs.page link validation)
@@ -25,6 +25,15 @@ All three must be green before opening a PR. If you changed `docs/` or `docs.jso
 ```bash
 pnpm install   # once
 just docs-check
+```
+
+If you changed Apple projection (`intentcall_platform_sync` emitters or
+`intentcall_platform_apple` Swift facades), also run the dogfood compile gate
+with sibling [mcp_flutter](https://github.com/Arenukvern/mcp_flutter) checked
+out next to this repo:
+
+```bash
+just apple-runner-compile-check   # delegates to mcp_flutter/tool/contracts/check_apple_runner_compile.sh
 ```
 
 Agent/operator preflight starts with the declared Steward surface:

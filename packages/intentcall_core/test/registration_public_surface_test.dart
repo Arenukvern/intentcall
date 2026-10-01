@@ -25,14 +25,14 @@ void main() {
   test('exports neutral resource registration vocabulary', () async {
     expectCoreResourceHandler(_resourceHandler);
     const resource = ResourceRegistration(
-      uri: 'intentcall://resource/app/state',
+      uri: 'demoapp://resource/app/state',
       name: 'app_state',
       description: 'App state',
       mimeType: 'application/json',
       handler: _resourceHandler,
     );
     const template = ResourceTemplateRegistration(
-      uriTemplate: 'intentcall://resource/app/{id}',
+      uriTemplate: 'demoapp://resource/app/{id}',
       name: 'app_resource',
       description: 'App resource',
       mimeType: 'application/json',
@@ -42,7 +42,7 @@ void main() {
     expect(resource.mimeType, 'application/json');
     expect(template.uriTemplate, contains('{id}'));
     expect(
-      await template.handler('intentcall://resource/app/1'),
+      await template.handler('demoapp://resource/app/1'),
       isA<AgentResult>(),
     );
   });

@@ -24,7 +24,6 @@ Transport-agnostic agent intent platform for Dart/Flutter: define intent truth o
 
 [Live Demo with Flutter MCP Toolkit and Grok Build](https://www.youtube.com/watch?v=mX4xxVeImq0)
 
-
 Conceptual map: write one Dart intent, register it once, project it to useful surfaces, then people and agents use it.
 
 **Start here:** [How it works](docs/start_here/how_it_works.mdx) · [Choose your path](docs/start_here/choose_your_path.mdx) · [Platform support](docs/start_here/platform_support.mdx) · [Roadmap](docs/start_here/roadmap.mdx)
@@ -37,28 +36,33 @@ GitHub: [Arenukvern/intentcall](https://github.com/Arenukvern/intentcall)
 
 ## Ecosystem
 
-| Repo | Role |
-|---|---|
-| **IntentCall** (this repo) | Platform layer — registry + adapters |
-| **[mcp_flutter](https://github.com/Arenukvern/mcp_flutter)** | Early consumer and product harness — `mcp_toolkit`, `flutter-mcp-toolkit` CLI |
-| **[Skill Steward](https://github.com/Arenukvern/skill_steward)** | Meta-layer — agent skills governance |
+| Repo                                                             | Role                                                                          |
+| ---------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| **IntentCall** (this repo)                                       | Platform layer — registry + adapters                                          |
+| **[mcp_flutter](https://github.com/Arenukvern/mcp_flutter)**     | Early consumer and product harness — `mcp_toolkit`, `flutter-mcp-toolkit` CLI |
+| **[Skill Steward](https://github.com/Arenukvern/skill_steward)** | Meta-layer — agent skills governance                                          |
 
 ## Published Packages
 
-| Package | Pub.dev | Role |
-|---------|---------|------|
-| `intentcall_schema` | [![pub package](https://img.shields.io/pub/v/intentcall_schema.svg?include_prereleases)](https://pub.dev/packages/intentcall_schema) [![pub points](https://img.shields.io/pub/points/intentcall_schema.svg)](https://pub.dev/packages/intentcall_schema/score) | Wire types, validation, `AgentResult` |
-| `intentcall_core` | [![pub package](https://img.shields.io/pub/v/intentcall_core.svg?include_prereleases)](https://pub.dev/packages/intentcall_core) [![pub points](https://img.shields.io/pub/points/intentcall_core.svg)](https://pub.dev/packages/intentcall_core/score) | Registry, runtime, `AgentCallEntry`, and neutral tool/resource registration vocabulary |
-| `intentcall_session` | [![pub package](https://img.shields.io/pub/v/intentcall_session.svg?include_prereleases)](https://pub.dev/packages/intentcall_session) [![pub points](https://img.shields.io/pub/points/intentcall_session.svg)](https://pub.dev/packages/intentcall_session/score) | Runtime session lifecycle, persisted session state, snapshots, and registry execution inside a session |
-| `intentcall_mcp` | [![pub package](https://img.shields.io/pub/v/intentcall_mcp.svg?include_prereleases)](https://pub.dev/packages/intentcall_mcp) [![pub points](https://img.shields.io/pub/points/intentcall_mcp.svg)](https://pub.dev/packages/intentcall_mcp/score) | MCP publish adapter and MCP mapping (`dart_mcp`) |
-| `intentcall_webmcp` | [![pub package](https://img.shields.io/pub/v/intentcall_webmcp.svg?include_prereleases)](https://pub.dev/packages/intentcall_webmcp) [![pub points](https://img.shields.io/pub/points/intentcall_webmcp.svg)](https://pub.dev/packages/intentcall_webmcp/score) | WebMCP hot-sync adapter |
-| `intentcall_apple` | [![pub package](https://img.shields.io/pub/v/intentcall_apple.svg?include_prereleases)](https://pub.dev/packages/intentcall_apple) [![pub points](https://img.shields.io/pub/points/intentcall_apple.svg)](https://pub.dev/packages/intentcall_apple/score) | Apple manifest projection for App Intents / Shortcuts dispatch artifacts and first typed-entity/indexing direction |
-| `intentcall_android` | [![pub package](https://img.shields.io/pub/v/intentcall_android.svg?include_prereleases)](https://pub.dev/packages/intentcall_android) [![pub points](https://img.shields.io/pub/points/intentcall_android.svg)](https://pub.dev/packages/intentcall_android/score) | Android manifest codegen for shortcut and deep-link artifacts |
-| `intentcall_platform` | [![pub package](https://img.shields.io/pub/v/intentcall_platform.svg?include_prereleases)](https://pub.dev/packages/intentcall_platform) [![pub points](https://img.shields.io/pub/points/intentcall_platform.svg)](https://pub.dev/packages/intentcall_platform/score) | Native/web emitters, protocol fallback artifacts, and Flutter plugin |
-| `intentcall_codegen` | [![pub package](https://img.shields.io/pub/v/intentcall_codegen.svg?include_prereleases)](https://pub.dev/packages/intentcall_codegen) [![pub points](https://img.shields.io/pub/points/intentcall_codegen.svg)](https://pub.dev/packages/intentcall_codegen/score) | Optional `@AgentTool` codegen |
-| `intentcall_testing` | [![pub package](https://img.shields.io/pub/v/intentcall_testing.svg?include_prereleases)](https://pub.dev/packages/intentcall_testing) [![pub points](https://img.shields.io/pub/points/intentcall_testing.svg)](https://pub.dev/packages/intentcall_testing/score) | Contract / invoke test helpers |
+| Package                    | Pub.dev                                                                                                                                                                                                                                                                 | Role                                                                                                   |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `intentcall_schema`        | [![pub package](https://img.shields.io/pub/v/intentcall_schema.svg?include_prereleases)](https://pub.dev/packages/intentcall_schema) [![pub points](https://img.shields.io/pub/points/intentcall_schema.svg)](https://pub.dev/packages/intentcall_schema/score)         | Wire types, validation, `AgentResult`                                                                  |
+| `intentcall_core`          | [![pub package](https://img.shields.io/pub/v/intentcall_core.svg?include_prereleases)](https://pub.dev/packages/intentcall_core) [![pub points](https://img.shields.io/pub/points/intentcall_core.svg)](https://pub.dev/packages/intentcall_core/score)                 | Registry, runtime, `AgentCallEntry`, and neutral tool/resource registration vocabulary                 |
+| `intentcall_session`       | [![pub package](https://img.shields.io/pub/v/intentcall_session.svg?include_prereleases)](https://pub.dev/packages/intentcall_session) [![pub points](https://img.shields.io/pub/points/intentcall_session.svg)](https://pub.dev/packages/intentcall_session/score)     | Runtime session lifecycle, persisted session state, snapshots, and registry execution inside a session |
+| `intentcall_mcp`           | [![pub package](https://img.shields.io/pub/v/intentcall_mcp.svg?include_prereleases)](https://pub.dev/packages/intentcall_mcp) [![pub points](https://img.shields.io/pub/points/intentcall_mcp.svg)](https://pub.dev/packages/intentcall_mcp/score)                     | MCP publish adapter and MCP mapping (`dart_mcp`)                                                       |
+| `intentcall_webmcp`        | [![pub package](https://img.shields.io/pub/v/intentcall_webmcp.svg?include_prereleases)](https://pub.dev/packages/intentcall_webmcp) [![pub points](https://img.shields.io/pub/points/intentcall_webmcp.svg)](https://pub.dev/packages/intentcall_webmcp/score)         | WebMCP hot-sync adapter                                                                                |
+| `intentcall_platform_sync` | [![pub package](https://img.shields.io/pub/v/intentcall_platform_sync.svg?include_prereleases)](https://pub.dev/packages/intentcall_platform_sync)                                                                                                                      | Dart-only manifest, emitters, and `PlatformSync`                                                       |
+| `intentcall_hooks`         | [![pub package](https://img.shields.io/pub/v/intentcall_hooks.svg?include_prereleases)](https://pub.dev/packages/intentcall_hooks)                                                                                                                                      | Dart build hooks for manifest export and platform sync                                                 |
+| `intentcall_bridge`        | [![pub package](https://img.shields.io/pub/v/intentcall_bridge.svg?include_prereleases)](https://pub.dev/packages/intentcall_bridge)                                                                                                                                    | Pigeon IDL and generated Dart bindings for the platform bridge                                         |
+| `intentcall_cli`           | [![pub package](https://img.shields.io/pub/v/intentcall_cli.svg?include_prereleases)](https://pub.dev/packages/intentcall_cli)                                                                                                                                          | Framework-neutral CLI: manifest export, platform sync, MCP serve                                       |
+| `intentcall_platform`      | [![pub package](https://img.shields.io/pub/v/intentcall_platform.svg?include_prereleases)](https://pub.dev/packages/intentcall_platform) [![pub points](https://img.shields.io/pub/points/intentcall_platform.svg)](https://pub.dev/packages/intentcall_platform/score) | Flutter runtime host / federated umbrella (re-exports `intentcall_platform_sync`)                      |
+| `intentcall_codegen`       | [![pub package](https://img.shields.io/pub/v/intentcall_codegen.svg?include_prereleases)](https://pub.dev/packages/intentcall_codegen) [![pub points](https://img.shields.io/pub/points/intentcall_codegen.svg)](https://pub.dev/packages/intentcall_codegen/score)     | Optional `@AgentTool` codegen                                                                          |
+| `intentcall_testing`       | [![pub package](https://img.shields.io/pub/v/intentcall_testing.svg?include_prereleases)](https://pub.dev/packages/intentcall_testing) [![pub points](https://img.shields.io/pub/points/intentcall_testing.svg)](https://pub.dev/packages/intentcall_testing/score)     | Contract / invoke test helpers                                                                         |
 
-`intentcall_gemma` is example-only and intentionally unpublished. `intentcall_cli`
+| `intentcall_gemma` | Example-only on-device function-calling adapter (workspace-only). |
+| `dart_acp_toolkit` (`packages/acp_toolkit`) | Agent Client Protocol stdio server + registry-backed backend (workspace-only). |
+
+`intentcall_cli`
 is the workspace maintainer tool and is not part of the hosted package train.
 
 Platform support is tiered during the current pre-1.0 train: current code covers contract-tested MCP adapters, Dart-first WebMCP emitter/bootstrap helpers, Apple App Intents dispatch wrappers plus explicit main-app Swift `nativeInline` handlers, typed primitive App Intents return generation for Apple inline runtimes, an experimental Apple `dartExtensionInline` scaffold, Android shortcut/deep-link artifacts, Windows protocol activation artifacts, and Linux `x-scheme-handler` artifacts. L3 adds an additive actions/entities/indexing direction: Dart owns snapshots and behavior, while Apple is the first projection that can read a durable native cache when Flutter is cold. Generated schemas, artifacts, native cache rows, and storage helpers are not live Spotlight, Siri, Shortcuts, donation, indexing, or product proof. Android AppFunctions, richer Android App Actions capability generation, Windows App Actions / Agent Launchers, and AAIF ecosystem alignment are roadmap targets unless documented otherwise. See [Platform support](docs/start_here/platform_support.mdx) for evidence levels and non-claims.
@@ -67,10 +71,10 @@ Platform support is tiered during the current pre-1.0 train: current code covers
 
 We provide custom agent skills to assist in developing with and extending IntentCall:
 
-| Skill | Description | Install command |
-|---|---|---|
-| [register-intents](skills/register-intents/SKILL.md) | Guide to manual and codegen intent registration. | `npx skills add Arenukvern/intentcall --skill register-intents` |
-| [write-adapter](skills/write-adapter/SKILL.md) | Guide to implementing custom platform/transport adapters. | `npx skills add Arenukvern/intentcall --skill write-adapter` |
+| Skill                                                | Description                                               | Install command                                                 |
+| ---------------------------------------------------- | --------------------------------------------------------- | --------------------------------------------------------------- |
+| [register-intents](skills/register-intents/SKILL.md) | Guide to manual and codegen intent registration.          | `npx skills add Arenukvern/intentcall --skill register-intents` |
+| [write-adapter](skills/write-adapter/SKILL.md)       | Guide to implementing custom platform/transport adapters. | `npx skills add Arenukvern/intentcall --skill write-adapter`    |
 
 Repository management is guided by [Skill Steward](https://github.com/Arenukvern/skill_steward) meta-skills (installed in `.agents/skills/`).
 
@@ -102,14 +106,14 @@ See [docs/DX_FAQ.mdx](docs/DX_FAQ.mdx) for detailed workflows.
 
 ## Development Support
 
-| Need | Start here |
-|---|---|
-| Contribute code or docs | [CONTRIBUTING.md](CONTRIBUTING.md) |
-| Add or credit contributors | [Contributors guide](docs/contributing/contributors.mdx) · [`.all-contributorsrc`](.all-contributorsrc) |
-| Report vulnerabilities | [SECURITY.md](SECURITY.md) |
-| Validate local changes | `steward probe --json --profile quick` · `steward benchmark --scenario intentcall.adapter-contract --json` |
-| Maintain releases | [PUBLISHING.md](PUBLISHING.md) · [Release Please workflow](.github/workflows/release-please.yml) |
-| Build with the Flutter harness consumer | [mcp_flutter](https://github.com/Arenukvern/mcp_flutter) |
+| Need                                    | Start here                                                                                                 |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Contribute code or docs                 | [CONTRIBUTING.md](CONTRIBUTING.md)                                                                         |
+| Add or credit contributors              | [Contributors guide](docs/contributing/contributors.mdx) · [`.all-contributorsrc`](.all-contributorsrc)    |
+| Report vulnerabilities                  | [SECURITY.md](SECURITY.md)                                                                                 |
+| Validate local changes                  | `steward probe --json --profile quick` · `steward benchmark --scenario intentcall.adapter-contract --json` |
+| Maintain releases                       | [PUBLISHING.md](PUBLISHING.md) · [Release Please workflow](.github/workflows/release-please.yml)           |
+| Build with the Flutter harness consumer | [mcp_flutter](https://github.com/Arenukvern/mcp_flutter)                                                   |
 
 ## Git history
 

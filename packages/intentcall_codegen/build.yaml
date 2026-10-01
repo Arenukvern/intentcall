@@ -2,13 +2,20 @@ targets:
   $default:
     builders:
       intentcall_codegen|agent_tool:
-        generate_for:
-          - example/**
+        enabled: false
+      intentcall_codegen|agent_catalog:
+        enabled: false
 
 builders:
   agent_tool:
     import: "package:intentcall_codegen/builder.dart"
     builder_factories: ["agentToolBuilder"]
     build_extensions: {".dart": [".g.dart"]}
+    auto_apply: dependents
+    build_to: source
+  agent_catalog:
+    import: "package:intentcall_codegen/builder.dart"
+    builder_factories: ["agentCatalogBuilder"]
+    build_extensions: {r'$lib$': ['generated/agent_catalog.g.dart']}
     auto_apply: dependents
     build_to: source

@@ -3,17 +3,29 @@ import 'agent_validation_exception.dart';
 
 /// Validates [arguments] against a JSON Schema–shaped [schema] subset.
 ///
-/// **Supported:** root `type: object`; top-level `required`; top-level
-/// `additionalProperties: false` (unknown keys); per-property `type` of
-/// `string`, `integer`, `number`, `boolean`, `object`, or `array`; `enum` on
-/// `string` properties (JSON Schema `enum` array of allowed strings); array
-/// `items` when each item is `type: object` with `required` / `properties`;
-/// `minimum` / `maximum` on numeric types.
+/// Throws [AgentValidationException] when validation fails. Call
+/// [coerceArgumentsForSchema] first when [arguments] may contain string wire
+/// values.
 ///
-/// **Not supported:** `pattern`, `format`, nested object property
-/// validation (except array `items` when each item is `type: object` with
-/// `required` / `properties`), `oneOf` / `anyOf`, or type coercion. Properties
-/// without a `type` are skipped. Unknown keys are allowed when
+/// ## Supported
+///
+/// - Root `type: object`
+/// - Top-level `required` and `properties`
+/// - `additionalProperties: false` (rejects unknown keys)
+/// - Per-property `type`: `string`, `integer`, `number`, `boolean`, `object`,
+///   `list`
+/// - `enum` on string properties (allowed string list)
+/// - List `items` when each item is `type: object` with `required` /
+///   `properties`
+/// - `minimum` / `maximum` on numeric types
+///
+/// ## Not supported
+///
+/// - `pattern`, `format`, `oneOf`, `anyOf`
+/// - Nested object property validation (except list `items` objects)
+/// - Type coercion (use [coerceArgumentsForSchema])
+///
+/// Properties without a `type` are skipped. Unknown keys are allowed when
 /// `additionalProperties` is omitted or not `false`.
 void validateAgainstSchema(
   final InputSchema schema,
@@ -94,15 +106,15 @@ void _validateValue(
       if (value is! Map) {
         throw AgentValidationException('"$path" must be an object.');
       }
-    case 'array':
+    case 'list':
       if (value is! List) {
-        throw AgentValidationException('"$path" must be an array.');
+        throw AgentValidationException('"$path" must be an list.');
       }
-      _validateArrayItems(path, schema, value);
+      _validateListItems(path, schema, value);
   }
 }
 
-void _validateArrayItems(
+void _validateListItems(
   final String path,
   final Map<String, Object?> schema,
   final List<Object?> value,

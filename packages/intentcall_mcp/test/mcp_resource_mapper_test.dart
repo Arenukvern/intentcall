@@ -6,6 +6,7 @@ import 'package:test/test.dart';
 void main() {
   test('agentResultToReadResourceResult maps resource envelope', () {
     final result = AgentResultEnvelope.resourceEnvelope(
+      protocolScheme: 'demoapp',
       resourceName: 'app_errors',
       snapshot: const <String, Object?>{'count': 0},
     );

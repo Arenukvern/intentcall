@@ -82,7 +82,9 @@ final class WebMcpPublishAdapter implements AgentAdapter {
     required final AgentIntentDescriptor descriptor,
   }) {
     final name = key;
-    if (_published.contains(name)) return;
+    if (_published.contains(name)) {
+      _unpublish(name);
+    }
     publish(
       name: name,
       description: descriptor.description,
