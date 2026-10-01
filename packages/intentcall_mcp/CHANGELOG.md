@@ -13,6 +13,15 @@
 - Ignore typed entity registry events in the MCP publish adapter until MCP gets
   an explicit entity projection surface.
 
+## [0.7.0](https://github.com/Arenukvern/intentcall/compare/intentcall_mcp-v0.6.0...intentcall_mcp-v0.7.0) (2026-10-01)
+
+
+### Features
+
+* enhance resource URI handling by introducing protocol scheme support across agent manifest generation and related components ([e61d9d1](https://github.com/Arenukvern/intentcall/commit/e61d9d1095735bd2edd5672a9944d9a78c65baae))
+* introduce intentcall_cli and intentcall_platform_sync packages for framework-neutral CLI and manifest handling ([ee03e70](https://github.com/Arenukvern/intentcall/commit/ee03e70de7b18e7cae3767c6c3a83b2d68af90b0))
+* **mcp:** project automation hints onto tool _meta ([2b27bb2](https://github.com/Arenukvern/intentcall/commit/2b27bb200bc06a2507e63428c916f46e3a261f21))
+
 ## [0.6.0](https://github.com/Arenukvern/intentcall/compare/intentcall_mcp-v0.5.0...intentcall_mcp-v0.6.0) (2026-06-29)
 
 

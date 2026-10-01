@@ -20,6 +20,18 @@
   property query emission in the default artifact until it has separate Xcode
   macro proof.
 
+## [0.7.0](https://github.com/Arenukvern/intentcall/compare/intentcall_platform-v0.6.0...intentcall_platform-v0.7.0) (2026-10-01)
+
+
+### Features
+
+* add from_json_to_json and is_dart_empty_or_not dependencies, refactor JSON handling in schema and session management ([ee053c4](https://github.com/Arenukvern/intentcall/commit/ee053c426bc220a1f35574f2b952c526af8086e8))
+* add intentcall_bridge package with entity open envelope support, update testing commands, and enhance documentation for new features ([cc162e0](https://github.com/Arenukvern/intentcall/commit/cc162e00a536e607b74dd83a8cd6c721b6917a8d))
+* add projection pipeline check command and enhance entity type descriptor handling in manifest export ([ec1fbb0](https://github.com/Arenukvern/intentcall/commit/ec1fbb07775c3125e7fc5e5446995b5ef6042ac4))
+* introduce intentcall_cli and intentcall_platform_sync packages for framework-neutral CLI and manifest handling ([ee03e70](https://github.com/Arenukvern/intentcall/commit/ee03e70de7b18e7cae3767c6c3a83b2d68af90b0))
+* introduce intentcall_hooks and intentcall_bridge packages, enhance testing commands, and update manifest for new dependencies ([6272b7c](https://github.com/Arenukvern/intentcall/commit/6272b7cdf853edc9880cfc13f709a4a6a8ddd765))
+* return Dart results on WebMCP, awaitApp, and Windows App Actions ([eafaaee](https://github.com/Arenukvern/intentcall/commit/eafaaee96b7c96c092d820d0292d0252cb6b9ad6))
+
 ## [0.6.0](https://github.com/Arenukvern/intentcall/compare/intentcall_platform-v0.5.0...intentcall_platform-v0.6.0) (2026-06-29)
 
 
