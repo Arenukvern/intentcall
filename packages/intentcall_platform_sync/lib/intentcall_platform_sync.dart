@@ -2,6 +2,7 @@ library;
 
 export 'src/agent_manifest.dart';
 export 'src/bootstrap/agent_web_mcp_bootstrap.dart';
+export 'src/bootstrap/web_mcp_projection.dart';
 export 'src/catalog/agent_registry_catalog.dart';
 export 'src/catalog/catalog_loader.dart';
 export 'src/catalog/project_utils.dart';

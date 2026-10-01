@@ -9,12 +9,15 @@ import 'web_mcp_registration_report.dart';
 
 export 'web_mcp_registration_report.dart';
 
-/// Registers WebMCP tools from [AgentCallEntry] values (Flutter web path C).
+/// Projects [AgentCallEntry] values onto the WebMCP registry (Flutter web
+/// path C). Verb-first name: this projects the toolkit's dynamic entries to
+/// the browser surface; "Agent" jargon dropped (mcp_flutter ADR-0016
+/// upstream plan; the pre-rename aliases were removed unreleased).
 ///
 /// The default policy is open only while Dart assertions are enabled. In
 /// compiled profile/release builds it denies all invocations unless an app
 /// passes an explicit source/name allowlist or confirmation policy.
-WebMcpRegistrationReport registerAgentWebMcpFromEntries(
+WebMcpRegistrationReport projectEntriesToWebMcp(
   final Set<AgentCallEntry> entries, {
   final IntentCallAuthorizationPolicy policy =
       const IntentCallAuthorizationPolicy.debugAllowAll(),
@@ -25,12 +28,12 @@ WebMcpRegistrationReport registerAgentWebMcpFromEntries(
   surfaceIndex: surfaceIndex,
 );
 
-/// Registers WebMCP tools directly from [registry] and executes them in Dart.
+/// Projects [registry] onto the WebMCP registry and executes tools in Dart.
 ///
 /// The default policy is open only while Dart assertions are enabled. In
 /// compiled profile/release builds it denies all invocations unless an app
 /// passes an explicit source/name allowlist or confirmation policy.
-WebMcpRegistrationReport registerAgentWebMcpFromRegistry(
+WebMcpRegistrationReport projectRegistryToWebMcp(
   final AgentRegistry registry, {
   final IntentCallAuthorizationPolicy policy =
       const IntentCallAuthorizationPolicy.debugAllowAll(),

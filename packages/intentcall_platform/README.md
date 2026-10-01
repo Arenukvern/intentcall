@@ -72,6 +72,12 @@ Important options are:
 - `protocolScheme`: required when `listenForDeepLinks` is enabled and should
   match manifest `protocolScheme` plus Apple `CFBundleURLTypes`.
 
+For the web tier without the full host, `intentcall_platform_sync` exposes
+the projection API: `WebMcpProjection(policy: ...)` (composable with the
+Flutter MCP Toolkit's projection SPI) and one-shot
+`projectEntriesToWebMcp(...)` / `projectRegistryToWebMcp(...)`. Policies are
+always explicit; nothing registers WebMCP tools without one.
+
 Current native handoff storage is at-most-once dispatch. The plugin takes and
 clears pending rows before Dart execution reports success or failure. Treat that
 as a bridge contract, not durable delivery, result transport, secure storage, or

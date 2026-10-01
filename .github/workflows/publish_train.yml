@@ -1,0 +1,55 @@
+name: Publish pub.dev train (ordered)
+
+# Single-run, dependency-ordered publish of every packages/* package.
+# Preferred recovery path after a release-please train merge: computes the
+# order from the pubspecs themselves (the federated tail — platform_apple /
+# platform_android — publishes before intentcall_platform), retries each
+# package, and skips versions pub.dev already exposes, so re-runs resume.
+# The per-tag `pub_publish.yml` stays for one-off stragglers.
+
+on:
+  workflow_dispatch:
+    inputs:
+      execute:
+        description: 'Publish for real (unchecked = plan the order only)'
+        required: true
+        type: boolean
+        default: false
+      retries:
+        description: 'Publish attempts per package'
+        required: false
+        type: string
+        default: '3'
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: pub-dev-train
+  cancel-in-progress: false
+
+jobs:
+  publish-train:
+    runs-on: ubuntu-latest
+    environment: pub.dev
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
+        with:
+          channel: stable
+          cache: true
+
+      - uses: dart-lang/setup-dart@65eb853c7ba17dde3be364c3d2858773e7144260
+
+      - name: Workspace dependencies
+        run: dart pub get
+
+      - name: Publish train (plan or execute)
+        run: >-
+          dart run tool/intentcall/bin/intentcall.dart publish-train
+          ${{ inputs.execute && '--execute' || '' }}
+          --skip-existing
+          --retries "${{ inputs.retries }}"

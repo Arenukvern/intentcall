@@ -3,12 +3,12 @@ import 'package:intentcall_platform_sync/intentcall_platform_sync.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('registerAgentWebMcpFromEntries reports unavailable on VM', () {
-    final report = registerAgentWebMcpFromEntries(<AgentCallEntry>{});
+  test('projectEntriesToWebMcp reports unavailable on VM', () {
+    final report = projectEntriesToWebMcp(<AgentCallEntry>{});
     expect(report.available, isFalse);
     expect(report.registered, isEmpty);
     expect(
-      () => registerAgentWebMcpFromEntries(
+      () => projectEntriesToWebMcp(
         <AgentCallEntry>{},
         policy: const IntentCallAuthorizationPolicy.denyAll(),
       ),
@@ -16,19 +16,29 @@ void main() {
     );
   });
 
-  test('registerAgentWebMcpFromRegistry is safe on VM', () {
+  test('projectRegistryToWebMcp is safe on VM', () {
     expect(
-      () => registerAgentWebMcpFromRegistry(InMemoryAgentRegistry()),
+      () => projectRegistryToWebMcp(InMemoryAgentRegistry()),
       returnsNormally,
     );
     expect(
-      () => registerAgentWebMcpFromRegistry(
+      () => projectRegistryToWebMcp(
         InMemoryAgentRegistry(),
         policy: const IntentCallAuthorizationPolicy(
           allowedSources: <String>{IntentCallInvocationSource.webMcpDart},
           allowedQualifiedNames: <String>{'app_echo'},
         ),
       ),
+      returnsNormally,
+    );
+  });
+
+  test('WebMcpProjection forwards entries with the explicit policy', () {
+    const projection = WebMcpProjection(
+      policy: IntentCallAuthorizationPolicy.denyAll(),
+    );
+    expect(
+      () => projection.entriesChanged(<AgentCallEntry>{}),
       returnsNormally,
     );
   });

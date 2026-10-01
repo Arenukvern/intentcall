@@ -63,7 +63,7 @@ void main() {
     );
   });
 
-  test('registerAgentWebMcpFromRegistry accepts surface index on VM', () {
+  test('projectRegistryToWebMcp accepts surface index on VM', () {
     final registry = InMemoryAgentRegistry()
       ..register(
         RegisteredAgentIntent(
@@ -110,7 +110,7 @@ void main() {
     );
 
     expect(
-      () => registerAgentWebMcpFromRegistry(
+      () => projectRegistryToWebMcp(
         registry,
         surfaceIndex: index,
       ),

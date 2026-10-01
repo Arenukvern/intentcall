@@ -174,6 +174,27 @@ void main(List<String> arguments) async {
           negatable: false,
           help: 'Skip when pub.dev already exposes this package version.',
         ),
+    )
+    ..addCommand(
+      'publish-train',
+      ArgParser()
+        ..addFlag(
+          'execute',
+          negatable: false,
+          help:
+              'Publish the whole train in dependency order. Without this '
+              'flag the command prints the computed order and stops.',
+        )
+        ..addFlag(
+          'skip-existing',
+          negatable: false,
+          help: 'Skip when pub.dev already exposes a package version.',
+        )
+        ..addOption(
+          'retries',
+          defaultsTo: '3',
+          help: 'Publish attempts per package before giving up on it.',
+        ),
     );
 
   ArgResults results;
@@ -279,6 +300,16 @@ void main(List<String> arguments) async {
       );
       exit(code);
 
+    case 'publish-train':
+      final cmdResults = results.command!;
+      final code = await runPublishTrain(
+        repoRoot,
+        dryRun: !(cmdResults['execute'] as bool? ?? false),
+        skipExisting: cmdResults['skip-existing'] as bool? ?? false,
+        retries: int.tryParse(cmdResults['retries'] as String? ?? '3') ?? 3,
+      );
+      exit(code);
+
     default:
       printUsage(parser);
       exit(64);
@@ -338,6 +369,9 @@ void printUsage(ArgParser parser) {
   );
   print(
     '  publish-tag           Publish one package selected by a release tag.',
+  );
+  print(
+    '  publish-train         Publish every package in computed dependency order (use after a train merge; per-tag runs stay for stragglers).',
   );
   print('\nOptions:');
   print(parser.usage);
@@ -1585,6 +1619,22 @@ Future<int> runPublishTag(
     return 64;
   }
 
+  return publishRelease(
+    repoRoot,
+    release,
+    dryRun: dryRun,
+    skipExisting: skipExisting,
+  );
+}
+
+/// Publishes one release: validate → static checks → dependency wait →
+/// strict dry-run → publish → wait for pub.dev exposure.
+Future<int> publishRelease(
+  Directory repoRoot,
+  PackageRelease release, {
+  required bool dryRun,
+  required bool skipExisting,
+}) async {
   print(
     '== IntentCall package release: ${release.package} ${release.version} ==',
   );
@@ -1599,8 +1649,7 @@ Future<int> runPublishTag(
     return staticCode;
   }
 
-  if (skipExisting &&
-      await packageHasVersion(release.package, release.version)) {
+  if (skipExisting && await packageHasVersion(release.package, release.version)) {
     print(
       'OK: pub.dev already exposes ${release.package} ${release.version}; skipping.',
     );
@@ -1658,6 +1707,195 @@ Future<int> runPublishTag(
   }
 
   print('\nOK: publish-tag complete.');
+  return 0;
+}
+
+final class _WorkspacePackage {
+  _WorkspacePackage({
+    required this.name,
+    required this.version,
+    required this.siblingDependencies,
+  });
+
+  final String name;
+  final String version;
+  final Set<String> siblingDependencies;
+}
+
+/// Reads every `packages/*` pubspec: name, version, and sibling
+/// `intentcall_*` dependencies (both `dependencies` and
+/// `dev_dependencies` — publish dry-runs resolve dev deps too).
+List<_WorkspacePackage> readWorkspacePackages(Directory repoRoot) {
+  final packages = <_WorkspacePackage>[];
+  final packagesDir = Directory(p.join(repoRoot.path, 'packages'));
+  if (!packagesDir.existsSync()) {
+    return packages;
+  }
+  for (final entity in packagesDir.listSync()) {
+    if (entity is! Directory) continue;
+    final pubspec = File(p.join(entity.path, 'pubspec.yaml'));
+    if (!pubspec.existsSync()) continue;
+    final text = pubspec.readAsStringSync();
+    final name = RegExp(r'^name:\s*(\S+)', multiLine: true)
+        .firstMatch(text)
+        ?.group(1);
+    final version = RegExp(r'^version:\s*(\S+)', multiLine: true)
+        .firstMatch(text)
+        ?.group(1);
+    if (name == null || version == null) {
+      stderr.writeln(
+        'WARN: ${pubspec.path} is missing name/version; excluded from the train.',
+      );
+      continue;
+    }
+    final deps = <String>{};
+    var inDependencies = false;
+    for (final line in text.split('\n')) {
+      if (RegExp(r'^(dependencies|dev_dependencies):\s*$').hasMatch(line)) {
+        inDependencies = true;
+        continue;
+      }
+      if (inDependencies) {
+        if (line.isNotEmpty && !line.startsWith(' ')) {
+          inDependencies = false;
+        } else {
+          final match = RegExp(r'^\s{2}(intentcall_[a-z_]+):').firstMatch(line);
+          if (match != null) deps.add(match.group(1)!);
+        }
+      }
+    }
+    packages.add(
+      _WorkspacePackage(
+        name: name,
+        version: version,
+        siblingDependencies: deps,
+      ),
+    );
+  }
+  return packages;
+}
+
+/// Kahn topological order over sibling dependency edges, alphabetical
+/// tiebreak for determinism. Sibling deps not present in the workspace
+/// (should not happen) are ignored. Throws on dependency cycles.
+List<_WorkspacePackage> dependencyOrder(List<_WorkspacePackage> packages) {
+  final byName = {for (final pkg in packages) pkg.name: pkg};
+  final remaining = {
+    for (final pkg in packages) pkg.name: pkg.siblingDependencies
+        .where(byName.containsKey)
+        .toSet(),
+  };
+  final ordered = <_WorkspacePackage>[];
+  while (remaining.isNotEmpty) {
+    final ready =
+        remaining.entries.where((e) => e.value.isEmpty).map((e) => e.key)
+          .toList()
+          ..sort();
+    if (ready.isEmpty) {
+      stderr.writeln(
+        'FAIL: dependency cycle between: ${remaining.keys.toList()..sort()}',
+      );
+      throw StateError('publish-train: dependency cycle');
+    }
+    for (final name in ready) {
+      ordered.add(byName[name]!);
+      for (final entry in remaining.entries) {
+        entry.value.remove(name);
+      }
+      remaining.remove(name);
+    }
+  }
+  return ordered;
+}
+
+/// Publishes the whole train in dependency order computed from the
+/// pubspecs themselves (never a hand-maintained list — the 0.7.0 train
+/// failed 4 publishes because per-tag runs raced and the federated tail
+/// needed its implementations first). Per-package retries with backoff;
+/// a package that exhausts its budget is recorded and the train continues
+/// so one failure does not cascade.
+Future<int> runPublishTrain(
+  Directory repoRoot, {
+  required bool dryRun,
+  required bool skipExisting,
+  required int retries,
+}) async {
+  final packages = readWorkspacePackages(repoRoot)
+      .where((pkg) => publishOrder.contains(pkg.name))
+      .toList();
+  if (packages.isEmpty) {
+    stderr.writeln('FAIL: no packages/* pubspecs found.');
+    return 66;
+  }
+  final List<_WorkspacePackage> order;
+  try {
+    order = dependencyOrder(packages);
+  } on StateError {
+    return 65;
+  }
+
+  print('== publish-train: ${order.length} packages in computed order ==');
+  for (final i in order.indexed) {
+    print('  ${i.$1 + 1}. ${i.$2.name} ${i.$2.version}');
+  }
+  if (dryRun) {
+    print('\nOK: publish-train plan complete (dry-run; pass --execute).');
+    return 0;
+  }
+
+  final pubGetCode = await runCommand('dart', [
+    'pub',
+    'get',
+  ], repoRoot.path);
+  if (pubGetCode != 0) {
+    stderr.writeln('FAIL: workspace pub get failed');
+    return pubGetCode;
+  }
+
+  final failed = <String>[];
+  for (final pkg in order) {
+    final release = PackageRelease(package: pkg.name, version: pkg.version);
+    var published = false;
+    for (var attempt = 1; attempt <= retries && !published; attempt++) {
+      if (attempt > 1) {
+        final backoff = Duration(seconds: 30 * (attempt - 1));
+        print(
+          '» retrying ${pkg.name} in ${backoff.inSeconds}s '
+          '(attempt $attempt/$retries)',
+        );
+        await Future<void>.delayed(backoff);
+      }
+      final code = await publishRelease(
+        repoRoot,
+        release,
+        dryRun: false,
+        skipExisting: skipExisting,
+      );
+      if (code == 0) {
+        published = true;
+      } else {
+        stderr.writeln(
+          'WARN: ${pkg.name} attempt $attempt/$retries failed (exit $code)',
+        );
+        if (skipExisting && await packageHasVersion(pkg.name, pkg.version)) {
+          print(
+            'OK: pub.dev exposes ${pkg.name} ${pkg.version} after failed attempt; treating as published.',
+          );
+          published = true;
+        }
+      }
+    }
+    if (!published) failed.add(pkg.name);
+  }
+
+  if (failed.isNotEmpty) {
+    stderr.writeln(
+      'FAIL: publish-train finished with failures: ${failed.join(', ')}. '
+      'Re-run with --execute --skip-existing to resume.',
+    );
+    return 1;
+  }
+  print('\nOK: publish-train complete.');
   return 0;
 }
 

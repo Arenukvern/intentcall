@@ -166,7 +166,7 @@ final class IntentCallFlutterHost {
     }
     registerIntentCallAwaitingHandler(bridge);
     if (registerWebMcp) {
-      registerAgentWebMcpFromRegistry(
+      projectRegistryToWebMcp(
         bridge.registry,
         policy: bridge.policy,
         surfaceIndex: webMcpSurfaceIndex,

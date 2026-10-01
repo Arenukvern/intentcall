@@ -34,7 +34,10 @@ IntentCall v1 platform projection is Dart-first:
 - `IntentCallNativeBridge.bindRegistry(...)` executes authorized envelopes
   through the Dart `AgentRegistry`.
 - `registerAgentWebMcpFromRegistry(...)` registers WebMCP tools from Dart and
-  invokes Dart handlers in-page.
+  invokes Dart handlers in-page. (Renamed to `projectRegistryToWebMcp` —
+  with `registerAgentWebMcpFromEntries` → `projectEntriesToWebMcp` and the
+  new `WebMcpProjection` — before the name shipped to consumers; see
+  mcp_flutter ADR-0016.)
 - WebMCP network fallback is opt-in only.
 - Development builds may use `IntentCallAuthorizationPolicy.debugAllowAll()` to
   expose local dogfood tools while Dart assertions are enabled. Compiled
