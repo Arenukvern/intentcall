@@ -1634,21 +1634,26 @@ Future<int> runPublishTag(
   );
 }
 
-/// Publishes one release: validate → static checks → dependency wait →
-/// strict dry-run → publish → wait for pub.dev exposure.
+/// Publishes one release: static checks → dependency wait → strict dry-run →
+/// publish → wait for pub.dev exposure. [skipValidation] lets the train run
+/// the (expensive, whole-repo) validate once up front instead of per
+/// package.
 Future<int> publishRelease(
   Directory repoRoot,
   PackageRelease release, {
   required bool dryRun,
   required bool skipExisting,
+  bool skipValidation = false,
 }) async {
   print(
     '== IntentCall package release: ${release.package} ${release.version} ==',
   );
 
-  final validateCode = await runValidate(repoRoot);
-  if (validateCode != 0) {
-    return validateCode;
+  if (!skipValidation) {
+    final validateCode = await runValidate(repoRoot);
+    if (validateCode != 0) {
+      return validateCode;
+    }
   }
 
   final staticCode = await runReleasePackageStaticCheck(repoRoot, release);
@@ -1859,6 +1864,15 @@ Future<int> runPublishTrain(
     return pubGetCode;
   }
 
+  // Whole-repo validation is expensive — run it once for the train, not
+  // once per package (14 × validate would blow the workflow timeout).
+  if (!dryRun) {
+    final validateCode = await runValidate(repoRoot);
+    if (validateCode != 0) {
+      return validateCode;
+    }
+  }
+
   final failed = <String>[];
   for (final pkg in order) {
     final release = PackageRelease(package: pkg.name, version: pkg.version);
@@ -1877,6 +1891,7 @@ Future<int> runPublishTrain(
         release,
         dryRun: false,
         skipExisting: skipExisting,
+        skipValidation: true,
       );
       if (code == 0) {
         published = true;
