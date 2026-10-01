@@ -19,7 +19,7 @@ resolution: workspace
 dependencies:
   flutter:
     sdk: flutter
-  intentcall_bridge: ^0.7.0
+  intentcall_bridge: ^1.0.0
 
 flutter:
   plugin:

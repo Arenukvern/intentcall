@@ -17,7 +17,7 @@ resolution: workspace
 dependencies:
   code_assets: ^1.0.0
   hooks: ^2.0.0
-  intentcall_platform_sync: ^0.7.0
+  intentcall_platform_sync: ^1.0.0
   path: ^1.9.1
 
 dev_dependencies:
