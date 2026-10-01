@@ -7,6 +7,13 @@
 - Keep shared adapter contract tests compatible with typed entity registry
   events that adapters may intentionally ignore.
 
+## [1.0.0](https://github.com/Arenukvern/intentcall/compare/intentcall_testing-v0.7.0...intentcall_testing-v1.0.0) (2026-10-01)
+
+
+### Miscellaneous Chores
+
+* **intentcall_testing:** Synchronize intentcall package train versions
+
 ## [0.7.0](https://github.com/Arenukvern/intentcall/compare/intentcall_testing-v0.6.0...intentcall_testing-v0.7.0) (2026-10-01)
 
 

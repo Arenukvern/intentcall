@@ -20,6 +20,17 @@
   property query emission in the default artifact until it has separate Xcode
   macro proof.
 
+## [1.0.0](https://github.com/Arenukvern/intentcall/compare/intentcall_platform-v0.7.0...intentcall_platform-v1.0.0) (2026-10-01)
+
+
+### ⚠ BREAKING CHANGES
+
+* **platform-sync:** registerAgentWebMcpFromEntries / registerAgentWebMcpFromRegistry are removed (renamed before any consumer pinned them — they existed only in the 0.7.0 train published 2026-10-01). Use projectEntriesToWebMcp / projectRegistryToWebMcp.
+
+### Features
+
+* **platform-sync:** project* WebMCP API, WebMcpProjection; ordered publish-train ([e34db04](https://github.com/Arenukvern/intentcall/commit/e34db04fd7265040ad82247ba77e48ebc8a9f081))
+
 ## [0.7.0](https://github.com/Arenukvern/intentcall/compare/intentcall_platform-v0.6.0...intentcall_platform-v0.7.0) (2026-10-01)
 
 

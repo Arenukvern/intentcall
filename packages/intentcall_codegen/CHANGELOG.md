@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.0](https://github.com/Arenukvern/intentcall/compare/intentcall_codegen-v0.7.0...intentcall_codegen-v1.0.0) (2026-10-01)
+
+
+### Miscellaneous Chores
+
+* **intentcall_codegen:** Synchronize intentcall package train versions
+
 ## [0.7.0](https://github.com/Arenukvern/intentcall/compare/intentcall_codegen-v0.6.0...intentcall_codegen-v0.7.0) (2026-10-01)
 
 
