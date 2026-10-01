@@ -18,8 +18,8 @@ environment:
 resolution: workspace
 
 dependencies:
-  intentcall_core: ^0.6.0
-  intentcall_schema: ^0.6.0
+  intentcall_core: ^0.7.0
+  intentcall_schema: ^0.7.0
   meta: ^1.18.0
   from_json_to_json: ^0.5.0
   # oka ADR-0026 R3.3 adapter: composition contract (zero-dep, vendor-neutral).
