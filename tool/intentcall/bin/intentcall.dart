@@ -1133,8 +1133,15 @@ Future<int> runDocVersionReferenceCheck(
       continue;
     }
     final content = await file.readAsString();
+    // YAML frontmatter `metadata.version` fields are skill/doc
+    // self-versioning synced with the train — not claims about package
+    // versions. Scan the body only.
+    final body = content.replaceFirst(
+      RegExp(r'^---\n[\s\S]*?\n---\n'),
+      '',
+    );
     final findings = hardcodedDocVersionFindings(
-      content,
+      body,
       version: version,
       trainVersion: trainVersion,
     );
