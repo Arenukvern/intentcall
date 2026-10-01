@@ -33,6 +33,11 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Install just
+        uses: taiki-e/install-action@v2
+        with:
+          tool: just
+
       - name: release train metadata check
         run: dart tool/intentcall/bin/release_train.dart check
 
