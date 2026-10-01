@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## [1.0.0](https://github.com/Arenukvern/intentcall/compare/intentcall_hooks-v0.7.0...intentcall_hooks-v1.0.0) (2026-10-01)
+
+
+### Miscellaneous Chores
+
+* **intentcall_hooks:** Synchronize intentcall package train versions
+
 ## [0.7.0](https://github.com/Arenukvern/intentcall/compare/intentcall_hooks-v0.6.0...intentcall_hooks-v0.7.0) (2026-10-01)
 
 

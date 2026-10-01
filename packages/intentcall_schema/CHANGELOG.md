@@ -8,6 +8,13 @@
   app-owned typed entity snapshots, including display, keyword, link, freshness,
   version, and deletion metadata.
 
+## [1.0.0](https://github.com/Arenukvern/intentcall/compare/intentcall_schema-v0.7.0...intentcall_schema-v1.0.0) (2026-10-01)
+
+
+### Bug Fixes
+
+* **schema:** enforce JSON-Schema array vocabulary in validator and coercion ([4366745](https://github.com/Arenukvern/intentcall/commit/4366745dad4a15badf24c42ef6d5e958d2c16335))
+
 ## [0.7.0](https://github.com/Arenukvern/intentcall/compare/intentcall_schema-v0.6.0...intentcall_schema-v0.7.0) (2026-10-01)
 
 
