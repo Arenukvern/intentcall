@@ -71,7 +71,9 @@ Object? _coercePropertyValue(
       'number' => num.tryParse(trimmed) ?? value,
       'boolean' => jsonDecodeNullableBool(trimmed) ?? value,
       'object' => jsonDecodeNullableMapAs<String, Object>(trimmed) ?? value,
-      'list' => _parseWireJsonList(trimmed, propertySchema) ?? value,
+      // Both vocabularies appear in the wild: shared tool schemas in
+      // consumers use JSON-Schema `array`; older contracts use Dart `list`.
+      'list' || 'array' => _parseWireJsonList(trimmed, propertySchema) ?? value,
       _ => value,
     };
   }
@@ -79,7 +81,7 @@ Object? _coercePropertyValue(
   if (type == 'object' && value is Map) {
     return _coerceObjectValue(propertySchema, Map<String, Object?>.from(value));
   }
-  if (type == 'list' && value is List) {
+  if ((type == 'list' || type == 'array') && value is List) {
     return _coerceListValue(propertySchema, value);
   }
 

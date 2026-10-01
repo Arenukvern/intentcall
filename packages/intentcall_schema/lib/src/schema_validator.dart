@@ -106,9 +106,13 @@ void _validateValue(
       if (value is! Map) {
         throw AgentValidationException('"$path" must be an object.');
       }
+    // Both vocabularies appear in the wild: consumer schemas use JSON-Schema
+    // `array` (e.g. fill_form/semantic_snapshot field lists); older
+    // contracts use Dart `list`. Unrecognized arrays were silently skipped.
     case 'list':
+    case 'array':
       if (value is! List) {
-        throw AgentValidationException('"$path" must be an list.');
+        throw AgentValidationException('"$path" must be a list.');
       }
       _validateListItems(path, schema, value);
   }

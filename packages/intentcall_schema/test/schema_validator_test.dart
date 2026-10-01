@@ -136,6 +136,71 @@ void main() {
     });
   });
 
+  // Consumer shared schemas (e.g. mcp_flutter's fill_form/semantic_snapshot)
+  // use the JSON-Schema `array` vocabulary — it must validate identically
+  // to `list`. Regression: arrays were silently unvalidated before.
+  group('array items object required/properties (JSON-Schema vocabulary)', () {
+    const schema = {
+      'type': 'object',
+      'required': ['fields'],
+      'properties': {
+        'fields': {
+          'type': 'array',
+          'items': {
+            'type': 'object',
+            'additionalProperties': false,
+            'required': ['ref', 'text'],
+            'properties': {
+              'ref': {'type': 'string'},
+              'text': {'type': 'string'},
+            },
+          },
+        },
+      },
+    };
+
+    test('accepts valid field items', () {
+      expect(
+        () => validateAgainstSchema(schema, {
+          'fields': [
+            {'ref': 's_0', 'text': 'alice'},
+          ],
+        }),
+        returnsNormally,
+      );
+    });
+
+    test('rejects empty field object', () {
+      expect(
+        () => validateAgainstSchema(schema, {
+          'fields': [{}],
+        }),
+        throwsA(
+          isA<AgentValidationException>().having(
+            (final e) => e.message,
+            'message',
+            allOf(contains('ref'), contains('fields[0]')),
+          ),
+        ),
+      );
+    });
+
+    test('rejects fields that are not an array', () {
+      expect(
+        () => validateAgainstSchema(schema, {
+          'fields': 'not-an-array',
+        }),
+        throwsA(
+          isA<AgentValidationException>().having(
+            (final e) => e.message,
+            'message',
+            contains('must be a list'),
+          ),
+        ),
+      );
+    });
+  });
+
   group('string enum', () {
     const schema = {
       'type': 'object',
