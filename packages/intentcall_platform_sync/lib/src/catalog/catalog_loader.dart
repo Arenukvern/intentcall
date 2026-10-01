@@ -60,6 +60,24 @@ final class CatalogLoader {
       return null;
     }
 
+    // The probe imports the host package — it can never run without
+    // package resolution. Fresh checkouts (and CI) may not have resolved
+    // the host project yet; self-heal once instead of failing opaquely.
+    final packageConfig = File(
+      p.join(projectRoot, '.dart_tool', 'package_config.json'),
+    );
+    if (!packageConfig.existsSync()) {
+      final restore = await Process.run(
+        'dart',
+        <String>['pub', 'get'],
+        workingDirectory: projectRoot,
+        runInShell: true,
+      );
+      if (restore.exitCode != 0) {
+        return null;
+      }
+    }
+
     final probeDir = Directory(p.join(projectRoot, '.dart_tool'))
       ..createSync(recursive: true);
     final probeFile =
