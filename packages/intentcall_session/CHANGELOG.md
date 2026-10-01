@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.0](https://github.com/Arenukvern/intentcall/compare/intentcall_session-v0.6.0...intentcall_session-v0.7.0) (2026-10-01)
+
+
+### Features
+
+* add from_json_to_json and is_dart_empty_or_not dependencies, refactor JSON handling in schema and session management ([ee053c4](https://github.com/Arenukvern/intentcall/commit/ee053c426bc220a1f35574f2b952c526af8086e8))
+* introduce intentcall_cli and intentcall_platform_sync packages for framework-neutral CLI and manifest handling ([ee03e70](https://github.com/Arenukvern/intentcall/commit/ee03e70de7b18e7cae3767c6c3a83b2d68af90b0))
+
 ## [0.6.0](https://github.com/Arenukvern/intentcall/compare/intentcall_session-v0.5.0...intentcall_session-v0.6.0) (2026-06-29)
 
 

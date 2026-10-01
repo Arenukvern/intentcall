@@ -7,6 +7,13 @@
 - Keep shared adapter contract tests compatible with typed entity registry
   events that adapters may intentionally ignore.
 
+## [0.7.0](https://github.com/Arenukvern/intentcall/compare/intentcall_testing-v0.6.0...intentcall_testing-v0.7.0) (2026-10-01)
+
+
+### Features
+
+* introduce intentcall_cli and intentcall_platform_sync packages for framework-neutral CLI and manifest handling ([ee03e70](https://github.com/Arenukvern/intentcall/commit/ee03e70de7b18e7cae3767c6c3a83b2d68af90b0))
+
 ## [0.6.0](https://github.com/Arenukvern/intentcall/compare/intentcall_testing-v0.5.0...intentcall_testing-v0.6.0) (2026-06-29)
 
 

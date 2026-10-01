@@ -2,7 +2,7 @@ name: intentcall_schema
 description: >-
   PRE-RELEASE — Wire contract for IntentCall: AgentResult envelopes, JSON Schema
   validation, entity snapshots, and VM service wire parsing. Pure Dart.
-version: 0.6.0
+version: 0.7.0
 license: MIT
 repository: https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_schema
 issue_tracker: https://github.com/Arenukvern/intentcall/issues

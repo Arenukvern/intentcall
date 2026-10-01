@@ -2,7 +2,7 @@ name: intentcall_platform
 description: >-
   PRE-RELEASE — Federated Flutter runtime umbrella for IntentCall: Dart host
   APIs, WebMCP bootstrap, and endorsed native platform implementations.
-version: 0.6.0
+version: 0.7.0
 license: MIT
 repository: https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_platform
 issue_tracker: https://github.com/Arenukvern/intentcall/issues

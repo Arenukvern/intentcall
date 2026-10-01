@@ -7,6 +7,14 @@
 - Ignore typed entity registry events in the WebMCP publish adapter until WebMCP
   gets an explicit entity projection surface.
 
+## [0.7.0](https://github.com/Arenukvern/intentcall/compare/intentcall_webmcp-v0.6.0...intentcall_webmcp-v0.7.0) (2026-10-01)
+
+
+### Features
+
+* introduce intentcall_cli and intentcall_platform_sync packages for framework-neutral CLI and manifest handling ([ee03e70](https://github.com/Arenukvern/intentcall/commit/ee03e70de7b18e7cae3767c6c3a83b2d68af90b0))
+* return Dart results on WebMCP, awaitApp, and Windows App Actions ([eafaaee](https://github.com/Arenukvern/intentcall/commit/eafaaee96b7c96c092d820d0292d0252cb6b9ad6))
+
 ## [0.6.0](https://github.com/Arenukvern/intentcall/compare/intentcall_webmcp-v0.5.0...intentcall_webmcp-v0.6.0) (2026-06-29)
 
 
