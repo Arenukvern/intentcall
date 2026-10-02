@@ -1,13 +1,22 @@
 name: Publish pub.dev train (ordered)
 
-# Single-run, dependency-ordered publish of every packages/* package.
-# Preferred recovery path after a release-please train merge: computes the
-# order from the pubspecs themselves (the federated tail — platform_apple /
-# platform_android — publishes before intentcall_platform), retries each
-# package, and skips versions pub.dev already exposes, so re-runs resume.
-# The per-tag `pub_publish.yml` stays for one-off stragglers.
+# Single-run, dependency-ordered publish of every pending packages/* package.
+# Fires automatically on release-please train tags (`intentcall_*-v*`): each
+# run publishes every pending version in pubspec-computed order (the federated
+# tail — platform_apple / platform_android — before intentcall_platform),
+# retries each package, and skips versions pub.dev already exposes, so re-runs
+# resume. One ordered train beats a dozen racing per-tag runs.
+#
+# pub.dev automated publishing verifies repository + tag pattern + event type
+# (tag push only) and does not pin a workflow filename, so this workflow is
+# the one authorized publisher. `workflow_dispatch` stays for plan-only
+# previews (execute unchecked) and manual recovery; dispatch-triggered
+# publishes are not accepted by pub.dev.
 
 on:
+  push:
+    tags:
+      - 'intentcall_*-v*'
   workflow_dispatch:
     inputs:
       execute:
@@ -50,6 +59,6 @@ jobs:
       - name: Publish train (plan or execute)
         run: >-
           dart run tool/intentcall/bin/intentcall.dart publish-train
-          ${{ inputs.execute && '--execute' || '' }}
+          ${{ (github.event_name == 'push' || inputs.execute) && '--execute' || '' }}
           --skip-existing
-          --retries "${{ inputs.retries }}"
+          --retries "${{ inputs.retries || '3' }}"
