@@ -20,6 +20,13 @@
   property query emission in the default artifact until it has separate Xcode
   macro proof.
 
+## [1.2.0](https://github.com/Arenukvern/intentcall/compare/intentcall_platform-v1.0.0...intentcall_platform-v1.2.0) (2026-10-02)
+
+
+### Miscellaneous Chores
+
+* **intentcall_platform:** Synchronize intentcall package train versions
+
 ## [1.0.0](https://github.com/Arenukvern/intentcall/compare/intentcall_platform-v0.7.0...intentcall_platform-v1.0.0) (2026-10-01)
 
 

@@ -8,6 +8,13 @@
   app-owned typed entity snapshots, including display, keyword, link, freshness,
   version, and deletion metadata.
 
+## [1.2.0](https://github.com/Arenukvern/intentcall/compare/intentcall_schema-v1.0.0...intentcall_schema-v1.2.0) (2026-10-02)
+
+
+### Miscellaneous Chores
+
+* **intentcall_schema:** Synchronize intentcall package train versions
+
 ## [1.0.0](https://github.com/Arenukvern/intentcall/compare/intentcall_schema-v0.7.0...intentcall_schema-v1.0.0) (2026-10-01)
 
 

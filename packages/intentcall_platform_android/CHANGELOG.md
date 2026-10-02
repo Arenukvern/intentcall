@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## [1.2.0](https://github.com/Arenukvern/intentcall/compare/intentcall_platform_android-v1.0.0...intentcall_platform_android-v1.2.0) (2026-10-02)
+
+
+### Miscellaneous Chores
+
+* **intentcall_platform_android:** Synchronize intentcall package train versions
+
 ## [1.0.0](https://github.com/Arenukvern/intentcall/compare/intentcall_platform_android-v0.7.0...intentcall_platform_android-v1.0.0) (2026-10-01)
 
 
