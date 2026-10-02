@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.1.0
 
 ### Features
 
@@ -8,6 +8,10 @@
   `IntentAutomationHint`; locator requirements are per-action (navigate
   and evaluate take invocation operands instead). `fromJson` tolerates
   pre-action hints (absent action = click).
+- Add `IntentAutomationAction.custom`: route an intent to a named action
+  from the driver's surface-action catalog (the action name rides
+  `locator['name']`, arguments travel with the invocation). Companion to
+  the `universal_automation_interface` 0.2.0 `InvokeAction` tier.
 
 
 - Add `IntentAutomationHint` (ADR: universal_automation family ADR 0038):

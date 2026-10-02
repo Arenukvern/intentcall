@@ -19,7 +19,16 @@ enum IntentAutomationAction {
   navigate,
 
   /// Evaluate the read-only expression from the invocation text.
-  evaluate;
+  evaluate,
+
+  /// Invoke the named surface action from the driver's action catalog.
+  ///
+  /// The locator carries the catalog name under `name`; the invocation's
+  /// `args` map travels with the invocation (JSON-encodable). Catalog
+  /// actions are how an intent drives framework- or app-specific verbs —
+  /// a checkout flow, a Jaspr component contract — without waiting for a
+  /// driver release to grow the universal verb set.
+  custom;
 
   /// Parses [value] (wire form); `null` when it names no action.
   static IntentAutomationAction? tryParse(final Object? value) {
@@ -55,7 +64,8 @@ final class IntentAutomationHint {
     final locatorDriven = switch (action) {
       IntentAutomationAction.click ||
       IntentAutomationAction.type ||
-      IntentAutomationAction.key => true,
+      IntentAutomationAction.key ||
+      IntentAutomationAction.custom => true,
       IntentAutomationAction.navigate ||
       IntentAutomationAction.evaluate => false,
     };
@@ -64,6 +74,14 @@ final class IntentAutomationHint {
         locator,
         'locator',
         'must not be empty for ${action.wire}',
+      );
+    }
+    if (action == IntentAutomationAction.custom &&
+        (locator['name'] ?? '').trim().isEmpty) {
+      throw ArgumentError.value(
+        locator,
+        'locator',
+        "custom hints must name the catalog action under locator['name']",
       );
     }
   }
@@ -99,7 +117,8 @@ final class IntentAutomationHint {
       switch (action) {
         IntentAutomationAction.click ||
         IntentAutomationAction.type ||
-        IntentAutomationAction.key => true,
+        IntentAutomationAction.key ||
+        IntentAutomationAction.custom => true,
         IntentAutomationAction.navigate ||
         IntentAutomationAction.evaluate => false,
       };
@@ -116,7 +135,8 @@ final class IntentAutomationHint {
   /// Locator to resolve against the driver's snapshot (`ref`, `name`,
   /// `role`, `css` — the consuming driver defines the grammar). Empty for
   /// [IntentAutomationAction.navigate]/[IntentAutomationAction.evaluate],
-  /// whose operands come from the invocation.
+  /// whose operands come from the invocation. [IntentAutomationAction.custom]
+  /// hints carry the catalog action name under `name`.
   final Map<String, String> locator;
 
   /// Serializes the hint (JSON-encodable, payload-free).

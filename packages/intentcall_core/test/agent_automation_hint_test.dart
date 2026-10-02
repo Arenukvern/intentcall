@@ -68,8 +68,40 @@ void main() {
           IntentAutomationAction.type);
       expect(IntentAutomationAction.tryParse('evaluate'),
           IntentAutomationAction.evaluate);
+      expect(IntentAutomationAction.tryParse('custom'),
+          IntentAutomationAction.custom);
       expect(IntentAutomationAction.tryParse('detonate'), isNull);
       expect(IntentAutomationAction.tryParse(null), isNull);
+    });
+
+    test('custom hints require the catalog name under locator.name', () {
+      expect(
+        () => IntentAutomationHint(
+          driver: 'toolkit',
+          action: IntentAutomationAction.custom,
+        ),
+        throwsArgumentError,
+      );
+      expect(
+        () => IntentAutomationHint(
+          driver: 'toolkit',
+          action: IntentAutomationAction.custom,
+          locator: const {'role': 'button'},
+        ),
+        throwsArgumentError,
+      );
+    });
+
+    test('custom hints round-trip through JSON', () {
+      final hint = IntentAutomationHint(
+        driver: 'toolkit',
+        action: IntentAutomationAction.custom,
+        locator: const {'name': 'app.checkout_flow'},
+      );
+      final restored = IntentAutomationHint.fromJson(hint.toJson());
+      expect(restored, isNotNull);
+      expect(restored!.action, IntentAutomationAction.custom);
+      expect(restored.locator['name'], 'app.checkout_flow');
     });
 
     test('navigate/evaluate carry no locator; click/type/key need one', () {

@@ -1,6 +1,6 @@
 {
   "packages/intentcall_schema": "1.0.0",
-  "packages/intentcall_core": "1.0.0",
+  "packages/intentcall_core": "1.1.0",
   "packages/intentcall_session": "1.0.0",
   "packages/intentcall_mcp": "1.0.0",
   "packages/intentcall_webmcp": "1.0.0",
