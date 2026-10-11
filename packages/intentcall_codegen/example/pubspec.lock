@@ -255,28 +255,28 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "0.6.0"
+    version: "1.0.0"
   intentcall_core:
     dependency: "direct main"
     description:
       path: "../../intentcall_core"
       relative: true
     source: path
-    version: "0.6.0"
+    version: "1.0.0"
   intentcall_platform_sync:
     dependency: "direct main"
     description:
       path: "../../intentcall_platform_sync"
       relative: true
     source: path
-    version: "0.6.0"
+    version: "1.0.0"
   intentcall_schema:
     dependency: "direct main"
     description:
       path: "../../intentcall_schema"
       relative: true
     source: path
-    version: "0.6.0"
+    version: "1.0.0"
   intl:
     dependency: transitive
     description:

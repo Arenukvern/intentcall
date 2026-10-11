@@ -6,6 +6,7 @@ import 'package:from_json_to_json/from_json_to_json.dart';
 
 import 'acp_agent_backend.dart';
 import 'acp_move.dart';
+import 'acp_auth.dart';
 import 'acp_types.dart';
 
 /// Optional capability for backends that need to ask the CLIENT for
@@ -111,6 +112,20 @@ final class AcpStdioServer {
   Future<void> _handleMessageSafe(Map<String, Object?> message) async {
     try {
       await _handleMessage(message);
+    } on AcpAgentError catch (error) {
+      // Deliberate backend refusal (auth_required et al.) — preserve the
+      // code and data so the client can branch typed.
+      _write({
+        'jsonrpc': '2.0',
+        'id': message['id'],
+        'error': _error(
+          error.code,
+          error.message,
+          data: error.data is Map
+              ? (error.data as Map).cast<String, Object?>()
+              : null,
+        ),
+      });
     } on Object catch (error, stack) {
       _write({
         'jsonrpc': '2.0',
@@ -167,6 +182,20 @@ final class AcpStdioServer {
       if (result != _noResponse) {
         _write({'jsonrpc': '2.0', 'id': id, 'result': result});
       }
+    } on AcpAgentError catch (error) {
+      // Deliberate backend refusal (auth_required et al.) — preserve the
+      // code and data so the client can branch typed.
+      _write({
+        'jsonrpc': '2.0',
+        'id': id,
+        'error': _error(
+          error.code,
+          error.message,
+          data: error.data is Map
+              ? (error.data as Map).cast<String, Object?>()
+              : null,
+        ),
+      });
     } on Object catch (error, stack) {
       _write({
         'jsonrpc': '2.0',
@@ -197,6 +226,18 @@ final class AcpStdioServer {
       case 'session/prompt':
         return _prompt(params);
 
+      case 'session/authenticate':
+        final authenticating = backend as AcpAuthenticating?;
+        if (authenticating == null) {
+          throw StateError('session/authenticate not supported: $method');
+        }
+        final methodId = switch (params) {
+          {'methodId': final String methodId} => methodId,
+          _ => '',
+        };
+        final authenticated = await authenticating.authenticate(methodId);
+        return {'authenticated': authenticated};
+
       case 'ping':
         return <String, Object?>{};
 
@@ -215,7 +256,9 @@ final class AcpStdioServer {
       'protocolVersion': agreedVersion,
       'agentCapabilities': backend.agentCapabilities,
       'agentInfo': {'name': backend.name, 'version': backend.version},
-      'authMethods': [],
+      'authMethods': backend is AcpAuthenticating
+          ? (backend as AcpAuthenticating).authMethods
+          : [],
     };
   }
 

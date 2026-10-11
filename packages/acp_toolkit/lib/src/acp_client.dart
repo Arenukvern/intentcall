@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:from_json_to_json/from_json_to_json.dart';
 
+import 'acp_auth.dart';
 import 'acp_types.dart';
 
 /// Result of a successful `initialize` handshake.
@@ -91,6 +92,7 @@ final class AcpClient {
     this.permissionHandler,
     this.serverRequestHandler,
     this.onOutOfTurnEvent,
+    this.initializeSettleDelay = Duration.zero,
     this._process,
   }) {
     _subscription = agentOutput
@@ -110,6 +112,8 @@ final class AcpClient {
     AcpPermissionDelegate? permissionHandler,
     AcpServerRequestHandler? serverRequestHandler,
     AcpUpdateHandler? onOutOfTurnEvent,
+    void Function(String line)? onStderr,
+    Duration initializeSettleDelay = Duration.zero,
   }) async {
     final process = await Process.start(
       command,
@@ -118,10 +122,19 @@ final class AcpClient {
       environment: environment,
       includeParentEnvironment: includeParentEnvironment,
     );
+    // STDERR MUST BE DRAINED: a chatty agent (codex-acp dumps its model
+    // catalog errors) fills the 64KB pipe buffer and blocks mid-startup,
+    // so session/new never gets answered. Drain by default; surface
+    // lines when [onStderr] is given.
+    process.stderr
+        .transform(utf8.decoder)
+        .transform(const LineSplitter())
+        .listen(onStderr ?? (_) {});
     return AcpClient(
       agentOutput: process.stdout,
       agentInput: process.stdin,
       protocolVersion: protocolVersion,
+      initializeSettleDelay: initializeSettleDelay,
       permissionHandler: permissionHandler,
       serverRequestHandler: serverRequestHandler,
       onOutOfTurnEvent: onOutOfTurnEvent,
@@ -132,6 +145,12 @@ final class AcpClient {
   /// Highest protocol version this client supports; negotiated down when the
   /// agent only speaks an older one.
   final int protocolVersion;
+
+  /// Settle pause between the initialize response and the `initialized`
+  /// notification. Zero by default: the codex-acp session hang turned out
+  /// to be its undrained stderr (fixed in [spawn]), not notification
+  /// timing — the knob stays for agents that need it.
+  final Duration initializeSettleDelay;
 
   /// The spawned agent process's pid, when this client owns one — for
   /// liveness observation only (never an unverified signal).
@@ -155,16 +174,24 @@ final class AcpClient {
   StreamSubscription<void>? _subscription;
   final Map<Object, Completer<Map<String, Object?>>> _pending = {};
   final Map<String, AcpUpdateHandler> _activePrompts = {};
+  final Map<String, AcpSessionModes> _sessionModes = {};
   var _nextRequestId = 1;
   var _initialized = false;
   var _closed = false;
+  var _authMethods = <AcpAuthMethod>[];
 
   bool get isClosed => _closed;
 
   Future<void> initialize() async {
     final result = await _request('initialize', {
       'protocolVersion': protocolVersion,
-      'clientCapabilities': const <String, Object?>{},
+      // Real agents validate the capability shape (gemini-cli rejects
+      // `{}` with -32602) — spell the baseline honestly: no fs, no
+      // terminal access.
+      'clientCapabilities': const <String, Object?>{
+        'fs': <String, Object?>{'readTextFile': false, 'writeTextFile': false},
+        'terminal': false,
+      },
     });
     final agreed = result['protocolVersion'] as int? ?? protocolVersion;
     if (agreed > protocolVersion) {
@@ -172,17 +199,156 @@ final class AcpClient {
         'Agent requires ACP v$agreed but this client supports v$protocolVersion',
       );
     }
+    final rawMethods = result['authMethods'];
+    if (rawMethods is List) {
+      _authMethods = [
+        for (final raw in rawMethods)
+          if (raw is Map)
+            AcpAuthMethod.fromJson(raw.cast<String, Object?>()),
+      ];
+    }
     _initialized = true;
+    // ACP: the client MUST follow the initialize response with the
+    // `initialized` notification. Sent inline: the codex-acp session hang
+    // turned out to be its undrained stderr (drained in [spawn]), not
+    // notification timing. A nonzero [initializeSettleDelay] (opt-in via
+    // spawn for agents that need the gap) still creates a Timer — fake-async
+    // tests pass Duration.zero precisely to avoid that.
+    if (initializeSettleDelay > Duration.zero) {
+      await Future<void>.delayed(initializeSettleDelay);
+    }
+    if (_closed) return;
+    _write(const <String, Object?>{
+      'jsonrpc': '2.0',
+      'method': 'initialized',
+    });
+  }
+
+  /// Authentication methods the agent advertised at `initialize`
+  /// (empty until initialize completes; most agents advertise none and
+  /// manage credentials in their own config store).
+  List<AcpAuthMethod> get authMethods => List.unmodifiable(_authMethods);
+
+  /// Answers the agent's `auth_required` with the chosen [methodId]
+  /// (ACP `session/authenticate`). Agents that complete OAuth over ACP
+  /// (e.g. Gemini CLI) finish here; terminal-auth agents need their own
+  /// login flow first — [AcpAuthRequiredException] names the state.
+  Future<void> authenticate(final String methodId) async {
+    _ensureInitialized();
+    await _request('session/authenticate', {'methodId': methodId});
   }
 
   Future<String> newSession({String cwd = '.'}) async {
     _ensureInitialized();
-    final result = await _request('session/new', {'cwd': cwd});
+    final Map<String, Object?> result;
+    try {
+      // `mcpServers` is part of the v1 session/new contract — strict
+      // agents (gemini-cli) reject its absence with -32602.
+      result = await _request('session/new', {
+        'cwd': cwd,
+        'mcpServers': const <Object>[],
+      });
+    } on AcpRemoteError catch (error) {
+      // ACP: `session/new` may refuse with -32000/auth_required; surface
+      // it typed with the advertised methods instead of a string error.
+      if (error.code == -32000 || error.message.contains('auth')) {
+        final data = error.data;
+        final methods = <AcpAuthMethod>[
+          if (data is Map && data['authMethods'] is List)
+            for (final raw in data['authMethods'] as List)
+              if (raw is Map)
+                AcpAuthMethod.fromJson(raw.cast<String, Object?>()),
+        ];
+        throw AcpAuthRequiredException(
+          message: error.message,
+          authMethods: methods.isNotEmpty ? methods : _authMethods,
+        );
+      }
+      rethrow;
+    }
     final sessionId = result['sessionId'] as String?;
     if (sessionId == null || sessionId.isEmpty) {
       throw StateError('Agent returned no sessionId from session/new');
     }
+    _rememberModes(sessionId, result['modes']);
     return sessionId;
+  }
+
+  /// The mode set advertised for [sessionId] (null when the agent does
+  /// not implement modes — the coarse client-side switcher still works).
+  AcpSessionModes? sessionModesOf(final String sessionId) =>
+      _sessionModes[sessionId];
+
+  /// Switches the agent's own mode (`session/set_mode`) — the codex/zed/
+  /// cursor-style switcher's agent side. The cached current id follows.
+  Future<void> setSessionMode(
+    final String sessionId,
+    final String modeId,
+  ) async {
+    _ensureInitialized();
+    await _request('session/set_mode', {
+      'sessionId': sessionId,
+      'modeId': modeId,
+    });
+    final known = _sessionModes[sessionId];
+    _sessionModes[sessionId] = AcpSessionModes(
+      currentModeId: modeId,
+      available: known?.available ?? const [],
+    );
+  }
+
+  void _rememberModes(final String sessionId, final Object? raw) {
+    if (raw is Map) {
+      _sessionModes[sessionId] = AcpSessionModes.fromJson(
+        raw.cast<String, Object?>(),
+      );
+    } else {
+      _sessionModes.remove(sessionId);
+    }
+  }
+
+  /// Resumes a previous conversation (`session/load`, ACP spec): the
+  /// agent answers carrying the session id and replays its history as
+  /// `session/update` notifications on the normal update channel — a
+  /// resumed session prompts exactly like a fresh one. Agents that do
+  /// not implement the method answer -32601 (method not found); callers
+  /// fall back to [newSession] with their own "context reset" marker.
+  ///
+  /// This is the multiplayer-handoff enabler: a chat's session id lives
+  /// on the shared document, so the device that takes over the session
+  /// (or the restarted process on the same device) reloads the
+  /// conversation instead of silently starting empty.
+  Future<String> loadSession(String sessionId, {String cwd = '.'}) async {
+    _ensureInitialized();
+    final Map<String, Object?> result;
+    try {
+      // The params mirror session/new's strictness (gemini-cli rejects
+      // absent mcpServers with -32602).
+      result = await _request('session/load', {
+        'sessionId': sessionId,
+        'cwd': cwd,
+        'mcpServers': const <Object>[],
+      });
+    } on AcpRemoteError catch (error) {
+      // Same typed auth refusal as session/new (-32000/auth_required).
+      if (error.code == -32000 || error.message.contains('auth')) {
+        final data = error.data;
+        final methods = <AcpAuthMethod>[
+          if (data is Map && data['authMethods'] is List)
+            for (final raw in data['authMethods'] as List)
+              if (raw is Map)
+                AcpAuthMethod.fromJson(raw.cast<String, Object?>()),
+        ];
+        throw AcpAuthRequiredException(
+          message: error.message,
+          authMethods: methods.isNotEmpty ? methods : _authMethods,
+        );
+      }
+      rethrow;
+    }
+    final returned = result['sessionId'] as String?;
+    _rememberModes(sessionId, result['modes']);
+    return (returned == null || returned.isEmpty) ? sessionId : returned;
   }
 
   /// Runs one prompt turn, streaming [AcpSessionUpdate]s to [onUpdate].
@@ -294,7 +460,11 @@ final class AcpClient {
       if (pending == null) return;
       final error = message['error'];
       if (error != null) {
-        pending.completeError(StateError('$error'));
+        pending.completeError(
+          error is Map
+              ? AcpRemoteError.fromMap(error.cast<String, Object?>())
+              : AcpRemoteError(0, '$error'),
+        );
       } else {
         pending.complete(jsonDecodeMap(message['result']));
       }

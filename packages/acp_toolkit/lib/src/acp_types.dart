@@ -110,6 +110,7 @@ sealed class AcpSessionUpdate {
     UserMessageChunk() => 'user_message_chunk',
     ToolCallUpdate() => 'tool_call_update',
     Plan() => 'plan',
+    CurrentModeUpdate() => 'current_mode_update',
     UnknownSessionUpdate(:final kind) => kind,
   };
 
@@ -159,6 +160,10 @@ sealed class AcpSessionUpdate {
               )
               .toList(),
         );
+      case 'current_mode_update':
+        return CurrentModeUpdate(
+          currentModeId: json['currentModeId'] as String? ?? '',
+        );
       default:
         return UnknownSessionUpdate(kind: update, raw: json);
     }
@@ -206,6 +211,9 @@ sealed class AcpSessionUpdate {
           )
           .toList(),
     },
+    CurrentModeUpdate(:final currentModeId) => {
+      'currentModeId': currentModeId,
+    },
     UnknownSessionUpdate() => const <String, Object?>{},
   };
 }
@@ -249,6 +257,68 @@ class PlanEntry {
   final String content;
   final String priority;
   final String status;
+}
+
+/// One selectable agent mode (ACP `session/modes`): the coarse permission
+/// stance the AGENT owns (claude-code: `default`/`acceptEdits`/`plan`/
+/// `bypassPermissions`; codex adapters expose their approval set).
+class AcpSessionModeInfo {
+  const AcpSessionModeInfo({
+    required this.id,
+    this.name,
+    this.description,
+  });
+
+  factory AcpSessionModeInfo.fromJson(Map<String, Object?> json) =>
+      AcpSessionModeInfo(
+        id: json['id'] as String? ?? '',
+        name: json['name'] as String?,
+        description: json['description'] as String?,
+      );
+
+  final String id;
+  final String? name;
+  final String? description;
+
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'name': ?name,
+    'description': ?description,
+  };
+}
+
+/// The advertised mode set of one live session (the `modes` field of the
+/// `session/new` / `session/load` responses). Null current = the agent
+/// reports the set without an active marker.
+class AcpSessionModes {
+  const AcpSessionModes({
+    this.currentModeId,
+    this.available = const [],
+  });
+
+  factory AcpSessionModes.fromJson(Map<String, Object?> json) =>
+      AcpSessionModes(
+        currentModeId: json['currentModeId'] as String?,
+        available: (json['available'] as List<Object?>? ?? [])
+            .whereType<Map<String, Object?>>()
+            .map(AcpSessionModeInfo.fromJson)
+            .toList(),
+      );
+
+  final String? currentModeId;
+  final List<AcpSessionModeInfo> available;
+
+  Map<String, Object?> toJson() => {
+    'currentModeId': ?currentModeId,
+    'available': available.map((m) => m.toJson()).toList(),
+  };
+}
+
+/// `current_mode_update` — the agent switched (or reports) the active
+/// mode mid-session.
+class CurrentModeUpdate extends AcpSessionUpdate {
+  const CurrentModeUpdate({required this.currentModeId});
+  final String currentModeId;
 }
 
 class Plan extends AcpSessionUpdate {
