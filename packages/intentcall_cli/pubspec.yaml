@@ -1,6 +1,6 @@
 name: intentcall_cli
 description: PRE-RELEASE — Framework-neutral IntentCall CLI for manifest export and platform sync.
-version: 1.0.0
+version: 1.2.0
 license: MIT
 repository: https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_cli
 issue_tracker: https://github.com/Arenukvern/intentcall/issues
@@ -20,16 +20,16 @@ executables:
 dependencies:
   args: ^2.7.0
   dart_mcp: ^0.5.0
-  intentcall_core: ^1.0.0
-  intentcall_mcp: ^1.0.0
-  intentcall_platform_sync: ^1.0.0
-  intentcall_schema: ^1.0.0
+  intentcall_core: ^1.2.0
+  intentcall_mcp: ^1.2.0
+  intentcall_platform_sync: ^1.2.0
+  intentcall_schema: ^1.2.0
   meta: ^1.17.0
   path: ^1.9.1
   yaml: ^3.1.3
 
 dev_dependencies:
-  intentcall_codegen: ^1.0.0
+  intentcall_codegen: ^1.2.0
   lints: ^6.1.0
   test: ^1.31.1
   xsoulspace_lints: ^0.1.2
