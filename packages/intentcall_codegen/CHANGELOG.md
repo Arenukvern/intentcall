@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/Arenukvern/intentcall/compare/intentcall_codegen-v1.0.0...intentcall_codegen-v1.2.0) (2026-10-26)
+
+
+### Features
+
+* **acp_toolkit:** the session/authenticate surface ([3419b58](https://github.com/Arenukvern/intentcall/commit/3419b58a2a8296aa38b8a7f9a1e3ee2911e85e6d))
+
 ## [1.0.0](https://github.com/Arenukvern/intentcall/compare/intentcall_codegen-v0.7.0...intentcall_codegen-v1.0.0) (2026-10-01)
 
 

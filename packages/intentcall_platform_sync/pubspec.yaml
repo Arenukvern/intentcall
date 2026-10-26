@@ -1,6 +1,6 @@
 name: intentcall_platform_sync
 description: PRE-RELEASE — Dart-only platform manifest, emitters, and sync for IntentCall.
-version: 1.0.0
+version: 1.2.0
 license: MIT
 repository: https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_platform_sync
 issue_tracker: https://github.com/Arenukvern/intentcall/issues
