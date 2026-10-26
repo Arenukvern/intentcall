@@ -211,9 +211,7 @@ sealed class AcpSessionUpdate {
           )
           .toList(),
     },
-    CurrentModeUpdate(:final currentModeId) => {
-      'currentModeId': currentModeId,
-    },
+    CurrentModeUpdate(:final currentModeId) => {'currentModeId': currentModeId},
     UnknownSessionUpdate() => const <String, Object?>{},
   };
 }
@@ -263,11 +261,7 @@ class PlanEntry {
 /// stance the AGENT owns (claude-code: `default`/`acceptEdits`/`plan`/
 /// `bypassPermissions`; codex adapters expose their approval set).
 class AcpSessionModeInfo {
-  const AcpSessionModeInfo({
-    required this.id,
-    this.name,
-    this.description,
-  });
+  const AcpSessionModeInfo({required this.id, this.name, this.description});
 
   factory AcpSessionModeInfo.fromJson(Map<String, Object?> json) =>
       AcpSessionModeInfo(
@@ -291,10 +285,7 @@ class AcpSessionModeInfo {
 /// `session/new` / `session/load` responses). Null current = the agent
 /// reports the set without an active marker.
 class AcpSessionModes {
-  const AcpSessionModes({
-    this.currentModeId,
-    this.available = const [],
-  });
+  const AcpSessionModes({this.currentModeId, this.available = const []});
 
   factory AcpSessionModes.fromJson(Map<String, Object?> json) =>
       AcpSessionModes(
@@ -351,6 +342,7 @@ class AcpPermissionRequest {
     required this.title,
     this.kind = 'other',
     this.details,
+    this.expiresAt,
   });
   final String sessionId;
   final String toolCallId;
@@ -362,6 +354,10 @@ class AcpPermissionRequest {
   /// human decides on the CHANGE, not just the path.
   final String? details;
 
+  /// Native owner's exact permission-wait expiry. This is informational
+  /// lifecycle metadata, never an approval or an independently chosen timeout.
+  final DateTime? expiresAt;
+
   Map<String, Object?> toParams() => {
     'sessionId': sessionId,
     'options': [
@@ -372,6 +368,8 @@ class AcpPermissionRequest {
       'title': title,
       'kind': kind,
       if (details != null) 'details': details,
+      if (expiresAt != null)
+        'harnessPermissionExpiresAt': expiresAt!.toUtc().toIso8601String(),
     },
   };
 }

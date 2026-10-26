@@ -3,7 +3,7 @@
 Architecture Decision Records (ADRs) for IntentCall.
 Format: [MADR](https://adr.github.io/madr/) — see any existing ADR for the template.
 
-Next ADR number: **0030**
+Next ADR number: **0031**
 
 ---
 
@@ -31,6 +31,7 @@ Next ADR number: **0030**
 | [0027](0027-agent-usable-projection-results.md)                    | accepted | Agent-usable projection results                                         | 2026-09-22 |
 | [0028](0028-surface-link-no-redraw.md)                             | accepted | Surface link, default WebSocket, no transport redraw                    | 2026-09-23 |
 | [0029](0029-surface-discovery.md)                                  | accepted | Local discovery for web, CLI, macOS, and MCP                            | 2026-09-23 |
+| [0030](0030-guarded-acp-client-services.md) | accepted | Capability-derived guarded ACP client services | 2026-10-13 |
 
 ---
 

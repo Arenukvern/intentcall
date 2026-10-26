@@ -13,6 +13,7 @@ export 'src/acp_agent_backend.dart';
 export 'src/acp_auth.dart';
 export 'src/acp_agent_provider.dart';
 export 'src/acp_client.dart';
+export 'src/acp_client_services.dart';
 export 'src/acp_move.dart';
 export 'src/acp_types.dart';
 export 'src/acp_stdio_server.dart';

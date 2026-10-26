@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:from_json_to_json/from_json_to_json.dart';
 
 import 'acp_auth.dart';
+import 'acp_client_services.dart';
 import 'acp_types.dart';
 
 /// Result of a successful `initialize` handshake.
@@ -34,7 +35,10 @@ final class AcpAgentInfo {
 
 /// Result of a completed prompt turn.
 final class AcpPromptTurnResult {
-  const AcpPromptTurnResult({required this.sessionId, required this.stopReason});
+  const AcpPromptTurnResult({
+    required this.sessionId,
+    required this.stopReason,
+  });
 
   final String sessionId;
   final AcpStopReason stopReason;
@@ -55,9 +59,8 @@ typedef AcpServerRequestHandler =
 /// Decides tool-call permission on behalf of the user. Returning
 /// [AcpPermissionOutcome.allow] answers with the first `allow_once` option,
 /// [AcpPermissionOutcome.reject] with the first `reject_once`.
-typedef AcpPermissionDelegate = Future<AcpPermissionOutcome> Function(
-  AcpPermissionRequest request,
-);
+typedef AcpPermissionDelegate =
+    Future<AcpPermissionOutcome> Function(AcpPermissionRequest request);
 
 /// Callback for `session/update` notifications.
 typedef AcpUpdateHandler = void Function(AcpSessionUpdate update);
@@ -91,6 +94,8 @@ final class AcpClient {
     this.protocolVersion = 1,
     this.permissionHandler,
     this.serverRequestHandler,
+    this.services,
+    this.onTransportDispose,
     this.onOutOfTurnEvent,
     this.initializeSettleDelay = Duration.zero,
     this._process,
@@ -111,6 +116,7 @@ final class AcpClient {
     int protocolVersion = 1,
     AcpPermissionDelegate? permissionHandler,
     AcpServerRequestHandler? serverRequestHandler,
+    AcpClientServices? services,
     AcpUpdateHandler? onOutOfTurnEvent,
     void Function(String line)? onStderr,
     Duration initializeSettleDelay = Duration.zero,
@@ -137,6 +143,7 @@ final class AcpClient {
       initializeSettleDelay: initializeSettleDelay,
       permissionHandler: permissionHandler,
       serverRequestHandler: serverRequestHandler,
+      services: services,
       onOutOfTurnEvent: onOutOfTurnEvent,
       process: process,
     );
@@ -165,6 +172,14 @@ final class AcpClient {
   /// method-not-found error.
   final AcpServerRequestHandler? serverRequestHandler;
 
+  /// Explicit owner-bound services; standard service methods never fall back
+  /// to the generic extension handler.
+  final AcpClientServices? services;
+
+  /// Settles an externally owned transport before disposal completes.
+  final Future<void> Function()? onTransportDispose;
+  Future<void>? _disposal;
+
   /// Receives `session/update` notifications arriving outside any active
   /// [prompt] turn (e.g. agent-initiated progress after cancellation).
   final AcpUpdateHandler? onOutOfTurnEvent;
@@ -188,10 +203,15 @@ final class AcpClient {
       // Real agents validate the capability shape (gemini-cli rejects
       // `{}` with -32602) — spell the baseline honestly: no fs, no
       // terminal access.
-      'clientCapabilities': const <String, Object?>{
-        'fs': <String, Object?>{'readTextFile': false, 'writeTextFile': false},
-        'terminal': false,
-      },
+      'clientCapabilities':
+          services?.capabilities ??
+          const <String, Object?>{
+            'fs': <String, Object?>{
+              'readTextFile': false,
+              'writeTextFile': false,
+            },
+            'terminal': false,
+          },
     });
     final agreed = result['protocolVersion'] as int? ?? protocolVersion;
     if (agreed > protocolVersion) {
@@ -203,8 +223,7 @@ final class AcpClient {
     if (rawMethods is List) {
       _authMethods = [
         for (final raw in rawMethods)
-          if (raw is Map)
-            AcpAuthMethod.fromJson(raw.cast<String, Object?>()),
+          if (raw is Map) AcpAuthMethod.fromJson(raw.cast<String, Object?>()),
       ];
     }
     _initialized = true;
@@ -218,10 +237,7 @@ final class AcpClient {
       await Future<void>.delayed(initializeSettleDelay);
     }
     if (_closed) return;
-    _write(const <String, Object?>{
-      'jsonrpc': '2.0',
-      'method': 'initialized',
-    });
+    _write(const <String, Object?>{'jsonrpc': '2.0', 'method': 'initialized'});
   }
 
   /// Authentication methods the agent advertised at `initialize`
@@ -238,7 +254,10 @@ final class AcpClient {
     await _request('session/authenticate', {'methodId': methodId});
   }
 
-  Future<String> newSession({String cwd = '.'}) async {
+  Future<String> newSession({
+    String cwd = '.',
+    List<Map<String, Object?>> mcpServers = const [],
+  }) async {
     _ensureInitialized();
     final Map<String, Object?> result;
     try {
@@ -246,7 +265,7 @@ final class AcpClient {
       // agents (gemini-cli) reject its absence with -32602.
       result = await _request('session/new', {
         'cwd': cwd,
-        'mcpServers': const <Object>[],
+        'mcpServers': mcpServers,
       });
     } on AcpRemoteError catch (error) {
       // ACP: `session/new` may refuse with -32000/auth_required; surface
@@ -318,7 +337,11 @@ final class AcpClient {
   /// on the shared document, so the device that takes over the session
   /// (or the restarted process on the same device) reloads the
   /// conversation instead of silently starting empty.
-  Future<String> loadSession(String sessionId, {String cwd = '.'}) async {
+  Future<String> loadSession(
+    String sessionId, {
+    String cwd = '.',
+    List<Map<String, Object?>> mcpServers = const [],
+  }) async {
     _ensureInitialized();
     final Map<String, Object?> result;
     try {
@@ -327,7 +350,7 @@ final class AcpClient {
       result = await _request('session/load', {
         'sessionId': sessionId,
         'cwd': cwd,
-        'mcpServers': const <Object>[],
+        'mcpServers': mcpServers,
       });
     } on AcpRemoteError catch (error) {
       // Same typed auth refusal as session/new (-32000/auth_required).
@@ -401,7 +424,9 @@ final class AcpClient {
   /// The kill is awaited to verified death: SIGTERM, a bounded grace, then
   /// SIGKILL — dispose never returns while the agent still runs, and never
   /// leaves the kill fire-and-forget.
-  Future<void> dispose() async {
+  Future<void> dispose() => _disposal ??= _dispose();
+
+  Future<void> _dispose() async {
     _closed = true;
     await _subscription?.cancel();
     for (final completer in _pending.values) {
@@ -409,16 +434,16 @@ final class AcpClient {
     }
     _pending.clear();
     final process = _process;
-    if (process == null) return;
+    if (process == null) {
+      await onTransportDispose?.call();
+      return;
+    }
     process.kill();
     try {
       await process.exitCode.timeout(const Duration(seconds: 5));
     } on TimeoutException {
       process.kill(ProcessSignal.sigkill);
-      await process.exitCode.timeout(
-        const Duration(seconds: 5),
-        onTimeout: () => -1,
-      );
+      await process.exitCode.timeout(const Duration(seconds: 5));
     }
   }
 
@@ -498,6 +523,12 @@ final class AcpClient {
           final outcome = await _resolvePermission(params);
           _respond(id, {'outcome': outcome});
         default:
+          if (AcpClientServices.isServiceMethod(method)) {
+            final binding = services;
+            if (binding == null) throw UnimplementedError();
+            _respond(id, await binding.handle(method, params));
+            return;
+          }
           final handler = serverRequestHandler;
           if (handler == null) {
             throw UnimplementedError();
@@ -515,10 +546,9 @@ final class AcpClient {
   Future<Map<String, Object?>> _resolvePermission(
     Map<String, Object?> params,
   ) async {
-    final options =
-        (params['options'] as List<Object?>? ?? [])
-            .whereType<Map<String, Object?>>()
-            .toList();
+    final options = (params['options'] as List<Object?>? ?? [])
+        .whereType<Map<String, Object?>>()
+        .toList();
     Map<String, Object?> fallbackOption() {
       final reject = options.firstWhere(
         (o) => (o['kind'] as String?)?.startsWith('reject') == true,
@@ -532,12 +562,18 @@ final class AcpClient {
       return {'outcome': 'rejected', 'optionId': fallbackOption()['optionId']};
     }
     final meta = jsonDecodeMap(params['_meta']);
+    final expiry = meta['harnessPermissionExpiresAt'];
+    final expiresAt = expiry is String ? DateTime.tryParse(expiry) : null;
+    if (expiry != null && expiresAt == null) {
+      throw const FormatException('invalid_permission_expiry');
+    }
     final request = AcpPermissionRequest(
       sessionId: params['sessionId'] as String? ?? '',
       toolCallId: params['toolCallId'] as String? ?? '',
       title: meta['title'] as String? ?? '',
       kind: meta['kind'] as String? ?? 'other',
       details: meta['details'] as String?,
+      expiresAt: expiresAt,
     );
     final outcome = await delegate(request);
     final wantedKind = switch (outcome) {
@@ -547,8 +583,7 @@ final class AcpClient {
     };
     final option = options.firstWhere(
       (o) => (o['kind'] as String?)?.startsWith(wantedKind) == true,
-      orElse: () =>
-          wantedKind == 'allow'
+      orElse: () => wantedKind == 'allow'
           ? const <String, Object?>{'optionId': 'allow'}
           : fallbackOption(),
     );
