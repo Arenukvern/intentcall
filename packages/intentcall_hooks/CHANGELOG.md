@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## [1.2.0](https://github.com/Arenukvern/intentcall/compare/intentcall_hooks-v1.0.0...intentcall_hooks-v1.2.0) (2026-11-07)
+
+
+### Bug Fixes
+
+* **hooks:** co-resolve with code_assets 2.x consumers ([63722b2](https://github.com/Arenukvern/intentcall/commit/63722b2803daf0a7c320bef437887e0b2f995df0))
+
 ## [1.0.0](https://github.com/Arenukvern/intentcall/compare/intentcall_hooks-v0.7.0...intentcall_hooks-v1.0.0) (2026-10-01)
 
 

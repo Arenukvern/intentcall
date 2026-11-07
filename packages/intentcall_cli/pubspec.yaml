@@ -1,6 +1,6 @@
 name: intentcall_cli
 description: PRE-RELEASE — Framework-neutral IntentCall CLI for manifest export and platform sync.
-version: 1.0.0
+version: 1.2.0
 license: MIT
 repository: https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_cli
 issue_tracker: https://github.com/Arenukvern/intentcall/issues
