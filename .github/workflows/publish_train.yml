@@ -1,23 +1,26 @@
-name: Publish pub.dev train (waves)
+name: Publish pub.dev package (per-tag)
 
-# Single-run, wave-parallel publish of every pending packages/* package.
-# Fires automatically on release-please train tags (`intentcall_*-v*`):
-# release-please pushes one tag PER package (15 runs fire), and
-# `cancel-in-progress: true` makes the NEWEST tag's run the train owner —
-# earlier in-flight runs are cancelled cleanly, and `--skip-existing`
-# makes every run idempotent (it publishes only what pub.dev lacks).
-# Packages publish concurrently within dependency waves (pubspec-computed,
-# never hand-maintained); the wave boundary is the dependency wait. No
-# per-package dry-run — the PR gate owns the strict preflight — and no
-# 300s serial visibility polls, the measured cause of the silent hour.
-# Target wall time: ~10 minutes, with per-package progress lines and a
-# step-summary table.
+# ONE small run PER PACKAGE TAG — the architecture pub.dev itself mandates.
+# Verified: "publishing is configured to only be allowed from actions with
+# specific ref pattern … Expected tag 'intentcall_bridge-v1.2.0'" — each
+# package may only be published from a run whose triggering ref is THAT
+# package's own `intentcall_<name>-v<version>` tag. A single consolidated
+# train run can therefore only ever publish the one package its tag names
+# (measured 2026-11-08: one batch, one package, everything else refused);
+# the previous monolithic train design fought this constraint for an hour.
+#
+# Release-please already pushes one tag per package on the train merge, so
+# each tag fires this workflow, and each run publishes exactly its own
+# package: static check -> skip if pub.dev has it -> wait (bounded) for
+# same-train dependencies to become visible -> publish -> confirm.
+# Ordering emerges from the dependency waits; a run whose dependencies are
+# not yet visible fails fast and a re-run resumes (skip-existing), so the
+# fan-out self-heals. The wave-parallel `publish-train` command remains in
+# the CLI for LOCAL publishing (browser auth is not ref-gated).
 #
 # pub.dev automated publishing verifies repository + tag pattern + event
-# type (tag push only) and does not pin a workflow filename, so this
-# workflow is the one authorized publisher. `workflow_dispatch` stays for
-# plan-only previews (execute unchecked) and manual recovery;
-# dispatch-triggered publishes are not accepted by pub.dev.
+# type (tag push only); `workflow_dispatch` stays for plan-only previews
+# and manual recovery of one package.
 
 on:
   push:
@@ -26,32 +29,28 @@ on:
   workflow_dispatch:
     inputs:
       execute:
-        description: 'Publish for real (unchecked = plan the order only)'
+        description: 'Publish for real (unchecked = preflight only)'
         required: true
         type: boolean
         default: false
-      retries:
-        description: 'Publish attempts per package'
+      tag:
+        description: 'Tag to publish (defaults to the dispatching ref)'
         required: false
         type: string
-        default: '3'
 
 permissions:
   contents: read
   id-token: write
 
 concurrency:
-  group: pub-dev-train
-  # The newest tag's run owns the train; superseded runs cancel instead of
-  # queueing (cancel-in-progress:false wedged a queued run with zero jobs
-  # during the 2026-11-08 GitHub incident and produced the 15-run pileup).
+  group: pub-dev-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  publish-train:
+  publish-package:
     runs-on: ubuntu-latest
     environment: pub.dev
-    timeout-minutes: 40
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
 
@@ -65,9 +64,11 @@ jobs:
       - name: Workspace dependencies
         run: dart pub get
 
-      - name: Publish train (plan or execute)
+      - name: Publish this tag's package
+        env:
+          PUB_PUBLISH_WAIT_SECONDS: '240'
         run: >-
-          dart run tool/intentcall/bin/intentcall.dart publish-train
+          dart run tool/intentcall/bin/intentcall.dart publish-tag
+          --tag "${{ inputs.tag || github.ref_name }}"
           ${{ (github.event_name == 'push' || inputs.execute) && '--execute' || '' }}
           --skip-existing
-          --retries "${{ inputs.retries || '3' }}"
