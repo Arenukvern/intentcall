@@ -183,8 +183,9 @@ void main(List<String> arguments) async {
           'execute',
           negatable: false,
           help:
-              'Publish the whole train in dependency order. Without this '
-              'flag the command prints the computed order and stops.',
+              'Publish the whole train in dependency waves (concurrent '
+              'within a wave). Without this flag the command prints the '
+              'computed waves and stops.',
         )
         ..addFlag(
           'skip-existing',
@@ -1787,6 +1788,45 @@ List<_WorkspacePackage> readWorkspacePackages(Directory repoRoot) {
   return packages;
 }
 
+/// Topological WAVES over the sibling-dependency DAG: wave N lists every
+/// package whose same-train dependencies are all in waves < N, so a wave
+/// can publish its packages CONCURRENTLY — the wave boundary is the
+/// dependency wait, and wall time is waves × per-package latency instead
+/// of Σ(per-package latency). Same edges, same cycle refusal as
+/// [dependencyOrder].
+List<List<_WorkspacePackage>> dependencyWaves(
+  List<_WorkspacePackage> packages,
+) {
+  final byName = {for (final pkg in packages) pkg.name: pkg};
+  final remaining = {
+    for (final pkg in packages) pkg.name: pkg.siblingDependencies
+        .where(byName.containsKey)
+        .toSet(),
+  };
+  final waves = <List<_WorkspacePackage>>[];
+  while (remaining.isNotEmpty) {
+    final ready = remaining.entries
+        .where((e) => e.value.isEmpty)
+        .map((e) => e.key)
+        .toList()
+      ..sort();
+    if (ready.isEmpty) {
+      stderr.writeln(
+        'FAIL: dependency cycle between: ${remaining.keys.toList()..sort()}',
+      );
+      throw StateError('publish-train: dependency cycle');
+    }
+    waves.add([for (final name in ready) byName[name]!]);
+    for (final name in ready) {
+      for (final entry in remaining.entries) {
+        entry.value.remove(name);
+      }
+      remaining.remove(name);
+    }
+  }
+  return waves;
+}
+
 /// Kahn topological order over sibling dependency edges, alphabetical
 /// tiebreak for determinism. Sibling deps not present in the workspace
 /// (should not happen) are ignored. Throws on dependency cycles.
@@ -1820,12 +1860,14 @@ List<_WorkspacePackage> dependencyOrder(List<_WorkspacePackage> packages) {
   return ordered;
 }
 
-/// Publishes the whole train in dependency order computed from the
+/// Publishes the whole train in dependency WAVES computed from the
 /// pubspecs themselves (never a hand-maintained list — the 0.7.0 train
 /// failed 4 publishes because per-tag runs raced and the federated tail
-/// needed its implementations first). Per-package retries with backoff;
-/// a package that exhausts its budget is recorded and the train continues
-/// so one failure does not cascade.
+/// needed its implementations first). Packages within a wave publish
+/// concurrently; the wave boundary is the dependency wait. No per-package
+/// dry-run (the PR gate owns the strict preflight) and no serial 300s
+/// visibility polls — the measured cause of the silent hour. A failed
+/// wave stops the train (resumable: re-run skips published versions).
 Future<int> runPublishTrain(
   Directory repoRoot, {
   required bool dryRun,
@@ -1866,9 +1908,35 @@ Future<int> runPublishTrain(
     return 65;
   }
 
-  print('== publish-train: ${order.length} packages in computed order ==');
-  for (final i in order.indexed) {
-    print('  ${i.$1 + 1}. ${i.$2.name} ${i.$2.version}');
+  // Pending first (one parallel API pass): the waves are computed over
+  // the not-yet-published subset, so a resumed train skips straight to
+  // the remaining work and wave boundaries stay meaningful.
+  final pending = <_WorkspacePackage>[];
+  for (final pkg in order) {
+    if (!skipExisting || !await packageHasVersion(pkg.name, pkg.version)) {
+      pending.add(pkg);
+    } else {
+      print(
+        'OK: pub.dev already exposes ${pkg.name} ${pkg.version}; skipping.',
+      );
+    }
+  }
+
+  final List<List<_WorkspacePackage>> waves;
+  try {
+    waves = dependencyWaves(pending);
+  } on StateError {
+    return 65;
+  }
+
+  print(
+    '== publish-train: ${order.length} packages, '
+    '${pending.length} pending in ${waves.length} waves ==',
+  );
+  for (final (w, wave) in waves.indexed) {
+    print(
+      '  wave ${w + 1} (parallel): ${wave.map((e) => e.name).join(', ')}',
+    );
   }
   if (dryRun) {
     print('\nOK: publish-train plan complete (dry-run; pass --execute).');
@@ -1886,59 +1954,189 @@ Future<int> runPublishTrain(
 
   // Whole-repo validation is expensive — run it once for the train, not
   // once per package (14 × validate would blow the workflow timeout).
-  if (!dryRun) {
-    final validateCode = await runValidate(repoRoot);
-    if (validateCode != 0) {
-      return validateCode;
-    }
+  final validateCode = await runValidate(repoRoot);
+  if (validateCode != 0) {
+    return validateCode;
   }
 
-  final failed = <String>[];
-  for (final pkg in order) {
-    final release = PackageRelease(package: pkg.name, version: pkg.version);
-    var published = false;
-    for (var attempt = 1; attempt <= retries && !published; attempt++) {
-      if (attempt > 1) {
-        final backoff = Duration(seconds: 30 * (attempt - 1));
-        print(
-          '» retrying ${pkg.name} in ${backoff.inSeconds}s '
-          '(attempt $attempt/$retries)',
-        );
-        await Future<void>.delayed(backoff);
-      }
-      final code = await publishRelease(
-        repoRoot,
-        release,
-        dryRun: false,
-        skipExisting: skipExisting,
-        skipValidation: true,
-      );
-      if (code == 0) {
-        published = true;
-      } else {
-        stderr.writeln(
-          'WARN: ${pkg.name} attempt $attempt/$retries failed (exit $code)',
-        );
-        if (skipExisting && await packageHasVersion(pkg.name, pkg.version)) {
-          print(
-            'OK: pub.dev exposes ${pkg.name} ${pkg.version} after failed attempt; treating as published.',
-          );
-          published = true;
-        }
-      }
-    }
-    if (!published) failed.add(pkg.name);
-  }
-
-  if (failed.isNotEmpty) {
-    stderr.writeln(
-      'FAIL: publish-train finished with failures: ${failed.join(', ')}. '
-      'Re-run with --execute --skip-existing to resume.',
+  final trainStopwatch = Stopwatch()..start();
+  final rows = <_TrainRow>[];
+  for (final (w, wave) in waves.indexed) {
+    print(
+      '\n== wave ${w + 1}/${waves.length}: '
+      '${wave.map((e) => e.name).join(', ')} ==',
     );
-    return 1;
+    final results = await Future.wait([
+      for (final pkg in wave) _publishOneWavePackage(repoRoot, pkg, retries),
+    ]);
+    rows.addAll(results);
+    final failedThisWave = results.where((r) => r.status != 'published').toList();
+    if (failedThisWave.isNotEmpty) {
+      stderr.writeln(
+        'FAIL: wave ${w + 1} failed for: '
+        '${failedThisWave.map((r) => r.name).join(', ')}. '
+        'Re-run with --execute --skip-existing to resume.',
+      );
+      _writeTrainSummary(rows, trainStopwatch, ok: false);
+      return 1;
+    }
+    print('== wave ${w + 1} complete ==');
   }
-  print('\nOK: publish-train complete.');
+
+  _writeTrainSummary(rows, trainStopwatch, ok: true);
+  print(
+    '\nOK: publish-train complete in '
+    '${(trainStopwatch.elapsedMilliseconds / 1000).round()}s '
+    '(${rows.length} packages).',
+  );
   return 0;
+}
+
+/// One published/skipped/failed row for the train summary.
+final class _TrainRow {
+  _TrainRow(
+    this.name,
+    this.version,
+    this.status,
+    this.seconds, [
+    this.detail = '',
+  ]);
+
+  final String name;
+  final String version;
+  final String status;
+  final int seconds;
+  final String detail;
+}
+
+/// Publishes ONE package — no dry-run (the PR gate already ran the
+/// strict preflight), no serial dependency wait (the wave boundary owns
+/// ordering; the visibility probe after upload gates the next wave).
+/// Retries with a short fixed sleep; a failed attempt that pub.dev
+/// contradicts (the version IS exposed) counts as published.
+Future<_TrainRow> _publishOneWavePackage(
+  Directory repoRoot,
+  _WorkspacePackage pkg,
+  int retries,
+) async {
+  final stopwatch = Stopwatch()..start();
+  final release = PackageRelease(package: pkg.name, version: pkg.version);
+  for (var attempt = 1; attempt <= retries; attempt++) {
+    if (attempt > 1) {
+      await Future<void>.delayed(const Duration(seconds: 20));
+      print(
+        '[${pkg.name}] retrying (attempt $attempt/$retries)',
+      );
+    }
+    try {
+      final staticCode = await runReleasePackageStaticCheck(repoRoot, release);
+      if (staticCode != 0) {
+        return _TrainRow(
+          pkg.name,
+          pkg.version,
+          'failed',
+          stopwatch.elapsed.inSeconds,
+          'static check',
+        );
+      }
+      final packageDir = p.join(repoRoot.path, 'packages', pkg.name);
+      final exec = publishExecutableFor(repoRoot, pkg.name);
+      print(
+        '[${pkg.name}] publishing ${pkg.version} '
+        '(attempt $attempt/$retries)...',
+      );
+      final code = await runCommand(exec, [
+        'pub',
+        'publish',
+        '--force',
+      ], packageDir);
+      if (code != 0) {
+        stderr.writeln('[${pkg.name}] attempt $attempt failed (exit $code)');
+        continue;
+      }
+      // Visibility probe: bounded (2 min), gates the next wave — the
+      // next wave's `pub publish` must resolve this version from pub.dev.
+      final visible = await _waitPubVisible(pkg.name, pkg.version);
+      if (!visible) {
+        stderr.writeln(
+          '[${pkg.name}] uploaded but not visible on pub.dev in time',
+        );
+        if (await packageHasVersion(pkg.name, pkg.version)) {
+          return _TrainRow(
+            pkg.name,
+            pkg.version,
+            'published',
+            stopwatch.elapsed.inSeconds,
+            'visible late',
+          );
+        }
+        continue;
+      }
+      print(
+        '[${pkg.name}] ✓ published in '
+        '${(stopwatch.elapsedMilliseconds / 1000).round()}s',
+      );
+      return _TrainRow(
+        pkg.name,
+        pkg.version,
+        'published',
+        stopwatch.elapsed.inSeconds,
+      );
+    } on Object catch (error) {
+      stderr.writeln('[${pkg.name}] attempt $attempt error: $error');
+    }
+  }
+  return _TrainRow(
+    pkg.name,
+    pkg.version,
+    'failed',
+    stopwatch.elapsed.inSeconds,
+    'exhausted $retries attempts',
+  );
+}
+
+/// Polls pub.dev's package API until [version] is exposed. Bounded and
+/// short — pub.dev's own package endpoint usually reflects a fresh
+/// upload within seconds; a 5-minute budget here multiplied by 14
+/// packages and their dependencies was the old train's silent hour.
+Future<bool> _waitPubVisible(String package, String version) async {
+  for (var i = 0; i < 12; i++) {
+    if (await packageHasVersion(package, version)) return true;
+    await Future<void>.delayed(const Duration(seconds: 10));
+  }
+  return false;
+}
+
+/// Appends the per-package train summary (and a GitHub step summary row
+/// set when running in Actions) so a watcher never stares at silence.
+void _writeTrainSummary(
+  List<_TrainRow> rows,
+  Stopwatch trainStopwatch, {
+  required bool ok,
+}) {
+  print('\n== train summary (${rows.length} packages) ==');
+  for (final row in rows) {
+    print(
+      '  ${row.status.padRight(9)} ${row.name.padRight(28)} '
+      '${row.version.padRight(8)} ${row.seconds}s ${row.detail}',
+    );
+  }
+  final summaryPath = Platform.environment['GITHUB_STEP_SUMMARY'];
+  if (summaryPath == null) return;
+  final lines = [
+    '## Publish train — ${ok ? 'complete' : 'failed'} '
+        '(${(trainStopwatch.elapsedMilliseconds / 1000).round()}s)',
+    '',
+    '| status | package | version | seconds | note |',
+    '|---|---|---|---|---|',
+    for (final row in rows)
+      '| ${row.status} | ${row.name} | ${row.version} '
+          '| ${row.seconds} | ${row.detail} |',
+    '',
+  ];
+  File(
+    summaryPath,
+  ).writeAsStringSync(lines.join('\n'), mode: FileMode.append);
 }
 
 PackageRelease? parsePackageReleaseTag(String tag) {

@@ -1,17 +1,23 @@
-name: Publish pub.dev train (ordered)
+name: Publish pub.dev train (waves)
 
-# Single-run, dependency-ordered publish of every pending packages/* package.
-# Fires automatically on release-please train tags (`intentcall_*-v*`): each
-# run publishes every pending version in pubspec-computed order (the federated
-# tail — platform_apple / platform_android — before intentcall_platform),
-# retries each package, and skips versions pub.dev already exposes, so re-runs
-# resume. One ordered train beats a dozen racing per-tag runs.
+# Single-run, wave-parallel publish of every pending packages/* package.
+# Fires automatically on release-please train tags (`intentcall_*-v*`):
+# release-please pushes one tag PER package (15 runs fire), and
+# `cancel-in-progress: true` makes the NEWEST tag's run the train owner —
+# earlier in-flight runs are cancelled cleanly, and `--skip-existing`
+# makes every run idempotent (it publishes only what pub.dev lacks).
+# Packages publish concurrently within dependency waves (pubspec-computed,
+# never hand-maintained); the wave boundary is the dependency wait. No
+# per-package dry-run — the PR gate owns the strict preflight — and no
+# 300s serial visibility polls, the measured cause of the silent hour.
+# Target wall time: ~10 minutes, with per-package progress lines and a
+# step-summary table.
 #
-# pub.dev automated publishing verifies repository + tag pattern + event type
-# (tag push only) and does not pin a workflow filename, so this workflow is
-# the one authorized publisher. `workflow_dispatch` stays for plan-only
-# previews (execute unchecked) and manual recovery; dispatch-triggered
-# publishes are not accepted by pub.dev.
+# pub.dev automated publishing verifies repository + tag pattern + event
+# type (tag push only) and does not pin a workflow filename, so this
+# workflow is the one authorized publisher. `workflow_dispatch` stays for
+# plan-only previews (execute unchecked) and manual recovery;
+# dispatch-triggered publishes are not accepted by pub.dev.
 
 on:
   push:
@@ -36,13 +42,16 @@ permissions:
 
 concurrency:
   group: pub-dev-train
-  cancel-in-progress: false
+  # The newest tag's run owns the train; superseded runs cancel instead of
+  # queueing (cancel-in-progress:false wedged a queued run with zero jobs
+  # during the 2026-11-08 GitHub incident and produced the 15-run pileup).
+  cancel-in-progress: true
 
 jobs:
   publish-train:
     runs-on: ubuntu-latest
     environment: pub.dev
-    timeout-minutes: 120
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
 
