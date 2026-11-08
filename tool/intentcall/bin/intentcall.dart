@@ -1908,12 +1908,15 @@ Future<int> runPublishTrain(
     return 65;
   }
 
-  // Pending first (one parallel API pass): the waves are computed over
+  // Pending first (one PARALLEL API pass): the waves are computed over
   // the not-yet-published subset, so a resumed train skips straight to
   // the remaining work and wave boundaries stay meaningful.
   final pending = <_WorkspacePackage>[];
-  for (final pkg in order) {
-    if (!skipExisting || !await packageHasVersion(pkg.name, pkg.version)) {
+  final existence = await Future.wait([
+    for (final pkg in order) packageHasVersion(pkg.name, pkg.version),
+  ]);
+  for (final (i, pkg) in order.indexed) {
+    if (!skipExisting || !existence[i]) {
       pending.add(pkg);
     } else {
       print(
@@ -2049,7 +2052,7 @@ Future<_TrainRow> _publishOneWavePackage(
         'pub',
         'publish',
         '--force',
-      ], packageDir);
+      ], packageDir, timeout: const Duration(minutes: 10));
       if (code != 0) {
         stderr.writeln('[${pkg.name}] attempt $attempt failed (exit $code)');
         continue;
@@ -2256,12 +2259,22 @@ List<String> sameTrainDependencies(
   return dependencies;
 }
 
+/// One bounded pub.dev existence check: connection + response each time
+/// out, and the client always force-closes — an unbounded call here hung
+/// the whole train silently (2026-11-08: 14 sequential checks, one dead
+/// TLS handshake = no progress, no error, no log).
 Future<bool> packageHasVersion(String package, String version) async {
-  final client = HttpClient();
+  final client = HttpClient()..connectionTimeout = const Duration(seconds: 15);
   try {
     final uri = Uri.https('pub.dev', '/api/packages/$package');
     final request = await client.getUrl(uri);
-    final response = await request.close();
+    final response = await request.close().timeout(
+          const Duration(seconds: 20),
+          onTimeout: () {
+            stderr.writeln('WARN: pub.dev API request for $package timed out');
+            throw const SocketException('pub.dev API timeout');
+          },
+        );
     if (response.statusCode == HttpStatus.notFound) {
       await response.drain<void>();
       return false;
@@ -2273,7 +2286,6 @@ Future<bool> packageHasVersion(String package, String version) async {
       );
       throw StateError('Unexpected pub.dev response');
     }
-
     final body = await response.transform(SystemEncoding().decoder).join();
     return body.contains('"version":"$version"');
   } finally {
@@ -2317,8 +2329,9 @@ List<String> buildPublishArgs({
 Future<int> runCommand(
   String executable,
   List<String> arguments,
-  String workingDirectory,
-) async {
+  String workingDirectory, {
+  Duration? timeout,
+}) async {
   print(
     'Running command: $executable ${arguments.join(' ')} (in $workingDirectory)',
   );
@@ -2328,7 +2341,18 @@ Future<int> runCommand(
     workingDirectory: workingDirectory,
     mode: ProcessStartMode.inheritStdio,
   );
-  return process.exitCode;
+  if (timeout == null) return process.exitCode;
+  return process.exitCode.timeout(
+    timeout,
+    onTimeout: () {
+      stderr.writeln(
+        'FAIL: command exceeded ${timeout.inSeconds}s and was killed: '
+        '$executable ${arguments.join(' ')}',
+      );
+      process.kill(ProcessSignal.sigkill);
+      return 124; // GNU timeout's "timed out" convention.
+    },
+  );
 }
 
 
