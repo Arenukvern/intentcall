@@ -1,4 +1,7 @@
-> ⚠️ **Pre-release train** — Highly experimental. APIs may change without notice. Not for production. [Details](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md).
+> ⚠️ **Workspace-only** — `intentcall_gemma` is not published on pub.dev and is
+> outside the hosted `intentcall_*` package train. The semver 1.x policy in
+> [PRE_RELEASE.md](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md)
+> applies only to packages on that train.
 
 
 # intentcall_gemma

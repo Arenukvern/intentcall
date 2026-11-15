@@ -1,5 +1,5 @@
 name: intentcall_core
-description: PRE-RELEASE — Transport-agnostic agent intent registry and runtime.
+description: Transport-agnostic agent intent registry and runtime.
 version: 1.2.0
 license: MIT
 repository: https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_core

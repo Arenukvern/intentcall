@@ -1,4 +1,4 @@
-> ⚠️ **Pre-release train** — Highly experimental. APIs may change without notice. Not for production. [Details](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md).
+> ⚠️ **Published package train** — Hosted `intentcall_*` packages follow semver 1.x on pub.dev (breaking changes require a major). Not for production claims without app/runtime proof. [Details](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md).
 
 
 # intentcall_mcp
@@ -9,7 +9,7 @@
 
 MCP bridge: `McpPublishAdapter`, registry ↔ `dart_mcp` publish.
 
-Depends on `intentcall_core` and `intentcall_schema`. Only intentcall package that imports `dart_mcp`.
+Depends on `intentcall_core` and `intentcall_schema`. Primary **registry publish adapter** for `dart_mcp` (`McpPublishAdapter`). `intentcall_cli` also depends on `dart_mcp` for its stdio MCP server; this package owns registry ↔ MCP tool/resource mapping.
 
 ## What it owns
 

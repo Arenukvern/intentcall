@@ -55,7 +55,7 @@ This repo uses [Conventional Commits](https://www.conventionalcommits.org/) for 
 feat(core): add AgentRegistry.unregister
 fix(schema): validate empty AgentCallEntry name
 docs: update DX_FAQ publish order
-chore: bump dart_mcp to ^0.3.0
+chore: bump dart_mcp to ^0.5.0
 ```
 
 Breaking changes: add `!` after the type (`feat!:`) and include a `BREAKING CHANGE:` footer.
@@ -95,7 +95,13 @@ ADRs, tests, issues, or PRs. Report vulnerabilities privately through
 
 Publishing to pub.dev is maintainer-gated. Maintainers normally merge the Release Please PR and let tag-triggered GitHub Actions publish through pub.dev automated publishing. `just publish-dry-run` and tag dry-runs are preflight checks; manual execute commands are recovery-only. See [PUBLISHING.md](PUBLISHING.md).
 
-## Pre-release note
+## Release policy
 
-The hosted packages are on the current `0.3.x` pre-1.0 train. APIs may change
-without a semver major. See [PRE_RELEASE.md](PRE_RELEASE.md).
+The hosted `intentcall_*` packages are published on pub.dev as one synchronized
+semver **1.x** train. Breaking API changes require a major release and a
+deprecation path. See [PRE_RELEASE.md](PRE_RELEASE.md).
+
+Every user-facing PR that changes published package behavior should use scoped
+[conventional commits](#conventional-commits) so Release Please can record the
+change in the synchronized train changelogs. Pure docs or repo-only edits use
+`docs:` / `chore:` and normally need no manual `CHANGELOG.md` edit.

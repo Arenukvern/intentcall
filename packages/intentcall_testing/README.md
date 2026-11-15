@@ -1,4 +1,4 @@
-> ⚠️ **Pre-release train** — Highly experimental. APIs may change without notice. Not for production. [Details](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md).
+> ⚠️ **Published package train** — Hosted `intentcall_*` packages follow semver 1.x on pub.dev (breaking changes require a major). Not for production claims without app/runtime proof. [Details](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md).
 
 
 # intentcall_testing

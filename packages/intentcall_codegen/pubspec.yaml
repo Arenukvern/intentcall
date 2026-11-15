@@ -1,5 +1,5 @@
 name: intentcall_codegen
-description: PRE-RELEASE — Optional @AgentTool annotations and build_runner
+description: Optional @AgentTool annotations and build_runner
   codegen for intentcall.
 version: 1.2.0
 license: MIT

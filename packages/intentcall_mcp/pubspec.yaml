@@ -1,5 +1,5 @@
 name: intentcall_mcp
-description: PRE-RELEASE — MCP adapter for intentcall registry (dart_mcp publish bridge).
+description: MCP adapter for intentcall registry (dart_mcp publish bridge).
 version: 1.2.0
 license: MIT
 repository: https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_mcp

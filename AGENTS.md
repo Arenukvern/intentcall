@@ -46,12 +46,12 @@ npx skills add arenukvern/skill_steward
 | Agent / Tool | Skills location |
 |---|---|
 | Antigravity / Claude Code | `.agents/skills/` |
-| Cursor | `.cursor/skills/` (if using Cursor) |
+| Cursor | `.agents/skills/` (`npx skills add arenukvern/skill_steward` or copy from repo) |
 | Codex | `.agents/skills/` |
 
 ---
 
-Skill authoring detail → [.agents/skills/create-skill/SKILL.md](.agents/skills/create-skill/SKILL.md)
+Skill authoring detail → [.agents/skills/skill-authoring-lifecycle/SKILL.md](.agents/skills/skill-authoring-lifecycle/SKILL.md)
 
 ## Governance & Skill Steward
 

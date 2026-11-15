@@ -1,5 +1,5 @@
 name: intentcall_hooks
-description: PRE-RELEASE — Dart SDK build hooks for IntentCall manifest export and platform sync.
+description: Dart SDK build hooks for IntentCall manifest export and platform sync.
 version: 1.2.0
 license: MIT
 repository: https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_hooks
