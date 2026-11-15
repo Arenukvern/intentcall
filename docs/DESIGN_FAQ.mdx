@@ -133,8 +133,8 @@ A: Repository tests can prove generated schemas, generated artifacts, native cac
 
 ## Quality & stability
 
-**Q: Why did the packages stay pre-1.0 for so long?**
-A: Until October 2026 the wire contract in `intentcall_schema` and the registry API in `intentcall_core` were still being exercised across real adapters (oka, Flutter MCP Toolkit, WebMCP). Pre-release allowed breaking changes to land without a semver major while the design stabilized. The stable major arrived with the projection API rename (`projectEntriesToWebMcp` / `projectRegistryToWebMcp` / `WebMcpProjection`), once those adapters proved the surface.
+**Q: Why was there a long pre-1.0 period before pub.dev 1.x?**
+A: Until October 2026 the wire contract in `intentcall_schema` and the registry API in `intentcall_core` were still being exercised across real adapters (oka, Flutter MCP Toolkit, WebMCP). The pre-1.0 train allowed breaking changes without a semver major while the design stabilized. The stable **1.x** major arrived with the projection API rename (`projectEntriesToWebMcp` / `projectRegistryToWebMcp` / `WebMcpProjection`), once those adapters proved the surface. The hosted train now follows normal semver majors for breaking changes — see [PRE_RELEASE.md](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md).
 
 **Q: Why does CI run a publish dry-run on every PR?**
 A: pub.dev publish validation catches issues (missing `README.md`, bad `pubspec.yaml` constraints, platform tag mismatches) that `dart analyze` misses. Catching them early in PR review prevents a broken pub.dev publish in a release workflow.

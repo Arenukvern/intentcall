@@ -1,7 +1,7 @@
 # intentcall_platform_sync
 
-PRE-RELEASE — Dart-only platform manifest, emitters, and sync for
-IntentCall.
+Dart-only platform manifest, emitters, and sync for IntentCall (hosted
+pub.dev package train).
 
 The projection layer between an app's compiled registry catalog and the
 platform artifacts agents consume. It reads the build_runner-generated

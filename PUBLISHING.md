@@ -1,7 +1,7 @@
 # Publishing intentcall to pub.dev
 
-Status: all publishable `intentcall_*` packages should move together on the
-current pre-1.0 train. Use this runbook for normal
+Status: all publishable `intentcall_*` packages move together on the
+synchronized pub.dev **semver 1.x** train. Use this runbook for normal
 tag-triggered releases; keep first-publish and manual execute commands only as
 historical or recovery guidance.
 
@@ -17,8 +17,8 @@ publishing:
    into one package train, including `intentcall_session`, so versions remain
    synchronized.
 4. Merging the release PR creates component tags such as
-   `intentcall_core-v0.2.1`.
-5. `.github/workflows/pub_publish.yml` runs for each `intentcall_*-v*` tag and
+   `intentcall_core-v<version>`.
+5. `.github/workflows/publish_train.yml` runs for each `intentcall_*-v*` tag and
    publishes the package named by that tag. The workflow is skip-existing safe,
    so rerunning a tag does not republish an already visible package version.
 
@@ -92,7 +92,7 @@ just publish-preflight
 just publish-dry-run
 
 # Validate one package tag the way automated publishing does
-just publish-tag-dry-run intentcall_session-v0.2.1
+just publish-tag-dry-run intentcall_session-v<version>
 
 # Diagnostic only while release-critical files are dirty; still fails archive/content errors
 just publish-dry-run-ignore-warnings
@@ -100,8 +100,8 @@ just publish-dry-run-ignore-warnings
 # Recovery-only: after credentials are configured and automated publishing is unavailable
 just publish-execute
 
-# CI normally runs this from .github/workflows/pub_publish.yml on tag push
-just publish-tag-execute intentcall_session-v0.2.1
+# CI normally runs this from .github/workflows/publish_train.yml on tag push
+just publish-tag-execute intentcall_session-v<version>
 ```
 
 For a brand-new package name, treat `just publish-preflight-first` as the release desk:

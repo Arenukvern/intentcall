@@ -1,5 +1,5 @@
 name: intentcall_platform_apple
-description: PRE-RELEASE — Apple (iOS/macOS) federated implementation for intentcall_platform.
+description: Apple (iOS/macOS) federated implementation for intentcall_platform.
 version: 1.2.0
 license: MIT
 repository: https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_platform_apple

@@ -87,7 +87,7 @@ just publish-dry-run
 Release Please opens a release PR from `release-please-config.json` and
 `.release-please-manifest.json`. The packages are linked as one synchronized
 `intentcall_*` train, so merging the release PR creates component tags such as
-`intentcall_core-v<version>`. Each tag triggers `.github/workflows/pub_publish.yml`,
+`intentcall_core-v<version>`. Each tag triggers `.github/workflows/publish_train.yml`,
 which publishes the package named by the tag through pub.dev automated
 publishing.
 
