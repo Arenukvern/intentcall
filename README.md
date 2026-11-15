@@ -6,7 +6,7 @@ _Register intents. Call them everywhere._
 
 [![skills.sh](https://skills.sh/b/arenukvern/intentcall)](https://skills.sh/arenukvern/intentcall)
 [![IntentCall CI](https://github.com/Arenukvern/intentcall/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Arenukvern/intentcall/actions/workflows/ci.yml)
-[![Publish pub.dev package](https://github.com/Arenukvern/intentcall/actions/workflows/publish_train.yml/badge.svg?branch=main)](https://github.com/Arenukvern/intentcall/actions/workflows/publish_train.yml)
+[![Publish pub.dev package](https://github.com/Arenukvern/intentcall/actions/workflows/publish_train.yml/badge.svg?event=push)](https://github.com/Arenukvern/intentcall/actions/workflows/publish_train.yml)
 [![Release Please](https://github.com/Arenukvern/intentcall/actions/workflows/release-please.yml/badge.svg?branch=main)](https://github.com/Arenukvern/intentcall/actions/workflows/release-please.yml)
 [![Docs](https://img.shields.io/badge/docs-docs.page-blue)](https://docs.page/Arenukvern/intentcall)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/arenukvern/intentcall)
@@ -62,8 +62,8 @@ GitHub: [Arenukvern/intentcall](https://github.com/Arenukvern/intentcall)
 | `intentcall_gemma` | Example-only on-device function-calling adapter (workspace-only). |
 | `dart_acp_toolkit` (`packages/acp_toolkit`) | Agent Client Protocol stdio server + registry-backed backend (workspace-only). |
 
-`intentcall_cli`
-is the workspace maintainer tool and is not part of the hosted package train.
+**`intentcall_cli`** is on the synchronized pub.dev train (see the table above).
+This repo also invokes the same CLI via `dart run tool/intentcall/bin/intentcall.dart` when developing IntentCall itself — that workspace entrypoint is for maintainers, not a separate published package.
 
 Platform support is tiered on the current pub.dev package train: current code covers contract-tested MCP adapters, Dart-first WebMCP emitter/bootstrap helpers, Apple App Intents dispatch wrappers plus explicit main-app Swift `nativeInline` handlers, typed primitive App Intents return generation for Apple inline runtimes, an experimental Apple `dartExtensionInline` scaffold, Android shortcut/deep-link artifacts, Windows protocol activation artifacts, and Linux `x-scheme-handler` artifacts. L3 adds an additive actions/entities/indexing direction: Dart owns snapshots and behavior, while Apple is the first projection that can read a durable native cache when Flutter is cold. Generated schemas, artifacts, native cache rows, and storage helpers are not live Spotlight, Siri, Shortcuts, donation, indexing, or product proof. Android AppFunctions, richer Android App Actions capability generation, Windows App Actions / Agent Launchers, and AAIF ecosystem alignment are roadmap targets unless documented otherwise. See [Platform support](docs/start_here/platform_support.mdx) for evidence levels and non-claims.
 

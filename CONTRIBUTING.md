@@ -100,3 +100,8 @@ Publishing to pub.dev is maintainer-gated. Maintainers normally merge the Releas
 The hosted `intentcall_*` packages are published on pub.dev as one synchronized
 semver **1.x** train. Breaking API changes require a major release and a
 deprecation path. See [PRE_RELEASE.md](PRE_RELEASE.md).
+
+Every user-facing PR that changes published package behavior should use scoped
+[conventional commits](#conventional-commits) so Release Please can record the
+change in the synchronized train changelogs. Pure docs or repo-only edits use
+`docs:` / `chore:` and normally need no manual `CHANGELOG.md` edit.

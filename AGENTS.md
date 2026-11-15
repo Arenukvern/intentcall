@@ -46,7 +46,7 @@ npx skills add arenukvern/skill_steward
 | Agent / Tool | Skills location |
 |---|---|
 | Antigravity / Claude Code | `.agents/skills/` |
-| Cursor | `.agents/skills/` (install via `npx skills add` or copy from repo) |
+| Cursor | `.agents/skills/` (`npx skills add arenukvern/skill_steward` or copy from repo) |
 | Codex | `.agents/skills/` |
 
 ---

@@ -1,4 +1,7 @@
-> ⚠️ **Published package train** — Hosted `intentcall_*` packages follow semver 1.x on pub.dev (breaking changes require a major). Not for production claims without app/runtime proof. [Details](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md).
+> ⚠️ **Workspace-only** — `intentcall_gemma` is not published on pub.dev and is
+> outside the hosted `intentcall_*` package train. The semver 1.x policy in
+> [PRE_RELEASE.md](https://github.com/Arenukvern/intentcall/blob/main/PRE_RELEASE.md)
+> applies only to packages on that train.
 
 
 # intentcall_gemma
