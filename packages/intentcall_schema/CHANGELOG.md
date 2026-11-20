@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.2.1
+
+### Breaking
+
+- Removed the deprecated `jsonDecodeNullableBool` / `jsonDecodeNullableString`
+  stopgaps from `src/json_utils.dart`: from_json_to_json 0.5.1 now provides
+  both. Widen `is_dart_empty_or_not` to `^0.5.0` (nullable-aware empty
+  checks).
+
 ## Unreleased
 
 ### Features

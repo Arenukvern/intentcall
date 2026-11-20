@@ -13,32 +13,6 @@ bool? jsonDecodeNullableThrowableBool(final dynamic value) => switch (value) {
 
 @Deprecated('migrate cases to from_json_to_json')
 // ignore: avoid_annotating_with_dynamic
-bool? jsonDecodeNullableBool(final dynamic value) {
-  final normalized = jsonDecodeNullableString(value)?.toLowerCase();
-  // TODO(arenukvern): add jsonDecodeNullableBool for from_json_to_json
-  if (normalized == null || normalized.isEmpty) {
-    return null;
-  }
-  // TODO(arenukvern): add case for from_json_to_json
-  if (normalized == 'yes') {
-    return true;
-  }
-  // TODO(arenukvern): add case for from_json_to_json
-  if (normalized == 'no') {
-    return false;
-  }
-  return jsonDecodeBool(normalized);
-}
-
-@Deprecated('migrate cases to from_json_to_json')
-// ignore: avoid_annotating_with_dynamic
-String? jsonDecodeNullableString(final dynamic value) => switch (value) {
-  final String value => value,
-  _ => null,
-};
-
-@Deprecated('migrate cases to from_json_to_json')
-// ignore: avoid_annotating_with_dynamic
 String? jsonDecodeNullableNotEmptyString(final dynamic value) =>
     switch (value) {
       final String value when value.isNotEmpty => value,

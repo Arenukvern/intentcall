@@ -287,10 +287,17 @@ packages:
     dependency: transitive
     description:
       name: from_json_to_json
+<<<<<<< HEAD
       sha256: ff47ea337187cc24e6ee706fc7fd580e97d6723d6596468aa1b66ab9aad935d5
       url: "https://pub.dev"
     source: hosted
     version: "0.5.1"
+=======
+      sha256: "45e43782752a51434563a95a7a575334459b82eaa7f3b83873687449d9962b31"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.5.2"
+>>>>>>> eee1f0d (feat(schema): drop deprecated jsonDecodeNullableBool/String stopgaps (1.2.1))
   frontend_server_client:
     dependency: transitive
     description:
@@ -383,10 +390,10 @@ packages:
     dependency: transitive
     description:
       name: is_dart_empty_or_not
-      sha256: "1454632c2b961175d4c2807310713cbcbd054a51e63c545dc86c3eb9b2b061b0"
+      sha256: "40d4df05f424452a233fde75e1d05a39ad9e876c51e8e68df2813cdc14ff8060"
       url: "https://pub.dev"
     source: hosted
-    version: "0.4.0"
+    version: "0.5.0"
   json_annotation:
     dependency: transitive
     description:
@@ -419,6 +426,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.1.0"
+  listen:
+    dependency: transitive
+    description:
+      name: listen
+      sha256: "47501a08016a43fcad79252439d723f50f14f88fa7bfd8a177e0a417e5c9e1f2"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.1"
   logging:
     dependency: transitive
     description:
@@ -700,10 +715,10 @@ packages:
     dependency: transitive
     description:
       name: vector_math
-      sha256: f36f9f3be64c6198714492bb455c11056e33e2f85d9a0b676a48301e44fdcf47
+      sha256: fa49e1674cb84acb900141714e6c6e1f9ae099827c24d141430ff6819db4e1bc
       url: "https://pub.dev"
     source: hosted
-    version: "2.4.2"
+    version: "2.4.4"
   vm_service:
     dependency: transitive
     description:
@@ -769,5 +784,5 @@ packages:
     source: hosted
     version: "3.1.3"
 sdks:
-  dart: ">=3.12.0 <4.0.0"
+  dart: ">=3.13.0-0 <4.0.0"
   flutter: ">=3.24.0"
