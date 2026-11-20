@@ -4,7 +4,7 @@
   "packages/intentcall_session": "1.2.0",
   "packages/intentcall_mcp": "1.2.0",
   "packages/intentcall_webmcp": "1.2.0",
-  "packages/intentcall_codegen": "1.2.0",
+  "packages/intentcall_codegen": "1.2.1",
   "packages/intentcall_platform_sync": "1.2.0",
   "packages/intentcall_hooks": "1.2.0",
   "packages/intentcall_bridge": "1.2.0",
