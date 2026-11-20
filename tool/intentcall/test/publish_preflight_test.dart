@@ -426,7 +426,7 @@ INTENTCALL_ROOT="\$(pwd)/../agentkit" make check-intentcall-integration
             .readAsStringSync()
             .replaceFirst('version: 0.6.0', 'version: 0.6.1')
             .replaceFirst(
-              '  intentcall_schema: ^0.6.0',
+              '  intentcall_schema: ^0.5.0',
               '  intentcall_schema: ^0.6.2',
             ),
       );
