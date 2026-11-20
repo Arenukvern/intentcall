@@ -4,7 +4,8 @@
 import 'dart:convert';
 import 'dart:io' as io;
 
-import 'package:from_json_to_json/from_json_to_json.dart';
+import 'package:from_json_to_json/from_json_to_json.dart'
+    hide jsonDecodeNullableString;
 import 'package:path/path.dart' as p;
 
 import 'json_helpers.dart';
