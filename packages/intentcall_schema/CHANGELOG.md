@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.2](https://github.com/Arenukvern/intentcall/compare/intentcall_schema-v1.2.0...intentcall_schema-v1.2.2) (2026-11-20)
+
+### Bug Fixes
+
+* Hide `jsonDecodeNullableBool` from `from_json_to_json` where it collides with legacy `json_utils` helpers under 0.5.x.
+
 ## Unreleased
 
 ### Features
