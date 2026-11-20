@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/Arenukvern/intentcall/compare/intentcall_core-v1.2.0...intentcall_core-v1.3.0) (2026-11-20)
+
+
+### Miscellaneous Chores
+
+* **intentcall_core:** Synchronize intentcall package train versions
+
 ## [1.2.0](https://github.com/Arenukvern/intentcall/compare/intentcall_core-v1.1.0...intentcall_core-v1.2.0) (2026-11-07)
 
 

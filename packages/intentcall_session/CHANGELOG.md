@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.0](https://github.com/Arenukvern/intentcall/compare/intentcall_session-v1.2.0...intentcall_session-v1.3.0) (2026-11-20)
+
+
+### Bug Fixes
+
+* **intentcall_schema:** require from_json_to_json ^0.5.1 ([2aa33ab](https://github.com/Arenukvern/intentcall/commit/2aa33ab9d40dfd56625dfa1e5b336cf8f2c21ef8))
+* **intentcall_session:** hide jsonDecodeNullableString import clash ([39af162](https://github.com/Arenukvern/intentcall/commit/39af162dbb9ee816fc54af602d3709169c41076c))
+
 ## [1.2.0](https://github.com/Arenukvern/intentcall/compare/intentcall_session-v1.0.0...intentcall_session-v1.2.0) (2026-11-07)
 
 
