@@ -1,4 +1,5 @@
-import 'package:from_json_to_json/from_json_to_json.dart';
+import 'package:from_json_to_json/from_json_to_json.dart'
+    hide jsonDecodeNullableBool;
 
 import 'agent_result.dart';
 import 'json_utils.dart';
