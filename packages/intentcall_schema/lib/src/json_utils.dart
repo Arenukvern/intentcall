@@ -2,28 +2,6 @@ import 'package:from_json_to_json/from_json_to_json.dart';
 
 import 'agent_result.dart';
 
-@Deprecated('migrate cases to from_json_to_json')
-// ignore: avoid_annotating_with_dynamic
-bool? jsonDecodeNullableThrowableBool(final dynamic value) => switch (value) {
-  final String v => jsonDecodeNullableBool(v),
-  final bool v => v,
-  null => null,
-  _ => throw ArgumentError.value(value, null, 'Expected a boolean'),
-};
-
-@Deprecated('migrate cases to from_json_to_json')
-// ignore: avoid_annotating_with_dynamic
-String? jsonDecodeNullableNotEmptyString(final dynamic value) =>
-    switch (value) {
-      final String value when value.isNotEmpty => value,
-      _ => null,
-    };
-
-@Deprecated('migrate cases to from_json_to_json')
-// ignore: avoid_annotating_with_dynamic
-Map<K, V>? jsonDecodeNullableMapAs<K, V>(final dynamic json) =>
-    jsonDecodeNullableMap(json)?.cast<K, V>();
-
 /// validates every key is String, and checs map values
 /// normalization?
 Map<String, Object?> jsonDecodeNullableStringKeyMap(

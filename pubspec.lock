@@ -295,10 +295,10 @@ packages:
     dependency: transitive
     description:
       name: from_json_to_json
-      sha256: "45e43782752a51434563a95a7a575334459b82eaa7f3b83873687449d9962b31"
+      sha256: "1194287b38c24f55658eede40204c50ba82bbea97bc6dba9851e7228159633f2"
       url: "https://pub.dev"
     source: hosted
-    version: "0.5.2"
+    version: "0.6.0"
   frontend_server_client:
     dependency: transitive
     description:

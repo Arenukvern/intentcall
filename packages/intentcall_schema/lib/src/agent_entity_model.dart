@@ -1,5 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:meta/meta.dart';
+import 'package:from_json_to_json/from_json_to_json.dart';
 
 import 'json_utils.dart';
 

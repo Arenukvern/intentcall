@@ -22,6 +22,15 @@
   both. Widen `is_dart_empty_or_not` to `^0.5.0` (nullable-aware empty
   checks).
 
+## 1.3.1
+
+### Changed
+
+- Removed the remaining deprecated `json_utils` stopgaps
+  (`jsonDecodeNullableNotEmptyString`, `jsonDecodeNullableThrowableBool`,
+  `jsonDecodeNullableMapAs`): from_json_to_json 0.6.0 provides all three.
+  Internal callers migrated to the package imports.
+
 ## Unreleased
 
 ### Features
