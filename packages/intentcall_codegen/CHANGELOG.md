@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.4.0](https://github.com/Arenukvern/intentcall/compare/intentcall_codegen-v1.3.0...intentcall_codegen-v1.4.0) (2026-11-20)
+
+
+### Features
+
+* **schema:** migrate off the last json_utils stopgaps (1.3.1) ([b9c01ee](https://github.com/Arenukvern/intentcall/commit/b9c01ee974fe3d4a9dad5b2952f36cb180cea7eb))
+
+
+### Bug Fixes
+
+* **codegen:** widen analyzer to &gt;=8.0.0 &lt;16.0.0 ([abe992e](https://github.com/Arenukvern/intentcall/commit/abe992e0ed721141e9137359959f12984c42e068))
+
 ## [1.3.0](https://github.com/Arenukvern/intentcall/compare/intentcall_codegen-v1.2.0...intentcall_codegen-v1.3.0) (2026-11-20)
 
 

@@ -20,6 +20,13 @@
   property query emission in the default artifact until it has separate Xcode
   macro proof.
 
+## [1.4.0](https://github.com/Arenukvern/intentcall/compare/intentcall_platform-v1.3.0...intentcall_platform-v1.4.0) (2026-11-20)
+
+
+### Features
+
+* **schema:** migrate off the last json_utils stopgaps (1.3.1) ([b9c01ee](https://github.com/Arenukvern/intentcall/commit/b9c01ee974fe3d4a9dad5b2952f36cb180cea7eb))
+
 ## [1.3.0](https://github.com/Arenukvern/intentcall/compare/intentcall_platform-v1.2.0...intentcall_platform-v1.3.0) (2026-11-20)
 
 
