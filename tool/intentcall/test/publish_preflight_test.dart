@@ -404,6 +404,53 @@ INTENTCALL_ROOT="\$(pwd)/../agentkit" make check-intentcall-integration
       );
     });
 
+    test('maintenance overrides allow single-package patch drift', () async {
+      final repo = await _createReleaseTrainFixture();
+      addTearDown(() => repo.deleteSync(recursive: true));
+
+      final manifest = File(p.join(repo.path, '.release-please-manifest.json'));
+      manifest.writeAsStringSync(
+        manifest
+            .readAsStringSync()
+            .replaceFirst(
+              '"packages/intentcall_session": "0.6.0"',
+              '"packages/intentcall_session": "0.6.1"',
+            ),
+      );
+
+      final sessionPubspec = File(
+        p.join(repo.path, 'packages', 'intentcall_session', 'pubspec.yaml'),
+      );
+      sessionPubspec.writeAsStringSync(
+        sessionPubspec
+            .readAsStringSync()
+            .replaceFirst('version: 0.6.0', 'version: 0.6.1')
+            .replaceFirst(
+              '  intentcall_schema: ^0.5.0',
+              '  intentcall_schema: ^0.6.2',
+            ),
+      );
+
+      File(p.join(repo.path, '.release-train-maintenance.json'))
+        ..createSync()
+        ..writeAsStringSync('''
+{
+  "_note": "ignored by readMaintenanceOverrides",
+  "intentcall_session": {
+    "version": "0.6.1",
+    "dependencyFloors": {
+      "intentcall_schema": "0.6.2"
+    }
+  }
+}
+''');
+
+      expect(await release_train.runReleaseTrainCheck(repo), 0);
+
+      final syncCode = await release_train.runReleaseTrainSync(repo);
+      expect(syncCode, 1);
+    });
+
     test('check-only sync reports stale metadata without writing', () async {
       final repo = await _createReleaseTrainFixture();
       addTearDown(() => repo.deleteSync(recursive: true));

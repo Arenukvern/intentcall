@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.1](https://github.com/Arenukvern/intentcall/compare/intentcall_codegen-v1.2.0...intentcall_codegen-v1.2.1) (2026-11-20)
+
+### Bug Fixes
+
+* **intentcall_codegen:** widen `analyzer` to `>=8.0.0 <15.0.0` (caps at pub.dev’s latest 14.x) so consumers on Dart 3.14 / `test` 1.32.x can resolve alongside `flutter_test`.
+
 ## [1.2.0](https://github.com/Arenukvern/intentcall/compare/intentcall_codegen-v1.0.0...intentcall_codegen-v1.2.0) (2026-11-07)
 
 
