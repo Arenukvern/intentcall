@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:from_json_to_json/from_json_to_json.dart';
 
 import 'agent_result.dart';
-import 'json_utils.dart';
+import 'json_utils.dart' hide jsonDecodeNullableBool;
 
 /// Coerces wire [arguments] to types expected by [validateAgainstSchema].
 ///
