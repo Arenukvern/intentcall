@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/Arenukvern/intentcall/compare/intentcall_codegen-v1.2.0...intentcall_codegen-v1.3.0) (2026-11-20)
+
+
+### Features
+
+* **schema:** drop deprecated jsonDecodeNullableBool/String stopgaps (1.2.1) ([8ad06bd](https://github.com/Arenukvern/intentcall/commit/8ad06bdb1433e8f459e7387f89a1453a7bfb96da))
+
 ## [1.2.0](https://github.com/Arenukvern/intentcall/compare/intentcall_codegen-v1.0.0...intentcall_codegen-v1.2.0) (2026-11-07)
 
 

@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.3.0](https://github.com/Arenukvern/intentcall/compare/intentcall_schema-v1.2.0...intentcall_schema-v1.3.0) (2026-11-20)
+
+
+### Features
+
+* **schema:** drop deprecated jsonDecodeNullableBool/String stopgaps (1.2.1) ([8ad06bd](https://github.com/Arenukvern/intentcall/commit/8ad06bdb1433e8f459e7387f89a1453a7bfb96da))
+
+
+### Bug Fixes
+
+* **intentcall_schema:** require from_json_to_json ^0.5.1 ([2aa33ab](https://github.com/Arenukvern/intentcall/commit/2aa33ab9d40dfd56625dfa1e5b336cf8f2c21ef8))
+* **intentcall_schema:** require from_json_to_json ^0.5.1 ([e3bcb61](https://github.com/Arenukvern/intentcall/commit/e3bcb61a4add3197f707bbbfb3b72d60129cfbf3))
+
 ## 1.2.1
 
 ### Breaking

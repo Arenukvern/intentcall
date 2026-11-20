@@ -2,7 +2,7 @@ name: intentcall_bridge
 description: >-
   Pigeon IDL and generated Dart bindings for IntentCall platform
   bridge channels (invocations + entity snapshots).
-version: 1.2.0
+version: 1.3.0
 license: MIT
 repository: https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_bridge
 issue_tracker: https://github.com/Arenukvern/intentcall/issues
