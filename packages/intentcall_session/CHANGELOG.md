@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.1](https://github.com/Arenukvern/intentcall/compare/intentcall_session-v1.2.0...intentcall_session-v1.2.1) (2026-11-20)
+
+### Bug Fixes
+
+* **intentcall_session:** hide `jsonDecodeNullableString` from `from_json_to_json` to avoid ambiguous import with the local helper (`state_store.dart`).
+
 ## [1.2.0](https://github.com/Arenukvern/intentcall/compare/intentcall_session-v1.0.0...intentcall_session-v1.2.0) (2026-11-07)
 
 
