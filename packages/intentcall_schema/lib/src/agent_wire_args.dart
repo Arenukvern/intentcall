@@ -1,7 +1,7 @@
 import 'package:from_json_to_json/from_json_to_json.dart';
 
 import 'agent_result.dart';
-import 'json_utils.dart';
+import 'json_utils.dart' hide jsonDecodeNullableBool;
 
 /// Typed view over a VM service extension wire map (`Map<String, String>`).
 ///
