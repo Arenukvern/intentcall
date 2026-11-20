@@ -814,6 +814,20 @@ Future<int> runDoctor(Directory repoRoot) async {
   }
 }
 
+int _semverCompare(String a, String b) {
+  final ap = a.split('.').map(int.parse).toList();
+  final bp = b.split('.').map(int.parse).toList();
+  for (var i = 0; i < 3; i++) {
+    final ai = i < ap.length ? ap[i] : 0;
+    final bi = i < bp.length ? bp[i] : 0;
+    final cmp = ai.compareTo(bi);
+    if (cmp != 0) {
+      return cmp;
+    }
+  }
+  return 0;
+}
+
 Future<int> runValidate(Directory repoRoot) async {
   print('== Running Workspace Validation ==');
 
@@ -824,6 +838,21 @@ Future<int> runValidate(Directory repoRoot) async {
   }
 
   // 2. Run version consistency check
+  late final String synchronizedVersion;
+  if (await release_train.usesPerPackageReleaseTrain(repoRoot)) {
+    print('\nMaintenance line: using release train metadata check.');
+    final trainCode = await release_train.runReleaseTrainCheck(repoRoot);
+    if (trainCode != 0) {
+      return trainCode;
+    }
+    final manifestVersions = await release_train.readManifestVersions(repoRoot);
+    synchronizedVersion = manifestVersions.values.reduce(
+      (a, b) => _semverCompare(a, b) >= 0 ? a : b,
+    );
+    print(
+      'OK: Maintenance-line package versions validated (baseline $synchronizedVersion).',
+    );
+  } else {
   print('\nChecking version consistency across packages...');
   String? commonVersion;
   bool versionMismatch = false;
@@ -866,8 +895,9 @@ Future<int> runValidate(Directory repoRoot) async {
     return 1;
   }
 
-  final synchronizedVersion = commonVersion!;
+  synchronizedVersion = commonVersion!;
   print('OK: All packages are synchronized at version $synchronizedVersion.');
+  }
 
   // 3. Check native package metadata for Flutter plugin hygiene
   final nativePackageCode = await runNativePackageHygieneCheck(repoRoot);
@@ -875,13 +905,15 @@ Future<int> runValidate(Directory repoRoot) async {
     return nativePackageCode;
   }
 
-  // 4. Check internal hosted dependency floors
-  final dependencyFloorCode = await runInternalDependencyFloorCheck(
-    repoRoot,
-    version: synchronizedVersion,
-  );
-  if (dependencyFloorCode != 0) {
-    return dependencyFloorCode;
+  // 4. Check internal hosted dependency floors (lockstep train only)
+  if (!await release_train.usesPerPackageReleaseTrain(repoRoot)) {
+    final dependencyFloorCode = await runInternalDependencyFloorCheck(
+      repoRoot,
+      version: synchronizedVersion,
+    );
+    if (dependencyFloorCode != 0) {
+      return dependencyFloorCode;
+    }
   }
 
   // 5. Check public docs and skills do not hardcode the package train

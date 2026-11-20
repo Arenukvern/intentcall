@@ -22,6 +22,8 @@ const workspaceOnlyPackages = ['intentcall_gemma', 'acp_toolkit'];
 
 const allInternalPackages = [...publishablePackages, ...workspaceOnlyPackages];
 
+const releaseTrainMaintenanceFile = '.release-train-maintenance.json';
+
 Future<void> main(List<String> arguments) async {
   final repoRoot = findRepoRoot();
   final command = arguments.isEmpty ? 'check' : arguments.first;
@@ -33,6 +35,7 @@ Future<void> main(List<String> arguments) async {
       repoRoot,
       version: _option(args, '--version'),
       checkOnly: args.contains('--check'),
+      force: args.contains('--force'),
     ),
     _ => _usage(),
   };
@@ -54,6 +57,27 @@ Directory findRepoRoot() {
 }
 
 Future<int> runReleaseTrainCheck(Directory repoRoot) async {
+  if (await usesPerPackageReleaseTrain(repoRoot)) {
+    final manifestVersions = await readManifestVersions(repoRoot);
+    final maintenance = await readMaintenanceOverrides(repoRoot);
+    final findings = await releaseTrainMaintenanceFindings(
+      repoRoot,
+      manifestVersions: manifestVersions,
+      maintenance: maintenance,
+    );
+    if (findings.isNotEmpty) {
+      stderr.writeln('FAIL: IntentCall release train metadata is stale.');
+      for (final finding in findings) {
+        stderr.writeln('  - $finding');
+      }
+      return 1;
+    }
+    print(
+      'OK: IntentCall release train metadata is synchronized (maintenance line).',
+    );
+    return 0;
+  }
+
   final version = await resolveReleaseTrainVersion(repoRoot);
   final findings = await releaseTrainFindings(repoRoot, version: version);
   if (findings.isNotEmpty) {
@@ -72,7 +96,17 @@ Future<int> runReleaseTrainSync(
   Directory repoRoot, {
   String? version,
   bool checkOnly = false,
+  bool force = false,
 }) async {
+  if (!force && await usesPerPackageReleaseTrain(repoRoot)) {
+    stderr.writeln(
+      'FAIL: maintenance-line metadata is active (.release-train-maintenance.json '
+      'or divergent .release-please-manifest.json). '
+      'sync is blocked; use sync --force only to restore lockstep train.',
+    );
+    return 1;
+  }
+
   final targetVersion = version ?? await resolveReleaseTrainVersion(repoRoot);
   final edits = await syncReleaseTrainMetadata(
     repoRoot,
@@ -105,6 +139,190 @@ Future<int> runReleaseTrainSync(
   return 0;
 }
 
+Future<bool> usesPerPackageReleaseTrain(Directory repoRoot) async {
+  if (File(joinPath([repoRoot.path, releaseTrainMaintenanceFile])).existsSync()) {
+    return true;
+  }
+  final manifestVersions = await readManifestVersions(repoRoot);
+  return manifestVersions.values.toSet().length > 1;
+}
+
+Future<Map<String, String>> readManifestVersions(Directory repoRoot) async {
+  final manifest = File(
+    joinPath([repoRoot.path, '.release-please-manifest.json']),
+  );
+  final versions = <String, String>{};
+  if (!manifest.existsSync()) {
+    return versions;
+  }
+  final decoded = jsonDecode(await manifest.readAsString());
+  if (decoded is! Map<String, Object?>) {
+    return versions;
+  }
+  for (final packageName in publishablePackages) {
+    final value = decoded['packages/$packageName'];
+    if (value is String && value.isNotEmpty) {
+      versions[packageName] = value;
+    }
+  }
+  return versions;
+}
+
+final class ReleaseTrainMaintenanceOverride {
+  const ReleaseTrainMaintenanceOverride({
+    required this.version,
+    this.dependencyFloors = const {},
+  });
+
+  final String version;
+  final Map<String, String> dependencyFloors;
+}
+
+Future<Map<String, ReleaseTrainMaintenanceOverride>>
+readMaintenanceOverrides(Directory repoRoot) async {
+  final file = File(joinPath([repoRoot.path, releaseTrainMaintenanceFile]));
+  if (!file.existsSync()) {
+    return {};
+  }
+  final decoded = jsonDecode(await file.readAsString());
+  if (decoded is! Map<String, Object?>) {
+    throw StateError('$releaseTrainMaintenanceFile must be a JSON object.');
+  }
+  final overrides = <String, ReleaseTrainMaintenanceOverride>{};
+  for (final entry in decoded.entries) {
+    final packageName = entry.key;
+    if (!publishablePackages.contains(packageName)) {
+      continue;
+    }
+    final value = entry.value;
+    if (value is! Map<String, Object?>) {
+      throw StateError(
+        '$releaseTrainMaintenanceFile.$packageName must be an object.',
+      );
+    }
+    final version = value['version'];
+    if (version is! String || version.isEmpty) {
+      throw StateError(
+        '$releaseTrainMaintenanceFile.$packageName.version is required.',
+      );
+    }
+    final floors = <String, String>{};
+    final rawFloors = value['dependencyFloors'];
+    if (rawFloors is Map<String, Object?>) {
+      for (final floorEntry in rawFloors.entries) {
+        final floor = floorEntry.value;
+        if (floor is String && floor.isNotEmpty) {
+          floors[floorEntry.key] = floor;
+        }
+      }
+    }
+    overrides[packageName] = ReleaseTrainMaintenanceOverride(
+      version: version,
+      dependencyFloors: floors,
+    );
+  }
+  return overrides;
+}
+
+Future<List<String>> releaseTrainMaintenanceFindings(
+  Directory repoRoot, {
+  required Map<String, String> manifestVersions,
+  required Map<String, ReleaseTrainMaintenanceOverride> maintenance,
+}) async {
+  final findings = <String>[];
+
+  for (final packageName in publishablePackages) {
+    final pubspec = await readPubspec(repoRoot, packageName);
+    final actual = pubspecVersion(pubspec);
+    final expected = _expectedPackageVersion(
+      packageName,
+      manifestVersions: manifestVersions,
+      maintenance: maintenance,
+    );
+    if (expected == null) {
+      findings.add('$packageName has no manifest/maintenance version.');
+      continue;
+    }
+    if (actual != expected) {
+      findings.add('$packageName version is $actual, expected $expected');
+    }
+  }
+
+  for (final packageName in allInternalPackages) {
+    final pubspec = await readPubspec(repoRoot, packageName);
+    for (final dependency in publishablePackages) {
+      if (dependency == packageName) {
+        continue;
+      }
+      final actual = dependencyFloor(pubspec, dependency);
+      if (actual == null) {
+        continue;
+      }
+      final consumerOverride = maintenance[packageName];
+      final floorOverride = consumerOverride?.dependencyFloors[dependency];
+      if (floorOverride != null) {
+        if (actual != floorOverride) {
+          findings.add(
+            '$packageName depends on $dependency ^$actual, expected ^$floorOverride',
+          );
+        }
+        continue;
+      }
+
+      final dependencyVersion = manifestVersions[dependency];
+      if (dependencyVersion == null) {
+        continue;
+      }
+      if (!caretFloorAllowsVersion(actual, dependencyVersion)) {
+        findings.add(
+          '$packageName depends on $dependency ^$actual, which does not allow $dependencyVersion',
+        );
+      }
+    }
+  }
+
+  return findings;
+}
+
+String? _expectedPackageVersion(
+  String packageName, {
+  required Map<String, String> manifestVersions,
+  required Map<String, ReleaseTrainMaintenanceOverride> maintenance,
+}) {
+  final override = maintenance[packageName];
+  if (override != null) {
+    return override.version;
+  }
+  return manifestVersions[packageName];
+}
+
+bool caretFloorAllowsVersion(String floor, String version) {
+  final floorParts = _parseVersionParts(floor);
+  final versionParts = _parseVersionParts(version);
+  if (floorParts[0] != versionParts[0]) {
+    return false;
+  }
+  for (var i = 0; i < 3; i++) {
+    if (versionParts[i] > floorParts[i]) {
+      return true;
+    }
+    if (versionParts[i] < floorParts[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+List<int> _parseVersionParts(String version) {
+  return version
+      .split('.')
+      .map((part) => int.tryParse(part) ?? 0)
+      .take(3)
+      .followedBy(List.filled(3, 0))
+      .take(3)
+      .toList();
+}
+
 Future<String> resolveReleaseTrainVersion(Directory repoRoot) async {
   final manifest = File(
     joinPath([repoRoot.path, '.release-please-manifest.json']),
@@ -123,6 +341,9 @@ Future<String> resolveReleaseTrainVersion(Directory repoRoot) async {
         return values.single;
       }
       if (values.length > 1) {
+        if (await usesPerPackageReleaseTrain(repoRoot)) {
+          return 'maintenance (${values.join(", ")})';
+        }
         throw StateError(
           'Release manifest contains multiple train versions: ${values.join(", ")}',
         );
@@ -303,5 +524,8 @@ int _usage() {
     '  sync [--version X]    Rewrite train versions and internal floors.',
   );
   stderr.writeln('  sync --check          Report the edits sync would make.');
+  stderr.writeln(
+    '  sync --force          Allow sync on maintenance-line branches.',
+  );
   return 64;
 }
