@@ -1,4 +1,5 @@
 {
+  "_note": "On release/*-1.2.x branches, packages/intentcall_schema version 1.2.2 is a workspace-only shim so path resolution satisfies ^1.2.2. It must NOT be tagged or published from these branches — pub.dev intentcall_schema 1.2.2 is authoritative.",
   "intentcall_codegen": {
     "version": "1.2.1",
     "dependencyFloors": {

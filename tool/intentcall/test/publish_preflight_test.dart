@@ -435,6 +435,7 @@ INTENTCALL_ROOT="\$(pwd)/../agentkit" make check-intentcall-integration
         ..createSync()
         ..writeAsStringSync('''
 {
+  "_note": "ignored by readMaintenanceOverrides",
   "intentcall_session": {
     "version": "0.6.1",
     "dependencyFloors": {
