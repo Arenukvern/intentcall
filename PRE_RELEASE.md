@@ -1,12 +1,12 @@
 # Release policy (all hosted `intentcall_*` packages)
 
-**Status:** The synchronized **pub.dev package train** is **semver 1.x** (released through Release Please and `.github/workflows/publish_train.yml`). Packages are contract-tested platform infrastructure — **not production-ready without app/runtime proof**.
+**Status:** The pub.dev packages release through **dart_changesets** (intent files → version PR → per-tag publish; migrated from Release Please, 2026-11-21). Versions move per package with graph-cascaded dependents. Packages are contract-tested platform infrastructure — **not production-ready without app/runtime proof**.
 
 ## Semver
 
-- **Breaking API or wire-contract changes require a new major** on the synchronized train, with a documented deprecation path in release notes and changelogs where feasible.
+- **Breaking API or wire-contract changes require a new major** bump via an intent file, with a documented deprecation path in release notes and changelogs where feasible.
 - **Minor and patch** releases add compatible behavior and fixes within the current major.
-- The train version is defined by `.release-please-manifest.json`; all publishable `intentcall_*` packages move together.
+- Versions are declared by intent files in `.changesets/`; dependents cascade automatically when caret constraints no longer admit the new versions.
 
 ## Integration expectations
 

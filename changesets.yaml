@@ -1,0 +1,7 @@
+# dart_changesets configuration (replaces the release-please synchronized
+# train: intent files declare bumps, the graph cascades dependents).
+# Package discovery uses the root pubspec `workspace:` declaration
+# (packages/* + tool/intentcall); packages_dir is the fallback.
+packages_dir: packages
+dependent_bump: patch
+tag_format: '{package}-v{version}'

@@ -1,0 +1,37 @@
+# dart_changesets per-tag publish leg. pub.dev's automated publishing is
+# ref-gated, so each run publishes exactly the package its tag names; the
+# dart_changesets action dispatches one run per tag when the version PR merges.
+# Replaces publish_train.yml (same per-tag architecture, engine-owned steps).
+name: dart_changesets publish
+
+on:
+  push:
+    tags:
+      - '*-v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag, e.g. intentcall_core-v1.3.0'
+        required: true
+        type: string
+      execute:
+        description: 'Publish for real (unchecked = preflight)'
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: dart-changesets-publish-${{ inputs.tag || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    uses: Arenukvern/dart_changesets/.github/workflows/publish.yml@v1
+    with:
+      tag: ${{ inputs.tag || github.ref_name }}
+      execute: ${{ github.event_name == 'push' || inputs.execute }}
+    environment: pub.dev

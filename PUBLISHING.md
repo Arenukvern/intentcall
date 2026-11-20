@@ -1,47 +1,43 @@
 # Publishing intentcall to pub.dev
 
-Status: all publishable `intentcall_*` packages move together on the
-synchronized pub.dev **semver 1.x** train. Use this runbook for normal
-tag-triggered releases; keep first-publish and manual execute commands only as
-historical or recovery guidance.
+Status: publishable `intentcall_*` packages release through
+[dart_changesets](https://github.com/Arenukvern/dart_changesets) — intent
+files declare bumps, the dependency graph cascades dependents, and one tag
+per package drives the per-tag publish (migrated from the release-please
+synchronized train, 2026-11-21). First-publish and manual execute commands
+remain as historical or recovery guidance.
 
 ## Automatic release and publish flow
 
-IntentCall uses manifest-driven Release Please plus tag-triggered pub.dev
-publishing:
+1. Conventional commits land on `main` (commit discipline unchanged).
+2. Write an intent file in the PR: `.changesets/<name>.md`
+   (frontmatter: `'intentcall_core': minor` + changelog prose). One file per
+   intended release; dependents cascade automatically when caret constraints
+   no longer admit the new versions.
+3. On merge to `main`, `.github/workflows/dart_changesets.yml` assembles ONE
+   `chore: version packages` PR (pubspec bumps + changelogs + dependent
+   constraint rewrites) from pending intent files.
+4. Merging that PR pushes one tag per release
+   (`intentcall_core-v<version>`) and dispatches
+   `.github/workflows/dart_changesets_publish.yml` once per tag.
+5. Each publish run publishes exactly its own package: static check →
+   skip-existing → dependency wait → strict dry-run → OIDC publish →
+   wait-visible. Reruns are safe (skip-existing); ordering emerges from the
+   dependency waits.
 
-1. Conventional commits land on `main`.
-2. `.github/workflows/release-please.yml` opens or updates one release PR from
-   `release-please-config.json` and `.release-please-manifest.json`.
-3. The Release Please config links every publishable `intentcall_*` component
-   into one package train, including `intentcall_session`, so versions remain
-   synchronized.
-4. Merging the release PR creates component tags such as
-   `intentcall_core-v<version>`.
-5. `.github/workflows/publish_train.yml` runs for each `intentcall_*-v*` tag and
-   publishes the package named by that tag. The workflow is skip-existing safe,
-   so rerunning a tag does not republish an already visible package version.
-
-This mirrors the `mcp_flutter` release pattern: Release Please owns version and
-changelog generation, while the native repo publish script owns pub.dev
-preflight and publishing.
-
-Release PR titles must keep the release-please parseable grouped shape generated
-from `group-pull-request-title-pattern`: `chore${scope}: release intentcall
-package train`. Do not retitle release PRs away from that shape; Release Please
-can merge such PRs but then refuse to create tags.
+Replaces the release-please flow (`release-please.yml`,
+`release-please-config.json`, `release-pr-sync-train.yml`,
+`publish_train.yml` — removed). No conventional-commit-to-version mapping is
+required anymore: release intent lives in reviewed `.changesets/` files.
 
 ## Required GitHub and pub.dev configuration
 
-- Add a repository secret named `RELEASE_PLEASE_TOKEN` with permission to create
-  releases and tags that trigger follow-up workflows. If Release Please falls
-  back to `GITHUB_TOKEN`, GitHub can suppress the downstream tag-triggered
-  publish workflow.
-- Create a GitHub Actions environment named `pub.dev`. Add required reviewers
-  there if release publishing should be gated.
-- On pub.dev, enable automated publishing for every existing package in the
-  train. Use repository `Arenukvern/intentcall`, environment `pub.dev`, and the
-  package-specific tag pattern:
+- The caller workflow runs the `pub.dev` environment (required reviewers
+  there gate publishing). No repository secret is required — tag pushes and
+  dispatches ride `GITHUB_TOKEN`, and publishing uses GitHub OIDC through
+  `dart-lang/setup-dart`.
+- On pub.dev, automated publishing stays enabled per package for repository
+  `Arenukvern/intentcall` with the package-specific tag pattern:
 
 ```text
 intentcall_schema-v{{version}}
@@ -63,21 +59,26 @@ uses GitHub OIDC through `dart-lang/setup-dart`.
 
 ## Prerequisites
 
-- `dart pub` logged in (`dart pub token add https://pub.dev`)
-- All packages at the same semver for the release train
+- `dart pub` logged in (`dart pub token add https://pub.dev`) for LOCAL publishes
 - `just test` green in this workspace
 - Release-critical worktrees clean; pub treats modified checked-in package files as publish blockers
 
-## Order (required)
+## Order (reference)
+
+Per-tag fan-out orders itself through dependency waits; this is the
+dependency order for reading/recovery:
 
 1. `intentcall_schema`
 2. `intentcall_core`
 3. `intentcall_session`
 4. `intentcall_mcp`, `intentcall_webmcp`, `intentcall_codegen`
 5. `intentcall_platform_sync`, `intentcall_hooks`, `intentcall_bridge`, `intentcall_cli`
-6. `intentcall_platform` (Flutter plugin — may need `flutter pub publish`)
+6. `intentcall_platform` (Flutter plugin)
 7. `intentcall_platform_apple`, `intentcall_platform_android` (federated impls)
 8. `intentcall_testing`
+
+Versions now move per package (graph cascade) instead of one synchronized
+train version.
 
 ## Commands
 
@@ -100,7 +101,9 @@ just publish-dry-run-ignore-warnings
 # Recovery-only: after credentials are configured and automated publishing is unavailable
 just publish-execute
 
-# CI normally runs this from .github/workflows/publish_train.yml on tag push
+# CI normally runs this from .github/workflows/dart_changesets_publish.yml
+# (per-tag fan-out after the version PR merge); dispatch is the manual rescue:
+# gh workflow run dart_changesets_publish.yml -f tag=intentcall_session-v<version> -f execute=true
 just publish-tag-execute intentcall_session-v<version>
 ```
 
