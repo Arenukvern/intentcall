@@ -34,4 +34,3 @@ jobs:
     with:
       tag: ${{ inputs.tag || github.ref_name }}
       execute: ${{ github.event_name == 'push' || inputs.execute }}
-    environment: pub.dev
