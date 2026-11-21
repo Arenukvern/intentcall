@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.1
+
+### Patch Changes
+
+- Release the pending core 1.3.0 line: constraint and API work already on
+  main (required by intentcall_session 1.3.x's `intentcall_core: ^1.3.0`,
+  which pub.dev cannot satisfy from core 1.2.0).
 ## [1.3.0](https://github.com/Arenukvern/intentcall/compare/intentcall_core-v1.2.0...intentcall_core-v1.3.0) (2026-11-20)
 
 
@@ -136,3 +143,4 @@
 - Includes registry, module, authoring entry, runtime, and adapter primitives.
 - Expose `MCPCallEntry` migration helpers through
   `package:intentcall_core/intentcall_core_migration.dart`.
+
