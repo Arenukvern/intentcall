@@ -9,7 +9,9 @@
 ///
 /// - Return [AgentResult] from tool and resource handlers.
 /// - Attach an [InputSchema] to registrations in `intentcall_core`.
-/// - Parse VM service extension maps with [AgentWireArgs], then run
+/// - Encode outbound arguments with [wireArgumentsForServiceExtension]
+///   (complex values travel as JSON text across the string-only wire),
+///   parse VM service extension maps with [AgentWireArgs], then run
 ///   [coerceArgumentsForSchema] and [validateAgainstSchema] before invoke.
 ///
 /// ## For agents and clients (AX)
@@ -29,6 +31,8 @@ export 'src/agent_result_envelope.dart';
 export 'src/agent_validation_exception.dart';
 export 'src/agent_wire_args.dart';
 export 'src/client_resource_input_schemas.dart';
+export 'src/dart_literal.dart';
 export 'src/resource_uri.dart';
 export 'src/schema_coercion.dart';
 export 'src/schema_validator.dart';
+export 'src/wire_encode.dart';

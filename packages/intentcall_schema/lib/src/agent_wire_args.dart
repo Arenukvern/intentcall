@@ -1,7 +1,7 @@
 import 'package:from_json_to_json/from_json_to_json.dart';
 
 import 'agent_result.dart';
-import 'json_utils.dart' hide jsonDecodeNullableBool;
+import 'dart_literal.dart';
 
 /// Typed view over a VM service extension wire map (`Map<String, String>`).
 ///
@@ -36,10 +36,23 @@ extension type const AgentWireArgs(AgentWireMap _raw) {
 
   /// Decodes a JSON object from the string value at [key].
   ///
-  /// Returns `null` when the key is absent or the decoded value is not a map.
+  /// Dart `toString()` syntax (the service-extension flattening) is
+  /// recovered with [tryDecodeDartMap]. Returns `null` when the key is
+  /// absent or the value decodes to neither JSON object nor Dart map.
   Map<String, Object?>? jsonObject(final String key) {
     final raw = string(key);
-    return jsonDecodeNullableMapAs<String, Object>(raw);
+    if (raw == null) {
+      return null;
+    }
+    try {
+      final decoded = jsonDecodeNullableMapAs<String, Object>(raw);
+      if (decoded != null) {
+        return decoded;
+      }
+    } on FormatException {
+      // Fall through to the Dart-literal recovery.
+    }
+    return tryDecodeDartMap(raw);
   }
 
   /// Copies the underlying map into [AgentArguments] (values remain strings).

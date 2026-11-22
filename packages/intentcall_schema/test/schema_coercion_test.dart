@@ -117,4 +117,170 @@ void main() {
     expect(stable['predicate'], {'kind': 'stable', 'stableWindowMs': 300});
     expect(() => validateAgainstSchema(waitSchema, stable), returnsNormally);
   });
+
+  // The service-extension flattening: Flutter's binding hands every
+  // parameter to the callback as a string, so complex arguments arrive as
+  // Dart `toString()` text — not JSON. Coercion must recover the common
+  // shapes and never throw on the rest (pass through → honest validation
+  // refusal instead).
+  group('dart-literal wire recovery', () {
+    const patchSchema = {
+      'type': 'object',
+      'required': ['patch'],
+      'properties': {
+        'patch': {'type': 'object', 'additionalProperties': true},
+      },
+    };
+    const tilesSchema = {
+      'type': 'object',
+      'required': ['tiles'],
+      'properties': {
+        'tiles': {
+          'type': 'array',
+          'items': {'type': 'array'},
+        },
+      },
+    };
+
+    test('recovers a Dart toString map for an object-typed arg', () {
+      final coerced = coerceArgumentsForSchema(patchSchema, {
+        'patch': '{width: 2.0, color: 4294918846}',
+      });
+      expect(coerced['patch'], {'width': 2.0, 'color': 4294918846});
+      expect(
+        () => validateAgainstSchema(patchSchema, coerced),
+        returnsNormally,
+      );
+    });
+
+    test('recovers bare string values with special characters', () {
+      // The payload that could not round-trip before the fix.
+      final coerced = coerceArgumentsForSchema(patchSchema, {
+        'patch': '{canopyColors: {winter: #FF6A00}}',
+      });
+      expect(coerced['patch'], {
+        'canopyColors': {'winter': '#FF6A00'},
+      });
+    });
+
+    test('recovers an empty object', () {
+      final coerced = coerceArgumentsForSchema(patchSchema, {'patch': '{}'});
+      expect(coerced['patch'], <String, Object?>{});
+    });
+
+    test('recovers a Dart toString list for an array-typed arg', () {
+      final coerced = coerceArgumentsForSchema(tilesSchema, {
+        'tiles': '[[1, 2], [3, 4]]',
+      });
+      expect(coerced['tiles'], <Object?>[
+        <Object?>[1, 2],
+        <Object?>[3, 4],
+      ]);
+      expect(
+        () => validateAgainstSchema(tilesSchema, coerced),
+        returnsNormally,
+      );
+    });
+
+    test('passes non-decodable text through instead of throwing', () {
+      final coercedObject = coerceArgumentsForSchema(patchSchema, {
+        'patch': 'not an object',
+      });
+      expect(coercedObject['patch'], 'not an object');
+      expect(
+        () => validateAgainstSchema(patchSchema, coercedObject),
+        throwsA(isA<AgentValidationException>()),
+      );
+
+      final coercedList = coerceArgumentsForSchema(tilesSchema, {
+        'tiles': '[1, 2', // truncated
+      });
+      expect(coercedList['tiles'], '[1, 2');
+    });
+
+    test('JSON text still decodes exactly as before', () {
+      final coerced = coerceArgumentsForSchema(patchSchema, {
+        'patch': '{"winter": "#FF6A00"}',
+      });
+      expect(coerced['patch'], {'winter': '#FF6A00'});
+    });
+
+    test('open-object string entries recover Dart maps', () {
+      const schema = {
+        'type': 'object',
+        'properties': {
+          'options': {'type': 'object', 'additionalProperties': true},
+        },
+      };
+      final coerced = coerceArgumentsForSchema(schema, {
+        'options': {'colors': '{winter: #FF6A00}'},
+      });
+      expect(coerced['options'], {
+        'colors': {'winter': '#FF6A00'},
+      });
+    });
+  });
+
+  group('wire encode round-trip', () {
+    const schema = {
+      'type': 'object',
+      'required': ['id', 'patch', 'tiles', 'strict'],
+      'properties': {
+        'id': {'type': 'string'},
+        'patch': {'type': 'object', 'additionalProperties': true},
+        'tiles': {
+          'type': 'array',
+          'items': {'type': 'integer'},
+        },
+        'strict': {'type': 'boolean'},
+      },
+    };
+
+    test('encode -> flattened wire -> coerce reproduces the arguments', () {
+      final arguments = <String, Object?>{
+        'id': 'material/grass',
+        'patch': <String, Object?>{
+          'canopyColors': <String, Object?>{'winter': '#FF6A00'},
+          'width': 2.0,
+        },
+        'tiles': <Object?>[1, 2, 3],
+        'strict': true,
+      };
+      final wire = wireArgumentsForServiceExtension(arguments);
+      expect(
+        wire['patch'],
+        '{"canopyColors":{"winter":"#FF6A00"},"width":2.0}',
+      );
+      expect(wire['tiles'], '[1,2,3]');
+      expect(wire['strict'], 'true');
+      expect(wire['id'], 'material/grass');
+
+      final coerced = coerceArgumentsForSchema(schema, wire);
+      expect(coerced, arguments);
+      expect(
+        () => validateAgainstSchema(schema, coerced),
+        returnsNormally,
+      );
+    });
+
+    test('null encodes to empty text and stays absent', () {
+      const schemaWithOptional = {
+        'type': 'object',
+        'properties': {
+          'count': {'type': 'integer'},
+        },
+      };
+      final wire = wireArgumentsForServiceExtension({'count': null});
+      expect(wire['count'], '');
+      final coerced = coerceArgumentsForSchema(schemaWithOptional, wire);
+      expect(coerced.containsKey('count'), isFalse);
+    });
+
+    test('strings never double-encode', () {
+      final wire = wireArgumentsForServiceExtension({
+        'patch': '{"already": "json"}',
+      });
+      expect(wire['patch'], '{"already": "json"}');
+    });
+  });
 }

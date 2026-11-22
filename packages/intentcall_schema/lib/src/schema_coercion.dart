@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:from_json_to_json/from_json_to_json.dart';
 
 import 'agent_result.dart';
-import 'json_utils.dart' hide jsonDecodeNullableBool;
+import 'dart_literal.dart';
 
 /// Coerces wire [arguments] to types expected by [validateAgainstSchema].
 ///
@@ -70,10 +70,10 @@ Object? _coercePropertyValue(
       'integer' => jsonDecodeNullableInt(trimmed) ?? value,
       'number' => num.tryParse(trimmed) ?? value,
       'boolean' => jsonDecodeNullableBool(trimmed) ?? value,
-      'object' => jsonDecodeNullableMapAs<String, Object>(trimmed) ?? value,
+      'object' => _parseWireObject(trimmed) ?? value,
       // Both vocabularies appear in the wild: shared tool schemas in
       // consumers use JSON-Schema `array`; older contracts use Dart `list`.
-      'list' || 'array' => _parseWireJsonList(trimmed, propertySchema) ?? value,
+      'list' || 'array' => _parseWireList(trimmed, propertySchema) ?? value,
       _ => value,
     };
   }
@@ -131,12 +131,9 @@ Map<String, Object?> _coerceOpenObjectMap(final Map<String, Object?> value) {
 Object? _coerceOpenObjectEntryValue(final Object? value) {
   if (value is String) {
     final trimmed = value.trim();
-    // TODO(arenukvern): add trim case for jsonDecodeString
-    if (verifyMapDecodability(trimmed)) {
-      final parsed = _parseWireJsonMap(trimmed);
-      if (parsed != null) {
-        return _coerceOpenObjectMap(parsed);
-      }
+    final parsed = _parseWireObject(trimmed);
+    if (parsed != null) {
+      return _coerceOpenObjectMap(parsed);
     }
     return value;
   }
@@ -161,19 +158,45 @@ List<Object?> _coerceListValue(
       .toList();
 }
 
-List<Object?>? _parseWireJsonList(
+/// Decodes a wire string typed `object` in the schema.
+///
+/// Wire text may be JSON (faithful senders) or Dart `toString()` syntax
+/// (Flutter's binding flattens every parameter to a string). Both decoders
+/// are guarded: malformed text yields `null` so the caller passes the
+/// string through and validation refuses it honestly — no FormatException
+/// escapes coercion.
+Map<String, Object?>? _parseWireObject(final String trimmed) {
+  try {
+    final decoded = jsonDecodeNullableMapAs<String, Object>(trimmed);
+    if (decoded != null) {
+      return decoded;
+    }
+  } on FormatException {
+    // Fall through to the Dart-literal recovery.
+  }
+  return tryDecodeDartMap(trimmed);
+}
+
+/// Decodes a wire string typed `list`/`array` in the schema, then coerces
+/// its items against the list's item schema. Guarded like
+/// [_parseWireObject].
+List<Object?>? _parseWireList(
   final String trimmed,
   final Map<String, Object?> listSchema,
 ) {
-  final decoded = jsonDecode(trimmed);
-  if (decoded is! List) {
+  List<Object?>? decoded;
+  try {
+    final json = jsonDecode(trimmed);
+    decoded = json is List ? json : null;
+  } on FormatException {
+    decoded = null;
+  }
+  final source = decoded ?? tryDecodeDartList(trimmed);
+  if (source == null) {
     return null;
   }
-  return _coerceListValue(listSchema, decoded);
+  return _coerceListValue(listSchema, source);
 }
-
-Map<String, Object?>? _parseWireJsonMap(final String trimmed) =>
-    jsonDecodeNullableMapAs(json);
 
 Map<String, Map<String, Object?>> _propertySchemas(
   final Map<String, Object?> schema,
