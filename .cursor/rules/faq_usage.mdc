@@ -1,0 +1,41 @@
+---
+alwaysApply: true
+---
+
+# FAQ Documentation Usage Guide — IntentCall
+
+**Q: What is `docs/DESIGN_FAQ.mdx` for?**
+A: Standing **why** answers for the monorepo: package boundaries, transport model, platform projection, and quality gates. Use when changing architecture or documenting trade-offs. Path: `docs/DESIGN_FAQ.mdx` (root symlink: `DESIGN_FAQ.md`).
+
+**Q: What is `docs/DX_FAQ.mdx` for?**
+A: Repo-wide **how** for workspace setup, adapters, testing, and publishing. Memory Palace sections (emoji + location name). Path: `docs/DX_FAQ.mdx` (root symlink: `DX_FAQ.md`).
+
+**Q: What is the difference from `docs/decisions/` ADRs?**
+A: ADRs record significant decisions with status and consequences. DESIGN_FAQ compresses recurring **why** into searchable Q&A; link ADRs for full deliberation, never duplicate ADR prose in FAQs.
+
+**Q: What about package-level FAQs?**
+A: Packages that own distinct design keep `packages/<name>/docs/DESIGN_FAQ.mdx` and `DX_FAQ.mdx` (5–15 Q&As). Root FAQs **route** with pointers only — no repeated answers. See the router table in both root FAQs and `AGENTS.md`.
+
+**Q: Which packages have their own FAQ pair?**
+A: `intentcall_core`, `intentcall_schema`, `intentcall_session`, `intentcall_mcp`, `intentcall_codegen`, `intentcall_platform`, `intentcall_platform_sync`, `intentcall_webmcp`, `intentcall_bridge`, and workspace `acp_toolkit` (`dart_acp_toolkit`). Thin packages (`intentcall_testing`, `intentcall_hooks`, federated `intentcall_platform_apple` / `intentcall_platform_android`, example-only `intentcall_gemma`) use root FAQs only.
+
+**Q: What format should DX_FAQ use?**
+A: **Memory Palace** — one pattern per emoji location, terse prose, copy-paste code blocks verified against current APIs. Package DX_FAQs use the same pattern when the API surface is large.
+
+**Q: Where is the charter?**
+A: `docs/NORTH_STAR.mdx` — not DESIGN_FAQ. Use `repository-governance-lifecycle` when changing scope or the AGENTS map.
+
+**Q: When should I reference DESIGN_FAQ?**
+A: Package splits, session vs registry ownership, projection vs registry truth, platform tier claims, adapter boundaries, and semver train policy.
+
+**Q: When should I reference DX_FAQ?**
+A: Local setup, Steward first pass, adapter checklist, publish order, docs validation, and cross-package workflows before opening a package DX_FAQ.
+
+**Q: Can I use both root FAQs together?**
+A: Yes. DESIGN explains why codegen is optional; DX shows `build_runner` and manifest export commands. Link across files; never paste the same paragraph twice.
+
+**Q: Which FAQ should I update after a change?**
+A: Architectural **why** → package or root `DESIGN_FAQ.mdx` (+ ADR if significant). Public API or workflow **how** → package or root `DX_FAQ.mdx`. Skills under `.agents/skills/` only when agent procedure changes.
+
+**Q: How do I verify FAQ claims?**
+A: Read the implementing code and run targeted tests or `steward probe --json --profile quick`. Do not document wishful APIs. After edits run `just docs-check` when `docs/` or `docs.json` change.

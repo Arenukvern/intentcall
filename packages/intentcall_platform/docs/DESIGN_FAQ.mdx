@@ -1,0 +1,10 @@
+# intentcall_platform — Design FAQ
+
+**Q: Why a federated Flutter umbrella?**
+A: Mobile and desktop need different native implementations. Apps depend on `intentcall_platform` only; endorsed `intentcall_platform_apple` / `intentcall_platform_android` plug in via `default_package` without app authors juggling impl packages.
+
+**Q: Why `IntentCallFlutterHost` instead of per-transport setup?**
+A: One bind point wires registry policy, optional WebMCP registration, and deep-link listening for Flutter hosts. Platform sync and CLI still own manifest freshness; the host owns runtime draining after native handoff.
+
+**Q: Why removed standalone `intentcall_apple` / `intentcall_android` packages?**
+A: They were sparse manifest generators with no consumers. Projection lives in `intentcall_platform_sync`; runtime native code lives in federated plugins ([ADR 0025](/decisions/0025-platform-subset-federated-plugins)).

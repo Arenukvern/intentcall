@@ -1,0 +1,23 @@
+# dart_acp_toolkit — DX FAQ
+
+---
+
+## 🖥️ Stdio server
+
+**Q: How do I run an ACP server?**
+
+```dart
+import 'package:dart_acp_toolkit/dart_acp_toolkit.dart';
+
+final backend = RegistryAcpBackend(registry: myRegistry);
+final server = AcpStdioServer(backend: backend);
+await server.run();
+```
+
+---
+
+## 🗣️ Registry prompts
+
+**Q: How does `RegistryAcpBackend` map prompts to intents?**
+
+Send one line: `qualified_name {"key": "value"}`. First token is the registry key; remainder is JSON arguments when parseable. Unknown intents return JSON errors with a `refusal` stop reason.

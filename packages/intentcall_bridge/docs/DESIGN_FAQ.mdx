@@ -1,0 +1,7 @@
+# intentcall_bridge — Design FAQ
+
+**Q: Why a bridge package for entity open envelopes?**
+A: Cross-app handoff over `<scheme>://invoke/...` needs typed platform channels without pulling Flutter host code into pure Dart consumers. Bridge owns Pigeon transport; core owns registry dispatch.
+
+**Q: How does this relate to deep links?**
+A: Deep links are the universal fallback when semantic platform registries are incomplete. The bridge carries structured open-envelope metadata; plain URI handlers remain untrusted unless allowlisted ([ADR 0027](/decisions/0027-agent-usable-projection-results)).

@@ -1,0 +1,34 @@
+# intentcall_platform — DX FAQ
+
+---
+
+## 📱 Flutter host bind
+
+**Q: How do I wire `IntentCallFlutterHost`?**
+
+1. Depend on `intentcall_platform` + `intentcall_core`.
+2. Add `intentcall.yaml` with `host: flutter`, `protocolScheme`, and non-empty `platforms.enabled`.
+3. Bind and start:
+
+```dart
+final host = IntentCallFlutterHost.bindRegistry(
+  registry: registry,
+  policy: productionPolicy,
+  registerWebMcp: kIsWeb,
+  listenForDeepLinks: !kIsWeb,
+  protocolScheme: 'myapp',
+);
+await host.start();
+```
+
+Run `intentcall manifest export --check` and `intentcall platform sync --check` (or mcp_flutter `codegen sync` wrappers).
+
+---
+
+## ✅ Readiness
+
+**Q: What should I verify after upgrading the train?**
+
+Use one synchronized `intentcall_*` version line. Pass an explicit production policy (not `debugAllowAll` in release). Drain pending native invocations on startup and resume. Apple Shortcuts proof needs a signed install; repo tests stop at emitter/scaffold unless AppIntentsTesting runs in a consuming app.
+
+Apple fixture commands and profile matrix: [ADR 0027](/decisions/0027-agent-usable-projection-results) and root [platform support](/start_here/platform_support).

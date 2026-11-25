@@ -1,0 +1,15 @@
+# intentcall_session — Design FAQ
+
+*Why runtime sessions are a first-class package.* [ADR 0014](/decisions/0014-own-runtime-sessions-in-intentcall).
+
+**Q: Why extract sessions from consumer repos?**
+A: “Which live endpoint is active?” is reusable across CLI, MCP, and app hosts. Flutter MCP keeps VM-specific discovery; IntentCall owns durable session identity and persistence.
+
+**Q: What is a session not?**
+A: Not a command catalog, not a transcript store, and not dynamic registry state. Sessions answer attachment; `AgentRegistry` answers capability.
+
+**Q: Why file-backed persistence?**
+A: CLI and MCP debug loops span processes. `StateStore` and locks preserve the active endpoint between commands while tests can still use temporary files.
+
+**Q: Why is `IntentSnapshotStore` here?**
+A: JSON snapshot save/list/diff is session-adjacent durable state without executing commands or knowing transports. Hosts build payloads; the store handles safe IO.

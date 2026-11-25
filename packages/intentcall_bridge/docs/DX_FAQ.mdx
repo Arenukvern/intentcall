@@ -1,0 +1,11 @@
+# intentcall_bridge — DX FAQ
+
+---
+
+## 📬 Open envelope
+
+**Q: When do I depend on `intentcall_bridge`?**
+
+Add it when a host or invoking agent must pass entity type, identifier, and presentation hints across the protocol fallback. Wire Pigeon-generated `intentcall_platform_bridge` with federated Apple/Android halves from `intentcall_platform`.
+
+Registry invocation still goes through `AgentRegistry` in the receiving app after the host drains native handoff.

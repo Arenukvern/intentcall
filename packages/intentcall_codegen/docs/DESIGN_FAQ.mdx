@@ -1,0 +1,10 @@
+# intentcall_codegen — Design FAQ
+
+**Q: Why keep codegen optional?**
+A: Handwritten `AgentCallEntry` values remain first-class. Codegen reduces repetition for stable surfaces and build-time manifest artifacts, not mandatory ceremony for tests or dynamic hosts.
+
+**Q: Why separate from `intentcall_cli`?**
+A: Codegen is a `build_runner` consumer; CLI owns manifest export and platform sync commands. Apps opt into codegen without pulling builder graphs into runtime packages.
+
+**Q: How does catalog merge relate to registry truth?**
+A: Generated `agent_catalog.g.dart` merges `@AgentTool`, `@AgentCatalog`, and handwritten rows for export probes. Runtime registration still flows through `AgentRegistry`; manifest rows are projection input, not a second catalog.

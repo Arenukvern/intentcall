@@ -1,0 +1,21 @@
+# intentcall_platform_sync — DX FAQ
+
+---
+
+## 🔗 Surface link
+
+**Q: How do peers share one registry without WebMCP?**
+
+Bind `AgentInvocationHub` to the registry. Serve `AgentWebSocketSurface` from `package:intentcall_platform_sync/io.dart` when another process must connect. Point `AgentHttpInvoke.through` at the hub for `POST /agent/invoke?name=`.
+
+Do not rebuild UI in MCP observe callbacks; mutate state inside tool handlers ([ADR 0028](/decisions/0028-surface-link-no-redraw)).
+
+---
+
+## 🔍 Discovery
+
+**Q: How do CLI, browser, and MCP find the link?**
+
+Pass `protocolScheme` to `AgentWebSocketSurface.serve`. It writes `$HOME/.intentcall/links/<scheme>.json` and serves `GET /agent/discover`. Use `AgentLinkDirectory.find`, `intentcall link discover`, or `intentcall mcp serve --auto --scheme <scheme>` ([ADR 0029](/decisions/0029-surface-discovery)).
+
+Flutter apps publish only with `publishSurfaceLink: true`.

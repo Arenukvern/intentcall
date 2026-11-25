@@ -1,0 +1,12 @@
+# dart_acp_toolkit — Design FAQ
+
+*Workspace package under `packages/acp_toolkit` (`publish_to: none`).*
+
+**Q: Why ACP beside MCP?**
+A: Editors such as Zed speak Agent Client Protocol over stdio. IntentCall registries should project without forcing MCP into IDE integrations that expect ACP JSON-RPC.
+
+**Q: Why pluggable backends?**
+A: `EchoAcpBackend` proves transport conformance; `RegistryAcpBackend` maps prompts to `AgentRegistry.invoke`. Product-specific routing stays in custom backends, not the protocol server.
+
+**Q: Why not publish to pub.dev yet?**
+A: The package is pre-1.0 dev tooling in the monorepo train. Consumers should treat it as workspace-only until a publish story exists.

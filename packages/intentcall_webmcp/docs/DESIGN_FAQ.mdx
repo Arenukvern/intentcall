@@ -1,0 +1,10 @@
+# intentcall_webmcp — Design FAQ
+
+**Q: Why separate from `intentcall_mcp`?**
+A: WebMCP registers tools in the browser via `document.modelContext` with a different lifecycle than request/response MCP. Mixing both in one adapter would blur failure modes and hot-sync rules.
+
+**Q: What happens when a web tool fails?**
+A: Failed execution rejects the `execute` promise; missing `modelContext` is a registration report, not silent success ([ADR 0027](/decisions/0027-agent-usable-projection-results)).
+
+**Q: Does WebMCP replace MCP for IDE agents?**
+A: No. WebMCP targets in-page agents; IDE and CLI agents still use `intentcall_mcp`.

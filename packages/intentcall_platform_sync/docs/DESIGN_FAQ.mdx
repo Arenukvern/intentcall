@@ -1,0 +1,10 @@
+# intentcall_platform_sync — Design FAQ
+
+**Q: Why generate `agent_manifest.json`?**
+A: Native emitters need a projection cache. Semantic truth stays in `AgentRegistry`; manifest rows are export output validated by `intentcall manifest export --check`.
+
+**Q: Why Dart `IntentCallNativeBridge` and Swift `IntentCallNativeBridge`?**
+A: Same handoff story across languages. Dart binds envelopes into the registry after wake; Swift queues App Intent invocations and optional `protocolScheme` URLs ([ADR 0015](/decisions/0015-dart-first-native-bridge)).
+
+**Q: Why surface link without redraw?**
+A: `AgentInvocationHub` returns `AgentResult`; observers must not schedule frames. UI updates belong in tool handlers via existing app state ([ADR 0028](/decisions/0028-surface-link-no-redraw)).

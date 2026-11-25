@@ -1,6 +1,25 @@
 # IntentCall — Design FAQ
 
-*Why IntentCall is built the way it is.* For usage patterns, see [DX FAQ](/DX_FAQ).
+*Why IntentCall is built the way it is.* For usage patterns, see [DX FAQ](/DX_FAQ). Cursor agents: `.cursor/rules/faq_usage.mdc`.
+
+---
+
+## Package FAQ router
+
+| Package | Why | How |
+|---------|-----|-----|
+| `intentcall_core` | [DESIGN](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_core/docs/DESIGN_FAQ.mdx) | [DX](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_core/docs/DX_FAQ.mdx) |
+| `intentcall_schema` | [DESIGN](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_schema/docs/DESIGN_FAQ.mdx) | [DX](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_schema/docs/DX_FAQ.mdx) |
+| `intentcall_session` | [DESIGN](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_session/docs/DESIGN_FAQ.mdx) | [DX](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_session/docs/DX_FAQ.mdx) |
+| `intentcall_mcp` | [DESIGN](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_mcp/docs/DESIGN_FAQ.mdx) | [DX](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_mcp/docs/DX_FAQ.mdx) |
+| `intentcall_codegen` | [DESIGN](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_codegen/docs/DESIGN_FAQ.mdx) | [DX](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_codegen/docs/DX_FAQ.mdx) |
+| `intentcall_platform` | [DESIGN](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_platform/docs/DESIGN_FAQ.mdx) | [DX](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_platform/docs/DX_FAQ.mdx) |
+| `intentcall_platform_sync` | [DESIGN](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_platform_sync/docs/DESIGN_FAQ.mdx) | [DX](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_platform_sync/docs/DX_FAQ.mdx) |
+| `intentcall_webmcp` | [DESIGN](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_webmcp/docs/DESIGN_FAQ.mdx) | [DX](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_webmcp/docs/DX_FAQ.mdx) |
+| `intentcall_bridge` | [DESIGN](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_bridge/docs/DESIGN_FAQ.mdx) | [DX](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_bridge/docs/DX_FAQ.mdx) |
+| `dart_acp_toolkit` (`acp_toolkit/`) | [DESIGN](https://github.com/Arenukvern/intentcall/tree/main/packages/acp_toolkit/docs/DESIGN_FAQ.mdx) | [DX](https://github.com/Arenukvern/intentcall/tree/main/packages/acp_toolkit/docs/DX_FAQ.mdx) |
+
+Thin or federated packages (`intentcall_testing`, `intentcall_hooks`, `intentcall_cli`, `intentcall_platform_apple`, `intentcall_platform_android`, example `intentcall_gemma`) are covered here only.
 
 ---
 
@@ -63,7 +82,7 @@ A: `AgentRegistry`, `AgentCallEntry`, and `RegisteredAgentIntent` are the curren
 A: They are a projection layer over the existing source concepts. Actions remain registry entries. Typed entities are app-owned Dart snapshots with stable ids, display fields, and search/index fields. Indexing or donation is a lifecycle that copies those snapshots into a platform projection cache. Keeping this additive avoids turning `intentcall_core` into an Apple-shaped runtime while still letting Apple be the first concrete typed-entity/indexing projection. See [ADR 0018](decisions/0018-additive-actions-typed-entities-indexing-lifecycle.md).
 
 **Q: Why were `intentcall_apple` / `intentcall_android` removed, and what replaced them?**
-A: Those packages were sparse-manifest generators. They were **deleted** (zero consumers, pre-1.0). Canonical projection is `intentcall_platform_sync` (`PlatformSync` / `ManifestExporter`). Runtime native code lives in federated Flutter plugins `intentcall_platform_apple` / `intentcall_platform_android` under the `intentcall_platform` umbrella ([ADR 0025](decisions/0025-platform-subset-federated-plugins.md)). On Apple, generated `AppIntent` structs compile in the app `Runner` target but import `intentcall_platform_apple` for handoff (`IntentCallNativeBridge.enqueue`) and snapshot stores — do not duplicate that logic in emitted Swift. `intentcall_gemma` remains a separate surface adapter.
+A: They were sparse-manifest generators with no consumers and were deleted. Projection is `intentcall_platform_sync`; runtime native code is federated under `intentcall_platform` ([ADR 0025](decisions/0025-platform-subset-federated-plugins.md)). Package how-to: [intentcall_platform DESIGN](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_platform/docs/DESIGN_FAQ.mdx).
 
 **Q: Why are there two `IntentCallNativeBridge` types?**
 A: Different languages, same handoff story. Dart `IntentCallNativeBridge.bindRegistry(...)` in `intentcall_platform_sync` authorizes envelopes into the registry after the app wakes. Swift `IntentCallNativeBridge.enqueue(...)` in `intentcall_platform_apple` queues native App Intent invocations and optionally opens the app-owned `protocolScheme` URL. Generated Runner Swift calls the Swift facade only.
@@ -116,12 +135,8 @@ A: IDE and CLI agents speak MCP or ACP. WebMCP's consumer is an agent in the bro
 **Q: Why does IntentCall use deep links if the goal is native agent integration?**
 A: Deep links are the universal fallback, not the whole vision. Some platforms expose semantic agent/action registries; others only provide launch routing today. IntentCall preserves one invocation contract across both: native metadata where the platform supports it, and app-owned `<scheme>://invoke/...` or platform protocol handlers where it does not. Treat plain deep links as untrusted input unless they originate from generated native wrappers or an app-provided allowlist.
 
-**Q: How should platform support be described during pre-release?**
-A: Be explicit about tiers. WebMCP is a Dart-first in-page registration surface; failed executions reject, and a missing `modelContext` is a registration report rather than a silent success. Apple App Intents for `openApp` still queue and wake. `awaitApp` waits up to 10 seconds for the running Flutter host and returns the Dart `AgentResult` in the dialog; that contract is covered by emitter tests, not by a signed Shortcuts run. Apple inline runtimes can generate primitive typed App Intents returns when `inlineRuntime.result` is declared. Apple `dartExtensionInline` has a scaffold and VM-safe Dart runtime bridge, but remains experimental until a fixture extension proves target membership, FlutterEngine boot, plugin allowlisting, shared storage/IPC, limits, and live OS invocation. Android AppFunctions remain roadmap. Windows App Actions URI registration is an opt-in artifact (`windows.appActions`); protocol activation stays fallback. Unpackaged Flutter Windows builds cannot register App Actions. Agent Launchers are a different product and are not this projection. AAIF is ecosystem alignment around agent infrastructure, not a Linux desktop intent API. See [ADR 0027](/decisions/0027-agent-usable-projection-results).
-
-Windows App Actions URI launch and plain Windows protocol activation should not
-be collapsed into the same support claim. App Actions are a semantic action
-surface; protocol activation is fallback routing into an app-owned URI handler.
+**Q: How should platform support tiers be described now that 1.x ships?**
+A: Label proof separately from API shape: emitter/scaffold tests in CI do not equal live Siri, Shortcuts, Spotlight, or Windows App Actions product proof. WebMCP rejects failed `execute` and reports missing `modelContext`. Apple `openApp` queues wake; `awaitApp` returns Dart `AgentResult` within the documented timeout when the host is running. Treat Windows App Actions (semantic, MSIX) and protocol activation (fallback URI) as distinct claims. Full tier table and dogfood status: [platform support](/start_here/platform_support) and [ADR 0027](/decisions/0027-agent-usable-projection-results).
 
 **Q: Why does Apple entity querying need a native cache instead of calling Dart live?**
 A: Apple query, shortcut, Siri, and indexing code may run while the Flutter app is cold. A projection that needs entity lookup must therefore read durable native cache data derived from Dart-owned snapshots. Dart still owns the application data and refresh/prune lifecycle; the native cache is only a projection cache used by the platform query/indexing layer.
