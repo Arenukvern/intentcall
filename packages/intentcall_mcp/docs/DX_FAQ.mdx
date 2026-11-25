@@ -20,6 +20,38 @@ Reference test: `packages/intentcall_mcp/test/mcp_adapter_contract_test.dart`.
 
 **Q: How do I test my adapter?**
 
-Use the same shape as `mcp_adapter_contract_test.dart`: pass `adapter`, `isPublished`, `invoke`, and `normalize` to `verifyNativeAdapterContract`. Construct `McpPublishAdapter` with `publishTool` and `unpublishTool`, then `await adapter.attach(registry)` before the contract runs.
+```dart
+import 'dart:async';
 
-Run `steward benchmark --scenario intentcall.adapter-contract --json` before claiming compliance.
+import 'package:dart_mcp/server.dart';
+import 'package:intentcall_mcp/intentcall_mcp.dart';
+import 'package:intentcall_testing/intentcall_testing.dart';
+
+test('McpPublishAdapter satisfies contract', () async {
+  final published =
+      <String, FutureOr<CallToolResult> Function(CallToolRequest)>{};
+  final adapter = McpPublishAdapter(
+    publishTool: (tool, impl) => published[tool.name] = impl,
+    unpublishTool: published.remove,
+  );
+
+  await verifyNativeAdapterContract(
+    adapter: adapter,
+    isPublished: published.containsKey,
+    invoke: (qualifiedName, arguments) {
+      final invoker = published[qualifiedName];
+      if (invoker == null) {
+        throw StateError('No MCP tool published for $qualifiedName');
+      }
+      return invoker(
+        CallToolRequest(name: qualifiedName, arguments: arguments),
+      );
+    },
+    normalize: (result) => normalizeJsonTextAgentResult(
+      mcpResultToAgentResult(result! as CallToolResult),
+    ),
+  );
+});
+```
+
+Canonical copy: `packages/intentcall_mcp/test/mcp_adapter_contract_test.dart`. Run `steward benchmark --scenario intentcall.adapter-contract --json` before claiming compliance.
