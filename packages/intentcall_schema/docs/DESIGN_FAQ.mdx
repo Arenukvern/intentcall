@@ -1,0 +1,12 @@
+# intentcall_schema — Design FAQ
+
+*Why wire types sit in a leaf package.*
+
+**Q: Why is schema separate from `intentcall_core`?**
+A: Envelopes and validation cross every adapter and test helper without pulling registry runtime. A leaf package prevents circular imports and stabilizes the wire contract across core releases.
+
+**Q: Why pure Dart with no Flutter dependency?**
+A: Servers, CLIs, and codegen hosts must validate arguments without the Flutter SDK. Platform packages add Flutter later; schema never does.
+
+**Q: Who owns entity snapshot JSON shape?**
+A: Schema defines `AgentEntityRef` and `AgentEntitySnapshot` so platform indexing and deep-link bridges share one AX/DX JSON contract. App data still lives in the host; schema only shapes portable snapshots.

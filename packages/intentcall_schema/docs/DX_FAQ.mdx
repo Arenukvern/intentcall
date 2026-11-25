@@ -1,0 +1,36 @@
+# intentcall_schema — DX FAQ
+
+*How to use wire types and validation.*
+
+---
+
+## 📨 Results
+
+**Q: How do I return a structured tool outcome?**
+
+```dart
+import 'package:intentcall_schema/intentcall_schema.dart';
+
+return AgentResult.success(
+  data: {'total': 42},
+);
+```
+
+---
+
+## ✅ Validation
+
+**Q: How do I validate arguments before invoke?**
+
+```dart
+import 'package:intentcall_schema/intentcall_schema.dart';
+
+final coerced = coerceArgumentsForSchema(inputSchema, arguments);
+try {
+  validateAgainstSchema(inputSchema, coerced);
+} on AgentValidationException catch (error) {
+  return AgentResult.failure(message: error.message);
+}
+```
+
+Wire-type tour and entity examples: [docs/packages/intentcall_schema](/packages/intentcall_schema).

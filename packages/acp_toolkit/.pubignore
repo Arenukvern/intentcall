@@ -5,3 +5,6 @@ doc/api/
 .idea/
 .vscode/
 pubspec_overrides.yaml
+docs/
+DESIGN_FAQ.md
+DX_FAQ.md

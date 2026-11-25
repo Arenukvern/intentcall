@@ -1,0 +1,60 @@
+# intentcall_session — DX FAQ
+
+---
+
+## 🧭 Session manager
+
+**Q: How do I add session lifecycle to a CLI or tool?**
+
+```dart
+import 'package:intentcall_session/intentcall_session.dart';
+
+final sessions = IntentSessionManager(
+  connector: myConnector,
+  stateStore: StateStore(path: '.intentcall/session_state.json'),
+);
+
+await sessions.load();
+await sessions.startSession(
+  const IntentSessionStartRequest(
+    mode: IntentSessionConnectionMode.uri,
+    uri: 'wss://runtime.example.com/ws',
+    sessionId: 'debug',
+  ),
+);
+```
+
+Implement `IntentSessionConnector` for runtime-specific connect/disconnect and stable `activeEndpointDisplay`.
+
+---
+
+## ▶️ Invoke in session
+
+**Q: How do I invoke through the active session?**
+
+```dart
+import 'package:intentcall_core/intentcall_core.dart';
+import 'package:intentcall_session/intentcall_session.dart';
+
+final executor = IntentSessionExecutor(sessions: sessions, registry: registry);
+final result = await executor.invoke(
+  qualifiedName: 'debug_select',
+  arguments: const {'id': 'node-7'},
+  sessionId: 'debug',
+);
+```
+
+---
+
+## 📸 Snapshots
+
+**Q: How do I persist JSON runtime snapshots?**
+
+```dart
+final snapshots = IntentSnapshotStore(snapshotsDir: '.intentcall/snapshots');
+await snapshots.saveSnapshot(id: 'before', snapshot: payload);
+await snapshots.saveSnapshot(id: 'after', snapshot: updatedPayload);
+final diff = await snapshots.diffSnapshots(fromId: 'before', toId: 'after');
+```
+
+Compose managers and executors directly; add a named broker only for real routing or multi-runtime product policy.

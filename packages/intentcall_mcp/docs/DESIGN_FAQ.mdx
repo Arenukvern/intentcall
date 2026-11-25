@@ -1,0 +1,10 @@
+# intentcall_mcp — Design FAQ
+
+**Q: Why wrap `dart_mcp` instead of a custom MCP stack?**
+A: Protocol maintenance belongs upstream. IntentCall stays a thin registry bridge: publish `listEntries()`, forward `invoke`, and honor `registry.events`.
+
+**Q: Why is MCP not the only transport?**
+A: IDE agents speak MCP today; browsers use WebMCP; platforms use App Intents or protocol handlers. MCP is one adapter, not the product center.
+
+**Q: What must every native adapter prove?**
+A: The shared attach/publish/invoke/detach contract checked by `intentcall_testing` and Steward `intentcall.adapter-contract`. `McpPublishAdapter` is the reference shape.

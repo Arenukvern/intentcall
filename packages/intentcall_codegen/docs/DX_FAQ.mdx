@@ -1,0 +1,42 @@
+# intentcall_codegen — DX FAQ
+
+---
+
+## 🧬 Opt in
+
+**Q: How do I enable codegen?**
+
+```yaml
+dev_dependencies:
+  intentcall_codegen: ^1.3.0
+  intentcall_cli: ^1.3.0
+  build_runner: ^2.0.0
+```
+
+```bash
+dart run build_runner build --delete-conflicting-outputs
+dart run intentcall_cli:intentcall manifest export
+dart run intentcall_cli:intentcall manifest export --check
+```
+
+`build_runner` writes `lib/generated/agent_catalog.g.dart`. Export merges catalog + `intentcall.yaml` into `web/agent_manifest.json`.
+
+---
+
+## 🏷️ Annotations
+
+**Q: How do instance tools join the catalog?**
+
+Put `@AgentTool` on methods and co-locate `@AgentCatalog()` on a `static final List<AgentRegistryCatalogEntry>` on the host class. Do not duplicate codegen keys in the catalog list.
+
+Per-tool projection uses `@AgentProjection` or `EntryProjection` on catalog rows. Host defaults live in `intentcall.yaml` only.
+
+Working example: `packages/intentcall_codegen/example/lib/tools/demo_host_tools.dart`. Builder options: `packages/intentcall_codegen/example/build.yaml`.
+
+---
+
+## 🗺️ Surfaces
+
+**Q: Where is the `AgentManifestSurface` table?**
+
+Surface enum keys and defaults are defined in codegen/projection types. Full table: root [DX FAQ](/DX_FAQ) routes here; details in [ADR 0022](/decisions/0022-projection-pipeline-alignment).

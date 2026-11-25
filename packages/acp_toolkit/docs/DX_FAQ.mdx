@@ -1,0 +1,40 @@
+# dart_acp_toolkit — DX FAQ
+
+---
+
+## 🖥️ Stdio server
+
+**Q: How do I run an ACP server?**
+
+Runnable entrypoint: `packages/acp_toolkit/bin/acp_server.dart`.
+
+```bash
+dart run bin/acp_server.dart --backend registry
+```
+
+Or embed in your app:
+
+```dart
+import 'package:dart_acp_toolkit/dart_acp_toolkit.dart';
+import 'package:intentcall_core/intentcall_core.dart';
+
+Future<void> main() async {
+  final registry = InMemoryAgentRegistry();
+  final server = AcpStdioServer(backend: RegistryAcpBackend(registry: registry));
+  await server.run();
+}
+```
+
+---
+
+## 🗣️ Registry prompts
+
+**Q: How does `RegistryAcpBackend` map prompts to intents?**
+
+After ACP `initialize` and `session/new`, send the text in a `session/prompt` request (not raw stdin JSON). Example prompt body:
+
+```text
+qualified_name {"key": "value"}
+```
+
+First token is the registry key; remainder is JSON arguments when parseable. Unknown intents return JSON errors with a `refusal` stop reason.

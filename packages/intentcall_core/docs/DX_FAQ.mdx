@@ -1,0 +1,41 @@
+# intentcall_core — DX FAQ
+
+*How to use the registry.* Why: [package Design FAQ](DESIGN_FAQ.mdx) · Repo [DX FAQ](/DX_FAQ).
+
+---
+
+## 🏠 Smallest host
+
+**Q: What is the smallest non-Flutter integration?**
+
+```dart
+import 'package:intentcall_core/intentcall_core.dart';
+
+final registry = InMemoryAgentRegistry();
+final registration = myEntry.toRegistration();
+registry.register(registration);
+final result = await registry.invoke(registration.qualifiedName, arguments);
+```
+
+Custom adapters publish metadata, translate calls, and route back through `registry.invoke`.
+
+---
+
+## 🔌 Adapter discovery
+
+**Q: How does an adapter read the catalog?**
+
+```dart
+final registry = InMemoryAgentRegistry();
+final entries = registry.listEntries();
+```
+
+Subscribe to `registry.events` when the transport supports hot-sync. Publish and invoke by `AgentRegistryEntry.key`, not descriptor display strings.
+
+---
+
+## 📦 Registration types
+
+**Q: Where do tool and resource value objects live?**
+
+Import `ToolRegistration`, `ToolHandler`, `ResourceRegistration`, `ResourceTemplateRegistration`, and `ResourceHandler` from `package:intentcall_core/intentcall_core.dart`.

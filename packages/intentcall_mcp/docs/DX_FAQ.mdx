@@ -1,0 +1,57 @@
+# intentcall_mcp — DX FAQ
+
+---
+
+## 🔌 Minimal adapter
+
+**Q: What is the adapter checklist?**
+
+1. Attach to an `AgentRegistry`.
+2. Publish each `registry.listEntries()` row by stored key.
+3. Subscribe to `registry.events` when the transport supports hot-sync.
+4. On invoke, call `registry.invoke(entry.key, arguments)`.
+5. Detach cleanly; add `verifyNativeAdapterContract(...)` in tests.
+
+Reference test: `packages/intentcall_mcp/test/mcp_adapter_contract_test.dart`.
+
+---
+
+## 🧪 Contract test
+
+**Q: How do I test my adapter?**
+
+```dart
+import 'dart:async';
+
+import 'package:dart_mcp/server.dart';
+import 'package:intentcall_mcp/intentcall_mcp.dart';
+import 'package:intentcall_testing/intentcall_testing.dart';
+
+test('McpPublishAdapter satisfies contract', () async {
+  final published =
+      <String, FutureOr<CallToolResult> Function(CallToolRequest)>{};
+  final adapter = McpPublishAdapter(
+    publishTool: (tool, impl) => published[tool.name] = impl,
+    unpublishTool: published.remove,
+  );
+
+  await verifyNativeAdapterContract(
+    adapter: adapter,
+    isPublished: published.containsKey,
+    invoke: (qualifiedName, arguments) {
+      final invoker = published[qualifiedName];
+      if (invoker == null) {
+        throw StateError('No MCP tool published for $qualifiedName');
+      }
+      return invoker(
+        CallToolRequest(name: qualifiedName, arguments: arguments),
+      );
+    },
+    normalize: (result) => normalizeJsonTextAgentResult(
+      mcpResultToAgentResult(result! as CallToolResult),
+    ),
+  );
+});
+```
+
+Canonical copy: `packages/intentcall_mcp/test/mcp_adapter_contract_test.dart`. Run `steward benchmark --scenario intentcall.adapter-contract --json` before claiming compliance.

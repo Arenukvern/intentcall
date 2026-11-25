@@ -1,0 +1,26 @@
+# intentcall_core — Design FAQ
+
+*Why the registry and authoring model look like this.* Repo router: [Design FAQ](/DESIGN_FAQ).
+
+---
+
+## Registry
+
+**Q: Why does IntentCall center on `AgentRegistry` instead of MCP tools directly?**
+A: Transports change; the registry contract should not. One `AgentRegistry` holds `AgentCallEntry` values, and adapters project `listEntries()` without re-implementing validation or dispatch.
+
+**Q: Why are tool and resource registration types in core, not in `intentcall_mcp`?**
+A: `ToolRegistration`, `ResourceRegistration`, and handlers are transport-neutral vocabulary. MCP re-exports them for compatibility; new adapters should import `intentcall_core`.
+
+**Q: Why is `listEntries()` the catalog snapshot instead of a separate gateway?**
+A: Stored registry keys plus descriptors are the neutral catalog today. A named gateway would only appear if it owned behavior beyond listing entries and subscribing to `registry.events`.
+
+**Q: Why is codegen not folded into core?**
+A: Many hosts register intents by hand. Keeping `intentcall_codegen` separate preserves zero `build_runner` dependency in the production graph for everyone else.
+
+---
+
+## Stability
+
+**Q: How does core relate to `intentcall_schema`?**
+A: Schema owns wire types that cross transport boundaries; core owns runtime registry semantics. Core depends on schema so adapters can import schema alone when they only need envelopes.

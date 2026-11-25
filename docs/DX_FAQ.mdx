@@ -2,7 +2,25 @@
 
 > Published copy for [docs.page](https://docs.page/Arenukvern/intentcall): [docs/DX_FAQ.mdx](docs/DX_FAQ.mdx)
 
-*How to use and extend IntentCall.* For architectural rationale, see [Design FAQ](/DESIGN_FAQ).
+*How to use and extend IntentCall.* For architectural rationale, see [Design FAQ](/DESIGN_FAQ). Cursor: `.cursor/rules/faq_usage.mdc` and `.cursor/commands/update-faq.md`.
+
+---
+
+## 🗺️ Package DX router
+
+| Task | Package DX FAQ |
+|------|----------------|
+| Registry / smallest host | [intentcall_core](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_core/docs/DX_FAQ.mdx) |
+| Wire validation / `AgentResult` | [intentcall_schema](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_schema/docs/DX_FAQ.mdx) |
+| Sessions / snapshots | [intentcall_session](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_session/docs/DX_FAQ.mdx) |
+| MCP adapter contract | [intentcall_mcp](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_mcp/docs/DX_FAQ.mdx) |
+| `@AgentTool` / catalog | [intentcall_codegen](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_codegen/docs/DX_FAQ.mdx) |
+| Flutter host bind | [intentcall_platform](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_platform/docs/DX_FAQ.mdx) |
+| Manifest export / catalog merge | [intentcall_codegen](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_codegen/docs/DX_FAQ.mdx) |
+| Surface link / discovery | [intentcall_platform_sync](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_platform_sync/docs/DX_FAQ.mdx) |
+| WebMCP adapter | [intentcall_webmcp](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_webmcp/docs/DX_FAQ.mdx) |
+| Entity open envelopes | [intentcall_bridge](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_bridge/docs/DX_FAQ.mdx) |
+| ACP stdio server | [dart_acp_toolkit](https://github.com/Arenukvern/intentcall/tree/main/packages/acp_toolkit/docs/DX_FAQ.mdx) |
 
 ---
 
@@ -149,154 +167,19 @@ The workspace resolver handles this; no extra steps needed.
 
 ## 🔌 Writing a new adapter
 
-**Q: What is the minimal interface a new adapter must implement?**
+**Q: Where is the full adapter checklist?**
 
-An adapter imports `intentcall_core`, reads entries from `AgentRegistry`, and bridges them to the target transport. Look at `intentcall_mcp` as the contract-tested reference adapter.
+[intentcall_mcp DX FAQ](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_mcp/docs/DX_FAQ.mdx) — reference `McpPublishAdapter` and `verifyNativeAdapterContract`. Registry discovery and registration types: [intentcall_core DX](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_core/docs/DX_FAQ.mdx). Wire types: [intentcall_schema DX](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_schema/docs/DX_FAQ.mdx) and [package guide](/packages/intentcall_schema).
 
-**Q: What is the adapter lifecycle checklist?**
-
-1. Attach to an `AgentRegistry`.
-2. Publish every current `registry.listEntries()` entry by `AgentRegistryEntry.key`.
-3. Subscribe to `registry.events` when the target transport supports hot-sync.
-4. On registration events, publish the stored registry key and descriptor.
-5. On unregistration events, remove the target transport surface.
-6. On invocation, translate target arguments and call `registry.invoke(entry.key, arguments)`.
-7. Detach by cancelling subscriptions and removing any transport resources the adapter owns.
-8. Add or extend a `verifyNativeAdapterContract(...)` test.
-
-Run `steward benchmark --scenario intentcall.adapter-contract --json` before
-claiming the adapter satisfies the shared contract.
-
-**Q: How does an adapter discover registered intents?**
-
-```dart
-import 'package:intentcall_core/intentcall_core.dart';
-
-final registry = InMemoryAgentRegistry();
-final entries = registry.listEntries();
-```
-
-Subscribe to `registry.events` when the target transport supports hot-sync.
-Adapters should publish and invoke by `AgentRegistryEntry.key`; descriptors are
-metadata, not a safe substitute for the stored registry key. `listDescriptors()`
-is fine for display-only catalog reads.
-
-**Q: Where do wire types live?**
-
-Wire types (`AgentResult`, validation helpers, resource input schemas) live in `intentcall_schema`. Registry and authoring types (`AgentRegistry`, `AgentCallEntry`, `RegisteredAgentIntent`) live in `intentcall_core`.
-
-Full wire-contract guide: [intentcall_schema](/packages/intentcall_schema) — package map, validate/coerce pipeline, entity JSON shape (AX), and envelope examples.
-
-**Q: Where do tool/resource registration value objects live?**
-
-Use `intentcall_core` for neutral registration values:
-`ToolRegistration`, `ToolHandler`, `ResourceRegistration`,
-`ResourceTemplateRegistration`, and `ResourceHandler`. `intentcall_mcp`
-re-exports them for compatibility with existing MCP adapter imports, but MCP
-does not own the vocabulary.
+Run `steward benchmark --scenario intentcall.adapter-contract --json` before claiming contract compliance.
 
 ---
 
 ## 🧭 Runtime sessions
 
-**Q: How do I add reusable runtime session lifecycle to a CLI or tool?**
+**Q: Where are session patterns documented?**
 
-Use `intentcall_session` with a connector that knows how to attach to your runtime. The connector owns target discovery and transport details; `IntentSessionManager` owns persisted session state.
-
-```dart
-import 'package:intentcall_session/intentcall_session.dart';
-
-final sessions = IntentSessionManager(
-  connector: myConnector,
-  stateStore: StateStore(path: '.intentcall/session_state.json'),
-);
-
-await sessions.load();
-final start = await sessions.startSession(
-  const IntentSessionStartRequest(
-    mode: IntentSessionConnectionMode.uri,
-    uri: 'wss://runtime.example.com/ws',
-    sessionId: 'debug',
-  ),
-);
-```
-
-**Q: What does my connector need to implement?**
-
-Implement `IntentSessionConnector`. Return a stable `activeEndpointDisplay` after `connect`; throw `IntentSessionConnectionException` with `multipleTargets`, `targetNotFound`, `noTargets`, `invalidUri`, or `invalidTargetId` when selection fails.
-
-```dart
-final class MyConnector implements IntentSessionConnector {
-  @override
-  String? activeEndpointDisplay;
-
-  @override
-  Map<String, Object?> get lastSelectionDiagnostics => const {};
-
-  @override
-  Future<Map<String, Object?>> connect({
-    IntentSessionConnectionMode mode = IntentSessionConnectionMode.auto,
-    String? targetId,
-    String? uri,
-    String? host,
-    int? port,
-    bool forceReconnect = false,
-  }) async {
-    activeEndpointDisplay = uri ?? 'runtime://current';
-    return {'connected': true, 'reusedConnection': false};
-  }
-
-  @override
-  Future<void> disconnect() async {
-    activeEndpointDisplay = null;
-  }
-}
-```
-
-**Q: How do I invoke an intent inside the active session?**
-
-Use `IntentSessionExecutor`. It attaches first, invokes the registry, and marks the session used after successful calls.
-
-```dart
-import 'package:intentcall_core/intentcall_core.dart';
-import 'package:intentcall_session/intentcall_session.dart';
-
-final executor = IntentSessionExecutor(
-  sessions: sessions,
-  registry: registry,
-);
-
-final result = await executor.invoke(
-  qualifiedName: 'debug_select',
-  arguments: const {'id': 'node-7'},
-  sessionId: 'debug',
-);
-```
-
-**Q: Should I build a broker package on top of this?**
-
-Usually no. Compose `IntentSessionManager`, `IntentSessionExecutor`, `AgentRegistry`, and your transport adapter directly; introduce a named broker only when it owns real product behavior such as routing policy, artifact storage, or multi-runtime coordination.
-
-**Q: How do I persist and diff JSON runtime snapshots?**
-
-Use `IntentSnapshotStore` for storage only. Build the snapshot payload in your host, then let the store handle safe writes, listing, loading, and structural diffs.
-
-```dart
-final snapshots = IntentSnapshotStore(
-  snapshotsDir: '.intentcall/snapshots',
-);
-
-await snapshots.saveSnapshot(
-  id: 'before',
-  snapshot: const {
-    'id': 'before',
-    'createdAt': '2026-06-22T00:00:00.000Z',
-    'result': {'selected': 'node-7'},
-  },
-);
-
-final diff = await snapshots.diffSnapshots(fromId: 'before', toId: 'after');
-```
+[intentcall_session DX FAQ](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_session/docs/DX_FAQ.mdx) — `IntentSessionManager`, connectors, `IntentSessionExecutor`, and `IntentSnapshotStore`. Why sessions are separate from registry: [Design FAQ](/DESIGN_FAQ) and [ADR 0014](/decisions/0014-own-runtime-sessions-in-intentcall).
 
 ---
 
@@ -304,22 +187,7 @@ final diff = await snapshots.diffSnapshots(fromId: 'before', toId: 'after');
 
 **Q: Can I use IntentCall in a CLI, server, or non-Flutter host?**
 
-Yes. Use `intentcall_core` + `intentcall_schema` for a pure Dart registry and
-wire contract. Add `intentcall_mcp`, `intentcall_webmcp`, `intentcall_session`,
-or platform packages only when you need those projection or lifecycle surfaces.
-Keep host-specific discovery, process management, permissions, and UI policy in
-your product.
-
-**Q: What is the smallest non-Flutter path?**
-
-```dart
-final registry = InMemoryAgentRegistry();
-registry.register(myEntry.toRegistration());
-final result = await registry.invoke('namespace.name', arguments);
-```
-
-Custom adapters should stay thin: publish registry metadata, translate incoming
-calls, then route execution back through `AgentRegistry.invoke(...)`.
+Yes. Start with [intentcall_core DX](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_core/docs/DX_FAQ.mdx) + [intentcall_schema DX](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_schema/docs/DX_FAQ.mdx). Add MCP, WebMCP, session, or platform packages only for those surfaces.
 
 **Q: When should I choose mcp_flutter?**
 
@@ -368,279 +236,29 @@ UX checks.
 
 ## 🧬 Codegen (`@AgentTool`)
 
-**Q: How do I opt in to codegen?**
+**Q: Where is codegen documented?**
 
-Add `intentcall_codegen` as a `dev_dependency` and `build_runner` to run the generator:
+[intentcall_codegen DX FAQ](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_codegen/docs/DX_FAQ.mdx) — opt-in, `@AgentTool` / `@AgentCatalog`, and manifest export. Codegen is optional; handwritten `AgentCallEntry` values stay first-class.
 
-```yaml
-dev_dependencies:
-  intentcall_codegen:
-    path: ../../packages/intentcall_codegen
-  build_runner: ^2.0.0
-```
-
-Then annotate your intent class with `@AgentTool` and run:
-
-```bash
-dart run build_runner build --delete-conflicting-outputs
-intentcall manifest export --check
-```
-
-`build_runner` writes `lib/generated/agent_catalog.g.dart`. `manifest export`
-merges the catalog with `intentcall.yaml` defaults (and optional `@AgentProjection`
-per tool) into committed `web/agent_manifest.json`.
-
-Per-tool projection is **Dart-only** (`@AgentProjection` or `EntryProjection` on
-catalog rows). `intentcall.yaml` carries host wiring and global `defaults` only.
-
-**Q: Is codegen required?**
-
-No. You can register `AgentCallEntry` objects manually. Codegen is a convenience layer.
-
-**Q: How do instance-bound or handwritten tools join the generated catalog and manifest?**
-
-Catalog sources:
-
-```text
-@AgentTool          →  tool implementation + (usually) catalog row
-handwritten getter  →  tool implementation only
-catalog row         →  @AgentCatalog list
-agent_catalog.g.dart →  merge of all three sources
-```
-
-Put instance methods and `AgentCallEntry` getters on a host class (typically
-`static final shared`), then co-locate a `List<AgentRegistryCatalogEntry>`
-annotated with **`@AgentCatalog`** — the catalog builder discovers it via
-`tool_globs`.
-
-**Placement:**
-
-| Where | Generated spread | Supported |
-|-------|------------------|-----------|
-| **Static field on host class** (recommended) | `...HostClass.catalogEntries` | Yes |
-| Top-level variable | `...catalogEntries` | Yes |
-| Instance field on host | — | No |
-
-```dart
-final class DemoHostTools {
-  static final DemoHostTools shared = DemoHostTools();
-
-  AgentCallEntry get inboxCallEntry => AgentCallEntry.tool(/* … */);
-
-  @AgentCatalog()
-  static final List<AgentRegistryCatalogEntry> demoHostCatalogEntries =
-      <AgentRegistryCatalogEntry>[
-    AgentRegistryCatalogEntry(
-      registryKey: 'app_demo_inbox',
-      entry: shared.inboxCallEntry,
-      projection: const EntryProjection(
-        surfaces: {AgentManifestSurface.webMcp: true},
-      ),
-    ),
-  ];
-}
-```
-
-**Do not duplicate `@AgentTool` rows** in `@AgentCatalog` — e.g. `app_demo_host_status`
-is merged from `@AgentTool` codegen on the instance method, not from the host catalog
-list. Duplicate `registryKey` values fail the build.
-
-Run `build_runner`. `@AgentTool` rows are collected from generated `*.g.dart`
-parts (`tool_part_globs`, default `lib/**.g.dart`), including tools under
-`lib/src/` when `agent_tool` emits their parts. The aggregate catalog at
-`lib/generated/agent_catalog.g.dart` spreads `@AgentCatalog` lists next to
-codegen rows; `intentcall manifest export --check` merges catalog +
-projection into committed `agent_manifest.json`. Per-row projection uses
-`EntryProjection` on catalog rows — same policy surface as `@AgentProjection`
-on annotated tools. See [ADR 0019](decisions/0019-framework-neutral-intentcall-cli.md),
-[ADR 0021](decisions/0021-agent-catalog-annotation.md), and the
-[`intentcall_codegen` example](../packages/intentcall_codegen/example/lib/tools/demo_host_tools.dart).
-
-**Catalog builder options** (`intentcall_codegen|agent_catalog` in `build.yaml`):
-`tool_part_globs`, `tool_globs` (`@AgentCatalog` scan only), `tool_exclude_globs`,
-`host_binding_field`.
-Defaults and a commented template: [`example/build.yaml`](../packages/intentcall_codegen/example/build.yaml).
-
-**Probe anchor:** `intentcall manifest export` runs a subprocess that evaluates
-each row's `entry:` and calls `resolveDescriptor()` — handlers are stripped
-before merge. Use `Host.shared.<getter>CallEntry` or top-level `*CallEntry`
-getters so the catalog compiles at export time. Runtime may register a different
-instance when descriptors match.
-
-**Descriptor-only rows:** When a tool should appear in the manifest but should
-not materialize an `AgentCallEntry` at probe time, set `descriptor:` on
-`AgentRegistryCatalogEntry` and register the handler in app setup; keep
-`qualifiedName` aligned for parity gates.
-
-**Optional instance `@AgentTool` codegen:** Annotate instance methods on a host
-class. Codegen emits an extension with `AgentCallEntry` getters whose handlers call
-instance methods on `this`. Catalog rows use `descriptor:` when no static binding
-field exists, or `Host.shared.<getter>CallEntry` when a probe anchor is present.
-Handwritten getters remain the canonical path when you need full control.
-
-**Typed projection:** `@AgentProjection` and `EntryProjection` use
-`AgentManifestSurface` enum keys. See [ADR 0022](decisions/0022-projection-pipeline-alignment.md)
-for the full surface table and Apple sub-channel defaults.
-
-| Enum | Manifest key | Default when platform enabled |
-|------|--------------|------------------------------|
-| `appleAppIntents` | `apple.appIntents` | `true` on `ios`/`macos` |
-| `appleAppShortcuts` | `apple.appShortcuts` | `false` (opt-in) |
-| `appleSpotlight` | `apple.spotlight` | `false` |
-| `appleEntities` | `apple.entities` | `false` |
-| `androidShortcuts` | `android.shortcuts` | `true` on `android` |
-| `webManifestShortcuts` | `web.manifestShortcuts` | `true` on `web` |
-| `webProtocolHandlers` | `web.protocolHandlers` | `true` on `web` |
-| `webMcp` | `web.webMcp` | `true` on `web` |
-| `windowsProtocolActivation` | `windows.protocolActivation` | `true` on `windows` |
-| `windowsMsixProtocol` | `windows.msixProtocol` | `true` on `windows` |
-| `windowsAppActions` | `windows.appActions` | `false` (opt-in). Requires an MSIX package. See [ADR 0027](/decisions/0027-agent-usable-projection-results). |
-| `linuxSchemeHandler` | `linux.schemeHandler` | `true` on `linux` |
-
-Apple sub-channels (Siri phrases, Spotlight donation hints) use
-`AgentManifestSurfaceExposure.options` on handwritten rows until emitters define
-them — see [ADR 0020](decisions/0020-platform-scoped-manifest-surfaces.md).
-
-**Platform-scoped surfaces:** `platforms.enabled` in `intentcall.yaml` scopes
-default manifest surface families at export time (not just platform sync targets).
-Explicit `defaults.surfaces` in yaml overrides platform-scoped defaults.
-
-**Platform subset author matrix** ([ADR 0025](decisions/0025-platform-subset-federated-plugins.md)):
-
-| App profile | `platforms.enabled` | `pubspec` deps | Hooks |
-|-------------|---------------------|----------------|-------|
-| iOS + Android mobile | `[android, ios]` | `intentcall_platform` (+ codegen stack) | Gradle + Xcode from spine |
-| macOS + Windows desktop | `[macos, windows]` | `intentcall_platform` | CI sync for windows/linux |
-| Android + Huawei stores | `[android]` | `intentcall_platform` | Gradle only |
-| Web Jaspr | `[web]` | `intentcall_hooks` as a dev dep; no Flutter platform plugin | Dart SDK hook |
-| iOS-only | `[ios]` | `intentcall_platform` (federated; android impl not compiled into the app binary) | Xcode only |
-
-Apps list the `intentcall_platform` umbrella only. Endorsed federated impls
-(`intentcall_platform_apple`, `intentcall_platform_android`) come in via
-`default_package`. Huawei/HyperOS use the `android` token — OEM packaging is an
-app concern.
+Surface enum reference: [ADR 0022](/decisions/0022-projection-pipeline-alignment). Platform profile matrix: [ADR 0025](/decisions/0025-platform-subset-federated-plugins.md).
 
 ---
 
-## Flutter in-app host {#flutter-in-app-host}
+## 📱 Flutter in-app host {#flutter-in-app-host}
 
-**Q: How do I wire `IntentCallFlutterHost` in a Flutter app?**
+**Q: How do I wire a Flutter app host?**
 
-Audience overview: [Who is this for? §1](/start_here/audiences#1-in-app--internal-flutter-host).
+[intentcall_platform DX FAQ](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_platform/docs/DX_FAQ.mdx) — `IntentCallFlutterHost.bindRegistry`, `intentcall.yaml`, and export/sync gates. Audience lane: [Who is this for? §1](/start_here/audiences#1-in-app--internal-flutter-host).
 
-1. Depend on `intentcall_platform` (umbrella) + `intentcall_core` — not deleted
-   `intentcall_apple` / `intentcall_android`.
-2. Add `intentcall.yaml` with `host: flutter`, `protocolScheme`, and explicit
-   `platforms.enabled` (required — `intentcall config validate` errors if empty).
-3. Register tools once; bind the host:
-
-```dart
-final host = IntentCallFlutterHost.bindRegistry(
-  registry: registry,
-  policy: productionPolicy, // never ship debugAllowAll in release
-  registerWebMcp: kIsWeb,
-  listenForDeepLinks: !kIsWeb,
-  protocolScheme: 'myapp',
-);
-await host.start();
-```
-
-4. Run hooks init + three-gate spine (`manifest export --check`,
-   `platform sync --check`) or the mcp_flutter `init intentcall-platform` /
-   `codegen sync` wrappers.
-
-**Q: What should a Flutter host check after moving to the current IntentCall train?**
-
-Use the same train for all `intentcall_*` packages. Pass an explicit production
-policy, enable `registerWebMcp` only for pages that expose a compatible WebMCP
-host, enable `listenForDeepLinks` only with an app-owned `protocolScheme`, and
-drain on startup plus foreground/resume for open-app native handoff.
-
-For iOS and macOS open-app App Intents, the readiness checklist is:
-
-1. `agent_manifest.json` / export has the app-owned `protocolScheme`.
-2. Apple entries that should appear in Shortcuts use `"dispatchMode": "openApp"`
-   and curated `"surfaces": { "apple.appShortcuts": { "include": true } }`.
-3. `intentcall platform sync --platform ios,macos --check` passes, proving generated Swift,
-   Runner target membership, and `Runner/Info.plist` `CFBundleURLTypes` drift.
-   For module visibility (generated Runner code vs federated plugin), also run
-   the mcp_flutter compile gate: `bash tool/contracts/check_apple_runner_compile.sh`
-   (or `just apple-runner-compile-check` from agentkit when `../mcp_flutter` exists).
-4. The app is signed and installed before claiming manual Shortcuts or Spotlight
-   product proof.
-5. Automated Apple App Intents regression proof uses AppIntentsTesting where the
-   API covers the behavior, and verifies that Flutter consumed the pending
-   invocation, not merely that Swift compiled.
-6. Any typed entity or indexing path refreshes a Dart-owned snapshot into a
-   durable native cache, and Apple query/indexing code reads that cache instead
-   of assuming Flutter is already running.
-
-Use the exact proof label in release notes and docs: generated Swift compile
-proof, AppIntentsTesting runtime proof, entity query proof, Spotlight
-indexing/query proof, or manual smoke. The current local repo proof can stop at
-scaffold/API-shape tests plus Steward gates when the active toolchain cannot
-import `AppIntentsTesting`.
-
-If `xcode-select -p` points at `/Library/Developer/CommandLineTools`, raw
-`xcrun swiftc -typecheck` may still typecheck `import AppIntents` but fail on
-`import AppIntentsTesting` with `no such module`. That is expected: the testing
-framework is shipped with full Xcode under the platform Developer framework
-directory. Use the Xcode-backed probe before claiming local AppIntentsTesting
-compile support:
-
-```bash
-just apple-appintents-testing-typecheck /Applications/Xcode-beta.app
-```
-
-Generate the XCTest UI-test source from the same `agent_manifest.json` that
-drives platform sync:
-
-```bash
-dart run intentcall_cli:intentcall apple-appintents-testing generate-fixtures \
-  --manifest path/to/agent_manifest.json \
-  --sample-arguments-output path/to/appintents_arguments.json \
-  --entity-fixtures-output path/to/appintents_entities.json
-
-dart run intentcall_cli:intentcall apple-appintents-testing generate-tests \
-  --manifest path/to/agent_manifest.json \
-  --bundle-id com.example.app \
-  --sample-arguments path/to/appintents_arguments.json \
-  --entity-fixtures path/to/appintents_entities.json \
-  --output ios/RunnerUITests/IntentCallAppIntentsTests.swift
-```
-
-`appintents_arguments.json` is keyed by action `qualifiedName`; each value is
-an object of primitive App Intent parameter fixtures. `appintents_entities.json`
-is keyed by entity `qualifiedName`; each value contains `identifier`, `search`,
-and `expectedTitle`. Treat generated fixture files as editable templates:
-replace placeholder argument values with data seeded by the consuming app's
-UI-test setup before claiming runtime proof. The generated source is still
-scaffold proof until it is added to a signed consuming app's XCTest UI-test
-target and run with `xcodebuild test`.
-
-The command emits a proof-label reminder because these claims are different:
-typechecking `import AppIntentsTesting` proves full-Xcode framework visibility,
-generated XCTest source proves scaffold/API shape, and a passing generated UI
-test in the app target is the AppIntentsTesting runtime proof.
-
-For web runtime checks, prefer local Flutter web resources when the consumer
-fixture does not check in `web/canvaskit/`. In Flutter CLI terms, launch with
-`--no-web-resources-cdn` rather than pointing at a missing local CanvasKit
-override.
-
-**mcp_flutter dogfood:** web and macOS have the strongest runtime lanes today;
-iOS shares Apple emitters and is proven at sync/scaffold level until signed
-AppIntentsTesting runs. See [Platform support — mcp_flutter dogfood](/start_here/platform_support#mcp_flutter-dogfood-sibling-consumer).
+Apple AppIntentsTesting fixtures and proof labels: `intentcall_cli` `apple-appintents-testing` subcommands and `just apple-appintents-testing-typecheck`. Dogfood status: [platform support](/start_here/platform_support).
 
 ---
 
-## Surface link
+## 🔗 Surface link
 
-**Q: How do I let a page and a coding agent call one registry without WebMCP?**
-A: Bind `AgentInvocationHub` to the registry. Serve `AgentWebSocketSurface` from `package:intentcall_platform_sync/io.dart` if another process must connect. Point `AgentHttpInvoke.through` at the hub for `POST /agent/invoke?name=`. Pass `McpPublishAdapter.onToolCall` through to `hub.observe` so MCP calls show up on `watch`. Do not rebuild the UI in that callback. Update state inside the tool handler. See [ADR 0028](/decisions/0028-surface-link-no-redraw).
+**Q: How do peers share one registry?**
 
-**Q: How do CLI, macOS, web, and MCP find that server?**
-A: Pass `protocolScheme` to `AgentWebSocketSurface.serve`. It writes `$HOME/.intentcall/links/<scheme>.json` and answers `GET /agent/discover` on the same port. Dart peers use `AgentLinkDirectory.find`. A browser uses the discover URL. `intentcall link discover` and `intentcall link call` read the directory. `intentcall mcp serve --auto --scheme <scheme>` prefers a Flutter debug VM (`--vm-service-uri` or a short `flutter attach --machine` probe) and otherwise proxies the published link. If neither door is open, the server stays up with `intentcall_app_status` instead of an empty tool list. A Flutter app publishes only with `publishSurfaceLink: true`. See [ADR 0029](/decisions/0029-surface-discovery.md).
+[intentcall_platform_sync DX FAQ](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_platform_sync/docs/DX_FAQ.mdx) — `AgentInvocationHub`, `AgentWebSocketSurface`, discovery files, and CLI link commands. Why observe callbacks must not redraw: [ADR 0028](/decisions/0028-surface-link-no-redraw).
 
 ---
 

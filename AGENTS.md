@@ -19,8 +19,9 @@ npx skills add arenukvern/skill_steward
 | Which audience / setup lane? | [docs/start_here/audiences.mdx](docs/start_here/audiences.mdx) |
 | Where is the full doc map? | [docs/start_here/docs_map.mdx](docs/start_here/docs_map.mdx) |
 | What does this repo own? | [docs/NORTH_STAR.mdx](docs/NORTH_STAR.mdx) |
-| Why is it built this way? | [docs/DESIGN_FAQ.mdx](docs/DESIGN_FAQ.mdx) |
-| How do I use / extend it? | [docs/DX_FAQ.mdx](docs/DX_FAQ.mdx) |
+| Why is it built this way? | [docs/DESIGN_FAQ.mdx](docs/DESIGN_FAQ.mdx) (+ package `docs/DESIGN_FAQ.mdx` — see router in file) |
+| How do I use / extend it? | [docs/DX_FAQ.mdx](docs/DX_FAQ.mdx) (+ package `docs/DX_FAQ.mdx` — see router in file) |
+| Which FAQ should an agent open? | [.cursor/rules/faq_usage.mdc](.cursor/rules/faq_usage.mdc) |
 | Why was X decided? | [docs/decisions/README.md](docs/decisions/README.md) |
 | How do I contribute? | [CONTRIBUTING.md](CONTRIBUTING.md) |
 | How do I publish to pub.dev? | [PUBLISHING.md](PUBLISHING.md) |
