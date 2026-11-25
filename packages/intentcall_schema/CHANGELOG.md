@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.4.0
+
+### Minor Changes
+
+- Wire encode + Dart-literal recovery (ADR 0031): complex tool arguments now
+  round-trip the string-only service-extension wire. New exports
+  `wireArgumentsForServiceExtension` / `wireValueForServiceExtension` encode
+  maps and lists to JSON text before an extension call (Flutter's binding
+  flattens parameters via `toString()`, which mangled them); coercion decodes
+  JSON first and recovers Dart `toString()` shapes with the conservative
+  `tryDecodeDartMap` / `tryDecodeDartList` / `tryDecodeDartLiteral` parsers
+  instead of throwing `FormatException` out of object- and array-typed
+  arguments — undecodable text now passes through for an honest validation
+  refusal. Also fixes `_parseWireJsonMap` decoding the JSON codec constant
+  instead of the string it was given, so open-object string entries actually
+  decode.
+
 ## [1.3.0](https://github.com/Arenukvern/intentcall/compare/intentcall_schema-v1.2.0...intentcall_schema-v1.3.0) (2026-11-20)
 
 
@@ -121,3 +138,4 @@
 - First pre-release of IntentCall schema primitives.
 - Includes `AgentResult`, wire argument helpers, JSON Schema validation, schema
   coercion, and result envelope helpers.
+
