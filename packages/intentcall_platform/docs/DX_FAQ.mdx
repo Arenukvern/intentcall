@@ -21,7 +21,16 @@ final host = IntentCallFlutterHost.bindRegistry(
 await host.start();
 ```
 
-Run `intentcall manifest export --check` and `intentcall platform sync --check` (or mcp_flutter `codegen sync` wrappers).
+Generate artifacts, then validate freshness:
+
+```bash
+dart run intentcall_cli:intentcall manifest export
+dart run intentcall_cli:intentcall platform sync
+dart run intentcall_cli:intentcall manifest export --check
+dart run intentcall_cli:intentcall platform sync --check
+```
+
+(or mcp_flutter `codegen sync` wrappers)
 
 ---
 

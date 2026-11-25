@@ -16,4 +16,4 @@ Contract tests: `packages/intentcall_webmcp/test/webmcp_adapter_contract_test.da
 
 **Q: How does manifest export include WebMCP?**
 
-Set `AgentManifestSurface.webMcp` in `@AgentProjection` / `EntryProjection` or rely on web platform defaults during `intentcall manifest export`. Generated JS may land in `web/intentcall_webmcp.generated.js` via codegen examples.
+Set `AgentManifestSurface.webMcp` in `@AgentProjection` / `EntryProjection` or rely on web platform defaults during manifest export. Platform sync writes `web/intentcall_webmcp.generated.js` via `dart run intentcall_cli:intentcall platform sync`; `build_runner` codegen does not emit that file.

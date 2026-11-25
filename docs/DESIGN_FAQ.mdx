@@ -82,7 +82,7 @@ A: `AgentRegistry`, `AgentCallEntry`, and `RegisteredAgentIntent` are the curren
 A: They are a projection layer over the existing source concepts. Actions remain registry entries. Typed entities are app-owned Dart snapshots with stable ids, display fields, and search/index fields. Indexing or donation is a lifecycle that copies those snapshots into a platform projection cache. Keeping this additive avoids turning `intentcall_core` into an Apple-shaped runtime while still letting Apple be the first concrete typed-entity/indexing projection. See [ADR 0018](decisions/0018-additive-actions-typed-entities-indexing-lifecycle.md).
 
 **Q: Why were `intentcall_apple` / `intentcall_android` removed, and what replaced them?**
-A: They were sparse-manifest generators with no consumers and were deleted. Projection is `intentcall_platform_sync`; runtime native code is federated under `intentcall_platform` ([ADR 0025](decisions/0025-platform-subset-federated-plugins.md)). Package how-to: [intentcall_platform DESIGN](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_platform/docs/DESIGN_FAQ.mdx).
+A: See [intentcall_platform DESIGN FAQ](https://github.com/Arenukvern/intentcall/tree/main/packages/intentcall_platform/docs/DESIGN_FAQ.mdx) for the authoritative removal and federation answer.
 
 **Q: Why are there two `IntentCallNativeBridge` types?**
 A: Different languages, same handoff story. Dart `IntentCallNativeBridge.bindRegistry(...)` in `intentcall_platform_sync` authorizes envelopes into the registry after the app wakes. Swift `IntentCallNativeBridge.enqueue(...)` in `intentcall_platform_apple` queues native App Intent invocations and optionally opens the app-owned `protocolScheme` URL. Generated Runner Swift calls the Swift facade only.

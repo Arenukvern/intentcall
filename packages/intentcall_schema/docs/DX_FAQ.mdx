@@ -12,7 +12,7 @@
 import 'package:intentcall_schema/intentcall_schema.dart';
 
 return AgentResult.success(
-  value: {'total': 42},
+  data: {'total': 42},
 );
 ```
 
@@ -23,11 +23,14 @@ return AgentResult.success(
 **Q: How do I validate arguments before invoke?**
 
 ```dart
-final errors = validateAgainstSchema(arguments, inputSchema);
-if (errors.isNotEmpty) {
-  return AgentResult.failure(message: errors.join('; '));
+import 'package:intentcall_schema/intentcall_schema.dart';
+
+final coerced = coerceArgumentsForSchema(inputSchema, arguments);
+try {
+  validateAgainstSchema(inputSchema, coerced);
+} on AgentValidationException catch (error) {
+  return AgentResult.failure(message: error.message);
 }
-final coerced = coerceArgumentsForSchema(arguments, inputSchema);
 ```
 
 Wire-type tour and entity examples: [docs/packages/intentcall_schema](/packages/intentcall_schema).

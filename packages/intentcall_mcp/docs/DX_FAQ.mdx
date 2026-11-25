@@ -20,18 +20,6 @@ Reference test: `packages/intentcall_mcp/test/mcp_adapter_contract_test.dart`.
 
 **Q: How do I test my adapter?**
 
-```dart
-import 'package:intentcall_testing/intentcall_testing.dart';
-
-test('adapter satisfies contract', () async {
-  await verifyNativeAdapterContract(
-    attach: (registry, transport) async {
-      final adapter = McpPublishAdapter(registry: registry, transport: transport);
-      await adapter.attach();
-      return adapter.detach;
-    },
-  );
-});
-```
+Use the same shape as `mcp_adapter_contract_test.dart`: pass `adapter`, `isPublished`, `invoke`, and `normalize` to `verifyNativeAdapterContract`. Construct `McpPublishAdapter` with `publishTool` and `unpublishTool`, then `await adapter.attach(registry)` before the contract runs.
 
 Run `steward benchmark --scenario intentcall.adapter-contract --json` before claiming compliance.

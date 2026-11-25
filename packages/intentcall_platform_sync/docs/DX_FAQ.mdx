@@ -16,6 +16,8 @@ Do not rebuild UI in MCP observe callbacks; mutate state inside tool handlers ([
 
 **Q: How do CLI, browser, and MCP find the link?**
 
-Pass `protocolScheme` to `AgentWebSocketSurface.serve`. It writes `$HOME/.intentcall/links/<scheme>.json` and serves `GET /agent/discover`. Use `AgentLinkDirectory.find`, `intentcall link discover`, or `intentcall mcp serve --auto --scheme <scheme>` ([ADR 0029](/decisions/0029-surface-discovery)).
+Pass `protocolScheme` to `AgentWebSocketSurface.serve`. It writes `$HOME/.intentcall/links/<scheme>.json` and serves `GET /agent/discover` on the surface origin. Dart peers use `AgentLinkDirectory.find`; CLI: `intentcall link discover` / `intentcall mcp serve --auto --scheme <scheme>`.
+
+Browsers cannot read the link directory. With the default ephemeral port, the launcher or app config must supply the discovery URL (origin + `/agent/discover`) before the page can connect.
 
 Flutter apps publish only with `publishSurfaceLink: true`.

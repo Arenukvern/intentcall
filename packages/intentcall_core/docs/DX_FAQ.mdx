@@ -12,8 +12,9 @@
 import 'package:intentcall_core/intentcall_core.dart';
 
 final registry = InMemoryAgentRegistry();
-registry.register(myEntry.toRegistration());
-final result = await registry.invoke('namespace.name', arguments);
+final registration = myEntry.toRegistration();
+registry.register(registration);
+final result = await registry.invoke(registration.qualifiedName, arguments);
 ```
 
 Custom adapters publish metadata, translate calls, and route back through `registry.invoke`.

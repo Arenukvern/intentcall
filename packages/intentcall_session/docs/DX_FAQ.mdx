@@ -53,6 +53,7 @@ final result = await executor.invoke(
 ```dart
 final snapshots = IntentSnapshotStore(snapshotsDir: '.intentcall/snapshots');
 await snapshots.saveSnapshot(id: 'before', snapshot: payload);
+await snapshots.saveSnapshot(id: 'after', snapshot: updatedPayload);
 final diff = await snapshots.diffSnapshots(fromId: 'before', toId: 'after');
 ```
 
